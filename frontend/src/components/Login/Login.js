@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Container, Row, Col, Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
 
 function Login() {
@@ -15,15 +16,26 @@ function Login() {
     setError("");
     setLoading(true);
 
-    // Giả lập đăng nhập API (2 giây)
-    setTimeout(() => {
+    // Send credentials to backend. The backend accepts either `email` or `username`.
+    axios.post('/api/auth/login', {
+      email: form.username, // if your frontend uses username as email field, send as email
+      username: form.username,
+      password: form.password,
+    })
+    .then(res => {
       setLoading(false);
-      if (form.username === "admin" && form.password === "123456") {
-        alert("Đăng nhập thành công!");
-      } else {
-        setError("Tên đăng nhập hoặc mật khẩu không đúng!");
-      }
-    }, 2000);
+      const { token, user } = res.data;
+      // Save token and user to localStorage for later use
+      if (token) localStorage.setItem('token', token);
+      if (user) localStorage.setItem('user', JSON.stringify(user));
+      alert('Đăng nhập thành công!');
+      // optionally redirect or update app state here
+    })
+    .catch(err => {
+      setLoading(false);
+      const msg = err?.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng!';
+      setError(msg);
+    });
   };
 
   return (
