@@ -8,4 +8,5 @@ const productSchema = new mongoose.Schema({
   stock: { type: Number, default: 0 },
 }, { timestamps: true });
 
+// Bây giờ chỉ cần 2 tham số vì collection đã đổi tên thành "products"
 export default mongoose.model("Product", productSchema);
