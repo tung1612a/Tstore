@@ -1,29 +1,65 @@
 import React from 'react';
-import { Carousel } from 'react-bootstrap';
+import { Carousel, Button } from 'react-bootstrap';
 
 function HeroCarousel() {
   return (
-    <Carousel className="mb-4">
+    <Carousel className="mb-5 hero-carousel" fade>
       <Carousel.Item>
-        <img className="d-block w-100" style={{ maxHeight: 320, objectFit: 'cover' }} src="https://images.unsplash.com/photo-1517336714731-489689fd1ca8?q=80&w=1600&auto=format&fit=crop" alt="Banner 1" />
-        <Carousel.Caption>
-          <h3>Giảm giá cuối tuần</h3>
-          <p>Ưu đãi đến 50% cho hàng ngàn sản phẩm.</p>
-        </Carousel.Caption>
+        <div className="hero-slide" style={{
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          position: 'relative'
+        }}>
+          <div className="hero-content text-center">
+            <h1 className="display-4 fw-bold mb-3">Giảm giá cuối tuần</h1>
+            <p className="lead mb-4">Ưu đãi đến 50% cho hàng ngàn sản phẩm chất lượng</p>
+            <Button variant="light" size="lg" className="px-4 py-2">
+              Mua ngay
+            </Button>
+          </div>
+        </div>
       </Carousel.Item>
       <Carousel.Item>
-        <img className="d-block w-100" style={{ maxHeight: 320, objectFit: 'cover' }} src="https://images.unsplash.com/photo-1491553895911-0055eca6402d?q=80&w=1600&auto=format&fit=crop" alt="Banner 2" />
-        <Carousel.Caption>
-          <h3>Sưu tầm xu nhận quà</h3>
-          <p>Mua sắm mỗi ngày nhận thêm quà tặng hấp dẫn.</p>
-        </Carousel.Caption>
+        <div className="hero-slide" style={{
+          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          position: 'relative'
+        }}>
+          <div className="hero-content text-center">
+            <h1 className="display-4 fw-bold mb-3">Sưu tầm xu nhận quà</h1>
+            <p className="lead mb-4">Mua sắm mỗi ngày nhận thêm quà tặng hấp dẫn</p>
+            <Button variant="light" size="lg" className="px-4 py-2">
+              Khám phá
+            </Button>
+          </div>
+        </div>
       </Carousel.Item>
       <Carousel.Item>
-        <img className="d-block w-100" style={{ maxHeight: 320, objectFit: 'cover' }} src="https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=1600&auto=format&fit=crop" alt="Banner 3" />
-        <Carousel.Caption>
-          <h3>Hàng mới về</h3>
-          <p>Khám phá bộ sưu tập mới nhất hôm nay.</p>
-        </Carousel.Caption>
+        <div className="hero-slide" style={{
+          background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
+          height: '400px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          position: 'relative'
+        }}>
+          <div className="hero-content text-center">
+            <h1 className="display-4 fw-bold mb-3">Hàng mới về</h1>
+            <p className="lead mb-4">Khám phá bộ sưu tập mới nhất hôm nay</p>
+            <Button variant="light" size="lg" className="px-4 py-2">
+              Xem ngay
+            </Button>
+          </div>
+        </div>
       </Carousel.Item>
     </Carousel>
   );

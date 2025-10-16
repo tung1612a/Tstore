@@ -80,40 +80,70 @@ function App() {
       </Row>
 
       <Row className="g-4">
-        <Col md={3} lg={3}>
+        <Col lg={3} className="mb-4">
           <CategoriesRow />
         </Col>
-        <Col md={9} lg={9}>
-          <SearchBar onSearch={() => {}} />
-          <Row className="mb-4">
-            <Col md={4}><Card className="mb-2"><Card.Body>🛒 Sản phẩm: <strong>{stats?.totalProducts ?? 0}</strong></Card.Body></Card></Col>
-            <Col md={4}><Card className="mb-2"><Card.Body>📂 Danh mục: <strong>{stats?.totalCategories ?? 0}</strong></Card.Body></Card></Col>
-            <Col md={4}><Card className="mb-2"><Card.Body>🏬 Cửa hàng: <strong>{stats?.totalStores ?? 0}</strong></Card.Body></Card></Col>
-          </Row>
+        <Col lg={9}>
+          <div className="search-container">
+            <SearchBar onSearch={() => {}} />
+          </div>
+          
+          {/* <Row className="mb-5">
+            <Col md={4} className="mb-3">
+              <Card className="stats-card h-100">
+                <Card.Body>
+                  <div className="stats-icon">🛒</div>
+                  <div className="stats-number">{stats?.totalProducts ?? 0}</div>
+                  <div className="stats-label">Sản phẩm</div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4} className="mb-3">
+              <Card className="stats-card h-100">
+                <Card.Body>
+                  <div className="stats-icon">📂</div>
+                  <div className="stats-number">{stats?.totalCategories ?? 0}</div>
+                  <div className="stats-label">Danh mục</div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col md={4} className="mb-3">
+              <Card className="stats-card h-100">
+                <Card.Body>
+                  <div className="stats-icon">🏬</div>
+                  <div className="stats-number">{stats?.totalStores ?? 0}</div>
+                  <div className="stats-label">Cửa hàng</div>
+                </Card.Body>
+              </Card>
+            </Col>
+          </Row> */}
 
-          <Row className="mb-3">
-            <Col><h2>Sản phẩm nổi bật</h2></Col>
-          </Row>
-          <Row xs={1} sm={2} md={3} lg={3} className="g-3 mb-4">
+          <div className="section-header">
+            <h2 className="section-title">Sản phẩm nổi bật</h2>
+            <p className="section-subtitle">Khám phá những sản phẩm được yêu thích nhất</p>
+          </div>
+          <div className="products-grid mb-5">
             {(featuredProducts || []).map((p) => (
-              <Col key={p._id}>
-                <ProductCard product={p} />
-              </Col>
+              <ProductCard key={p._id} product={p} />
             ))}
-          </Row>
+          </div>
 
-          <Row className="mb-3">
-            <Col><h2>Tất cả sản phẩm</h2></Col>
-          </Row>
-          {loadingProducts && <Spinner animation="border" />}
+          <div className="section-header">
+            <h2 className="section-title">Tất cả sản phẩm</h2>
+            <p className="section-subtitle">Bộ sưu tập đầy đủ các sản phẩm chất lượng</p>
+          </div>
+          {loadingProducts && (
+            <div className="loading-container">
+              <Spinner animation="border" size="lg" />
+              <div className="mt-3">Đang tải sản phẩm...</div>
+            </div>
+          )}
           {errorProducts && <Alert variant="warning">{errorProducts}</Alert>}
-          <Row xs={1} sm={2} md={3} lg={3} className="g-3">
+          <div className="products-grid">
             {allProducts.map((p) => (
-              <Col key={p._id}>
-                <ProductCard product={p} />
-              </Col>
+              <ProductCard key={p._id} product={p} />
             ))}
-          </Row>
+          </div>
         </Col>
       </Row>
       </Container>
