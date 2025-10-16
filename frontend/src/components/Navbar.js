@@ -11,7 +11,7 @@ function SiteNavbar() {
         <Navbar.Collapse id="basic-navbar-nav">
           <div className="me-auto" />
           <Nav>
-            <Nav.Link href="#">
+            <Nav.Link href="/login">
               <FiUser className="me-1" />
               Đăng nhập
             </Nav.Link>
