@@ -1,5 +1,18 @@
 import React from 'react';
-import { Row, Col, Card, Spinner, Alert, ListGroup } from 'react-bootstrap';
+import { Card, Spinner, Alert, ListGroup } from 'react-bootstrap';
+import { FiGrid, FiSmartphone, FiMonitor, FiHeadphones, FiWatch, FiCamera, FiHome } from 'react-icons/fi';
+import { FaGamepad } from 'react-icons/fa';
+
+const categoryIcons = {
+  'Điện thoại': FiSmartphone,
+  'Laptop': FiMonitor,
+  'Tai nghe': FiHeadphones,
+  'Đồng hồ': FiWatch,
+  'Máy ảnh': FiCamera,
+  'Gaming': FaGamepad,
+  'Nhà cửa': FiHome,
+  'default': FiGrid
+};
 
 function CategoriesRow() {
   const [categories, setCategories] = React.useState([]);
@@ -20,19 +33,45 @@ function CategoriesRow() {
     return () => { isMounted = false; };
   }, []);
 
-  if (loading) return <Spinner animation="border" size="sm" />;
-  if (error) return <Alert variant="warning">{error}</Alert>;
+  if (loading) return (
+    <Card className="category-sidebar">
+      <Card.Body className="text-center">
+        <Spinner animation="border" size="sm" />
+        <div className="mt-2">Đang tải...</div>
+      </Card.Body>
+    </Card>
+  );
+  
+  if (error) return (
+    <Card className="category-sidebar">
+      <Card.Body>
+        <Alert variant="warning" className="mb-0">{error}</Alert>
+      </Card.Body>
+    </Card>
+  );
 
   return (
-    <Card>
+    <Card className="category-sidebar">
       <Card.Body>
-        <Card.Title className="h5">Danh mục</Card.Title>
+        <Card.Title className="h5 d-flex align-items-center">
+          <FiGrid className="me-2" />
+          Danh mục sản phẩm
+        </Card.Title>
         <ListGroup variant="flush">
-          {categories.map((c) => (
-            <ListGroup.Item key={c._id} action href="#">
-              {c.name}
-            </ListGroup.Item>
-          ))}
+          {categories.map((c) => {
+            const IconComponent = categoryIcons[c.name] || categoryIcons.default;
+            return (
+              <ListGroup.Item 
+                key={c._id} 
+                action 
+                href="#" 
+                className="category-item d-flex align-items-center"
+              >
+                <IconComponent className="me-2" size={18} />
+                {c.name}
+              </ListGroup.Item>
+            );
+          })}
         </ListGroup>
       </Card.Body>
     </Card>
