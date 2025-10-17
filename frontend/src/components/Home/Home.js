@@ -45,6 +45,8 @@ function useHomeData() {
 
 function App() {
   const { data, loading, error } = useHomeData()
+  const [keyword, setKeyword] = React.useState("")
+  const [categoryId, setCategoryId] = React.useState("")
 
   // --- ĐÃ XÓA ---
   // Toàn bộ state và useEffect để fetch '/api/products' đã được chuyển vào trong ProductList.js
@@ -82,11 +84,11 @@ function App() {
 
         <Row className="g-4">
           <Col lg={3} className="mb-4">
-            <CategoriesRow />
+            <CategoriesRow selectedCategoryId={categoryId} onSelectCategory={setCategoryId} />
           </Col>
           <Col lg={9}>
             <div className="search-container">
-              <SearchBar onSearch={() => { }} />
+              <SearchBar onSearch={setKeyword} />
             </div>
 
             <div className="section-header">
@@ -98,12 +100,12 @@ function App() {
                 <ProductCard key={p._id} product={p} />
               ))}
             </div>
-            <ProductList />
+            <ProductList keyword={keyword} categoryId={categoryId} />
             <div className="section-header">
               <h2 className="section-title">Tất cả sản phẩm</h2>
               <p className="section-subtitle">Bộ sưu tập đầy đủ các sản phẩm chất lượng</p>
             </div>
-            <ProductList />
+            <ProductList keyword={keyword} categoryId={categoryId} />
             {/* --- THAY ĐỔI CHÍNH --- */}
             {/* Toàn bộ logic hiển thị loading, error, và map qua sản phẩm... */}
             {/* ...giờ được thay thế bằng một dòng duy nhất này. */}

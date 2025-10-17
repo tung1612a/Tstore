@@ -176,6 +176,11 @@ function ProductDetail() {
                                     <Badge bg="danger" className="ms-3">
                                         Giảm 20%
                                     </Badge>
+                                    {typeof product.inventoryQuantity === 'number' && (
+                                      <span className="ms-3 text-muted" style={{ fontSize: '14px' }}>
+                                        Còn {product.inventoryQuantity} sản phẩm
+                                      </span>
+                                    )}
                                 </div>
                             </div>
 

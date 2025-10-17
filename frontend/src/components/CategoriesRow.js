@@ -14,7 +14,7 @@ const categoryIcons = {
   'default': FiGrid
 };
 
-function CategoriesRow() {
+function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
   const [categories, setCategories] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
@@ -58,6 +58,15 @@ function CategoriesRow() {
           Danh mục sản phẩm
         </Card.Title>
         <ListGroup variant="flush">
+          <ListGroup.Item
+            key="all"
+            action
+            href="#"
+            className={`category-item d-flex align-items-center ${!selectedCategoryId ? 'active' : ''}`}
+            onClick={(e) => { e.preventDefault(); onSelectCategory?.(''); }}
+          >
+            Tất cả
+          </ListGroup.Item>
           {categories.map((c) => {
             const IconComponent = categoryIcons[c.name] || categoryIcons.default;
             return (
@@ -65,7 +74,8 @@ function CategoriesRow() {
                 key={c._id} 
                 action 
                 href="#" 
-                className="category-item d-flex align-items-center"
+                className={`category-item d-flex align-items-center ${selectedCategoryId === c._id ? 'active' : ''}`}
+                onClick={(e) => { e.preventDefault(); onSelectCategory?.(c._id); }}
               >
                 <IconComponent className="me-2" size={18} />
                 {c.name}

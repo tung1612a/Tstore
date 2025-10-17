@@ -105,6 +105,11 @@ function ProductCard({ product }) {
               {product.price && (product.price * 1.25).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
             </div>
           </div>
+          {typeof product.inventoryQuantity === 'number' && (
+            <div className="text-muted" style={{ fontSize: "12px" }}>
+              Còn {product.inventoryQuantity} sản phẩm
+            </div>
+          )}
         </div>
 
         <Button
