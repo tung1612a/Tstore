@@ -10,11 +10,11 @@ export const register = async (req, res) => {
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "User already exists" });
 
-    // Validate role if provided
-    const allowedRoles = ["customer", "seller", "admin"];
-    const finalRole = role && allowedRoles.includes(role) ? role : undefined;
+  // Validate role if provided; default to 'customer'
+  const allowedRoles = ["customer", "seller", "admin"];
+  const finalRole = allowedRoles.includes(role) ? role : "customer";
 
-    const user = await User.create({ fullName, email, password, phone, role: finalRole, active, avatarURL });
+  const user = await User.create({ fullName, email, password, phone, role: finalRole, active, avatarURL });
 
     const userObj = user.toObject ? user.toObject() : { ...user };
     delete userObj.password;

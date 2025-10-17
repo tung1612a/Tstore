@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import axios from 'axios';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 
@@ -6,8 +7,8 @@ function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     fullname: '',
-    username: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: ''
   });
@@ -25,6 +26,7 @@ function Register() {
     setError('');
     setSuccess(false);
 
+    // Validate password
     if (form.password !== form.confirmPassword) {
       setError('Mật khẩu nhập lại không khớp!');
       return;
@@ -32,18 +34,32 @@ function Register() {
 
     setLoading(true);
 
-    // Giả lập API đăng ký
-    setTimeout(() => {
+    // Call backend register endpoint
+    axios.post('/api/auth/register', {
+      fullName: form.fullname,
+      email: form.email,
+      password: form.password,
+      phone: form.phone,
+      role: "customer",   // mặc định
+      active: true,       // mặc định active
+      avatarURL: ""       // để rỗng nếu chưa upload avatar
+    })
+    .then(res => {
       setLoading(false);
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 1500); // Chuyển về trang đăng nhập
-    }, 2000);
+      setTimeout(() => navigate('/login'), 1500);
+    })
+    .catch(err => {
+      setLoading(false);
+      const msg = err?.response?.data?.message || 'Đăng ký thất bại';
+      setError(msg);
+    });
   };
 
   return (
     <Container className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
       <Row className="w-100">
-        <Col md={{ span: 5, offset: 3 }}>
+        <Col md={{ span: 6, offset: 3 }}>
           <Card className="shadow-lg border-0 rounded-4">
             <Card.Body className="p-4">
               <h3 className="text-center mb-4 fw-bold">Đăng ký tài khoản</h3>
@@ -64,18 +80,6 @@ function Register() {
                   />
                 </Form.Group>
 
-                <Form.Group className="mb-3" controlId="formUsername">
-                  <Form.Label>Tên đăng nhập</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Nhập tên đăng nhập"
-                    name="username"
-                    value={form.username}
-                    onChange={handleChange}
-                    required
-                  />
-                </Form.Group>
-
                 <Form.Group className="mb-3" controlId="formEmail">
                   <Form.Label>Email</Form.Label>
                   <Form.Control
@@ -83,6 +87,18 @@ function Register() {
                     placeholder="Nhập email"
                     name="email"
                     value={form.email}
+                    onChange={handleChange}
+                    required
+                  />
+                </Form.Group>
+
+                <Form.Group className="mb-3" controlId="formPhone">
+                  <Form.Label>Số điện thoại</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Nhập số điện thoại"
+                    name="phone"
+                    value={form.phone}
                     onChange={handleChange}
                     required
                   />
