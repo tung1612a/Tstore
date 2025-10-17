@@ -1,8 +1,9 @@
 import Product from "../models/Product.js";
 import Inventory from "../models/Inventory.js";
+import Store from "../models/Store.js";
 
 export const getProducts = async (req, res) => {
-  const { q, categoryId } = req.query;
+  const { q, categoryId, sellerId } = req.query;
   const filter = {};
   if (q) {
     filter.title = { $regex: q, $options: "i" };
@@ -10,18 +11,26 @@ export const getProducts = async (req, res) => {
   if (categoryId) {
     filter.categoryId = categoryId;
   }
+  if (sellerId) {
+    filter.sellerId = sellerId;
+  }
   
   const products = await Product.find(filter).populate("sellerId", "fullName");
   
   // Aggregate inventory quantities for each product
   const productsWithInventory = await Promise.all(
     products.map(async (product) => {
-      const inventory = await Inventory.findOne({ productId: product._id });
+      const [inventory, store] = await Promise.all([
+        Inventory.findOne({ productId: product._id }),
+        Store.findOne({ sellerId: product.sellerId?._id })
+      ]);
       const totalQuantity = inventory ? inventory.quantity : 0;
-      
+      const storeInfo = store ? { storeName: store.storeName, status: store.status, bannerImageURL: store.bannerImageURL } : null;
+
       return {
         ...product.toObject(),
-        inventoryQuantity: totalQuantity
+        inventoryQuantity: totalQuantity,
+        storeInfo
       };
     })
   );
@@ -34,12 +43,17 @@ export const getProductById = async (req, res) => {
   if (!product) return res.status(404).json({ message: "Product not found" });
   
   // Get inventory quantity for this product
-  const inventory = await Inventory.findOne({ productId: product._id });
+  const [inventory, store] = await Promise.all([
+    Inventory.findOne({ productId: product._id }),
+    Store.findOne({ sellerId: product.sellerId?._id })
+  ]);
   const totalQuantity = inventory ? inventory.quantity : 0;
-  
+  const storeInfo = store ? { storeName: store.storeName, status: store.status, bannerImageURL: store.bannerImageURL } : null;
+
   const productWithInventory = {
     ...product.toObject(),
-    inventoryQuantity: totalQuantity
+    inventoryQuantity: totalQuantity,
+    storeInfo
   };
   
   res.json(productWithInventory);

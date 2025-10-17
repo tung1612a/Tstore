@@ -12,6 +12,7 @@ import Register from './components/Register/Register';
 import ProductDetail from "./components/Product/ProductDetail"
 import ForgotPassword from "./components/Login/ForgotPassword";
 import Profile from './components/Profile/Profile';
+import StorePage from './components/Store/StorePage';
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/register" element={<Register />}></Route>
         <Route path="/forgetPass" element={<ForgotPassword />}></Route>
         <Route path="/profile" element={<Profile />}></Route>
+        <Route path="/store/:sellerId" element={<StorePage />}></Route>
       </Routes>
     </BrowserRouter>
   )
