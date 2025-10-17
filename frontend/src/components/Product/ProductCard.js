@@ -79,11 +79,15 @@ function ProductCard({ product }) {
           {product.title}
         </Card.Title>
 
-        {(product.sellerId?.fullName || product.seller?.fullName) && (
+        {product.storeInfo?.storeName ? (
+          <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
+            Cửa hàng: {product.storeInfo.storeName}
+          </div>
+        ) : ( (product.sellerId?.fullName || product.seller?.fullName) && (
           <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
             Người bán: {product.sellerId?.fullName || product.seller?.fullName}
           </div>
-        )}
+        ))}
 
         <div className="d-flex align-items-center mb-2">
           <div className="d-flex align-items-center me-2">
@@ -130,6 +134,16 @@ function ProductCard({ product }) {
           <FiShoppingCart className="me-2" size={16} />
           Thêm vào giỏ
         </Button>
+        {(product.sellerId?._id || product.sellerId) && (
+          <Button
+            variant="outline-secondary"
+            size="sm"
+            className="w-100 mt-2"
+            onClick={(e) => { e.stopPropagation(); navigate(`/store/${product.sellerId?._id || product.sellerId}`) }}
+          >
+            Xem cửa hàng
+          </Button>
+        )}
       </Card.Body>
     </Card>
   )
