@@ -11,6 +11,7 @@ import Login from './components/Login/Login';
 import Register from './components/Register/Register';
 import ProductDetail from "./components/Product/ProductDetail"
 import ForgotPassword from "./components/Login/ForgotPassword";
+import Profile from './components/Profile/Profile';
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
         <Route path="/login" element={<Login />}></Route>
         <Route path="/register" element={<Register />}></Route>
         <Route path="/forgetPass" element={<ForgotPassword />}></Route>
+        <Route path="/profile" element={<Profile />}></Route>
       </Routes>
     </BrowserRouter>
   )

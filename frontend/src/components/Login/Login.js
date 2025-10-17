@@ -32,7 +32,8 @@ function Login() {
         if (token) localStorage.setItem('token', token);
         if (user) localStorage.setItem('user', JSON.stringify(user));
         alert('Đăng nhập thành công!');
-        // optionally redirect or update app state here
+        // Redirect to home page after successful login
+        navigate('/');
       })
       .catch(err => {
         setLoading(false);
