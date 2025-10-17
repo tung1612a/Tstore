@@ -101,7 +101,7 @@ function Login() {
                             </Form>
 
                             <div className="text-center mt-3 text-muted" style={{ fontSize: "0.9rem" }}>
-                                Quên mật khẩu? <a href="#">Khôi phục tại đây</a>
+                                Quên mật khẩu? <a href="/forgetPass">Khôi phục tại đây</a>
                             </div>
                         </Card.Body>
                     </Card>
