@@ -1,12 +1,12 @@
 import Product from "../models/Product.js";
 
 export const getProducts = async (req, res) => {
-  const products = await Product.find();
+  const products = await Product.find().populate("sellerId", "fullName");
   res.json(products);
 };
 
 export const getProductById = async (req, res) => {
-  const product = await Product.findById(req.params.id);
+  const product = await Product.findById(req.params.id).populate("sellerId", "fullName");
   if (!product) return res.status(404).json({ message: "Product not found" });
   res.json(product);
 };

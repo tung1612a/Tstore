@@ -5,7 +5,8 @@ import Store from "../models/Store.js";
 export const getHome = async (req, res) => {
   try {
     const [latestProducts, totalProducts, totalCategories, totalStores] = await Promise.all([
-      Product.find({ status: "active" }).sort({ createdAt: -1 }).limit(8),
+      // Remove non-existent status filter and populate seller name
+      Product.find({}).sort({ createdAt: -1 }).limit(8).populate("sellerId", "fullName"),
       Product.countDocuments(),
       Category.countDocuments(),
       Store.countDocuments(),

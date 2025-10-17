@@ -17,10 +17,10 @@ function ProductCard({ product }) {
         style={{ cursor: "pointer" }}
         onClick={() => navigate(`/product/${product._id}`)}
       >
-        {product.imageURL ? (
+        {product.image || product.imageURL ? (
           <Card.Img
             variant="top"
-            src={product.imageURL}
+            src={product.image || product.imageURL}
             alt={product.title}
             style={{ height: 220, objectFit: "cover" }}
           />
@@ -78,6 +78,12 @@ function ProductCard({ product }) {
         >
           {product.title}
         </Card.Title>
+
+        {(product.sellerId?.fullName || product.seller?.fullName) && (
+          <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
+            Người bán: {product.sellerId?.fullName || product.seller?.fullName}
+          </div>
+        )}
 
         <div className="d-flex align-items-center mb-2">
           <div className="d-flex align-items-center me-2">
