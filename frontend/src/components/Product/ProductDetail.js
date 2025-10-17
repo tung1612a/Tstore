@@ -97,7 +97,8 @@ function ProductDetail() {
         product.price && (product.price * 1.25).toLocaleString("vi-VN", { style: "currency", currency: "VND" })
 
     // Mock images array - in real app, product would have multiple images
-    const images = product.imageURL ? [product.imageURL, product.imageURL, product.imageURL] : []
+    const mainImage = product.image || product.imageURL
+    const images = mainImage ? [mainImage, mainImage, mainImage] : []
 
     return (
         <div className="product-detail-page">
@@ -185,6 +186,11 @@ function ProductDetail() {
                                     {product.description ||
                                         "Sản phẩm chất lượng cao, được nhiều khách hàng tin dùng. Đảm bảo chính hãng 100%, giao hàng nhanh chóng trên toàn quốc."}
                                 </p>
+                                {(product.sellerId?.fullName || product.seller?.fullName) && (
+                                    <div className="mt-2 text-muted" style={{ fontSize: "14px" }}>
+                                        Người bán: <strong>{product.sellerId?.fullName || product.seller?.fullName}</strong>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Quantity Selector */}
