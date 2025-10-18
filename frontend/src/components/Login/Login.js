@@ -33,7 +33,7 @@ function Login() {
         if (user) localStorage.setItem('user', JSON.stringify(user));
         alert('Đăng nhập thành công!');
         // Redirect to home page after successful login
-        navigate('/');
+        window.location.href = '/';
       })
       .catch(err => {
         setLoading(false);
