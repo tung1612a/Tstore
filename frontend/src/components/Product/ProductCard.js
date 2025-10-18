@@ -4,11 +4,32 @@ import React from "react"
 import { Card, Badge, Button } from "react-bootstrap"
 import { FiHeart, FiShoppingCart, FiStar } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
+import { useCart } from "../../hooks/useCart"
 
 function ProductCard({ product }) {
   const price = product.price?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
   const [isLiked, setIsLiked] = React.useState(false)
+  const [isAddingToCart, setIsAddingToCart] = React.useState(false)
   const navigate = useNavigate()
+  const { addItem } = useCart()
+
+  // Helper function for adding to cart
+  const handleAddToCart = async (e) => {
+    e.stopPropagation()
+    
+    if (isAddingToCart) return
+    
+    setIsAddingToCart(true)
+    
+    try {
+      addItem(product, 1)
+    } catch (error) {
+      console.error('Error adding to cart:', error)
+      alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
+    } finally {
+      setIsAddingToCart(false)
+    }
+  }
 
   return (
     <Card className="product-card h-100">
@@ -111,19 +132,19 @@ function ProductCard({ product }) {
           variant="primary"
           size="sm"
           className="w-100 d-flex align-items-center justify-content-center"
+          disabled={isAddingToCart}
           style={{
-            background: "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+            background: isAddingToCart 
+              ? "#6c757d" 
+              : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
             border: "none",
             borderRadius: "8px",
             fontWeight: "600",
           }}
-          onClick={(e) => {
-            e.stopPropagation()
-            // TODO: Add to cart logic
-          }}
+          onClick={handleAddToCart}
         >
           <FiShoppingCart className="me-2" size={16} />
-          Thêm vào giỏ
+          {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
         </Button>
       </Card.Body>
     </Card>
