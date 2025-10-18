@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import ProductCard from './ProductCard';
 import './ProductList.css';
 
-const ProductList = () => {
+const ProductList = ({ keyword = '', categoryId = '' }) => {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -10,8 +10,14 @@ const ProductList = () => {
     useEffect(() => {
         const fetchProducts = async () => {
             try {
-                // Gọi API qua proxy đã cấu hình trong package.json
-                const response = await fetch('/api/products');
+                setLoading(true);
+                setError(null);
+                const params = new URLSearchParams();
+                if (keyword) params.set('q', keyword);
+                if (categoryId) params.set('categoryId', categoryId);
+                const query = params.toString();
+                const url = query ? `/api/products?${query}` : '/api/products';
+                const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error(`Lỗi HTTP: ${response.status}`);
                 }
@@ -25,7 +31,7 @@ const ProductList = () => {
         };
 
         fetchProducts();
-    }, []); // Mảng rỗng đảm bảo chỉ gọi 1 lần
+    }, [keyword, categoryId]);
 
     // Xử lý các trạng thái giao diện
     if (loading) return <div className="loading-message">Đang tải sản phẩm...</div>;

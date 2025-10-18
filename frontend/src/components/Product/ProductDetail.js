@@ -176,6 +176,11 @@ function ProductDetail() {
                                     <Badge bg="danger" className="ms-3">
                                         Giảm 20%
                                     </Badge>
+                                    {typeof product.inventoryQuantity === 'number' && (
+                                      <span className="ms-3 text-muted" style={{ fontSize: '14px' }}>
+                                        Còn {product.inventoryQuantity} sản phẩm
+                                      </span>
+                                    )}
                                 </div>
                             </div>
 
@@ -186,11 +191,15 @@ function ProductDetail() {
                                     {product.description ||
                                         "Sản phẩm chất lượng cao, được nhiều khách hàng tin dùng. Đảm bảo chính hãng 100%, giao hàng nhanh chóng trên toàn quốc."}
                                 </p>
-                                {(product.sellerId?.fullName || product.seller?.fullName) && (
+                                {product.storeInfo?.storeName ? (
+                                    <div className="mt-2 text-muted" style={{ fontSize: "14px" }}>
+                                        Cửa hàng: <strong>{product.storeInfo.storeName}</strong>
+                                    </div>
+                                ) : ((product.sellerId?.fullName || product.seller?.fullName) && (
                                     <div className="mt-2 text-muted" style={{ fontSize: "14px" }}>
                                         Người bán: <strong>{product.sellerId?.fullName || product.seller?.fullName}</strong>
                                     </div>
-                                )}
+                                ))}
                             </div>
 
                             {/* Quantity Selector */}
@@ -221,6 +230,16 @@ function ProductDetail() {
                                     <FiShoppingCart className="me-2" size={20} />
                                     Thêm vào giỏ hàng
                                 </Button>
+                                {(product.sellerId?._id || product.sellerId) && (
+                                  <Button 
+                                    variant="outline-secondary" 
+                                    size="lg" 
+                                    className="ms-3" 
+                                    onClick={() => navigate(`/store/${product.sellerId?._id || product.sellerId}`)}
+                                  >
+                                    Xem cửa hàng
+                                  </Button>
+                                )}
                             </div>
 
                             {/* Features */}
