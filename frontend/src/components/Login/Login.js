@@ -31,9 +31,12 @@ function Login() {
         // Save token and user to localStorage for later use
         if (token) localStorage.setItem('token', token);
         if (user) localStorage.setItem('user', JSON.stringify(user));
-        alert('Đăng nhập thành công!');
+        setError("Đăng nhập thành công!"); // hoặc dùng state success
         // Redirect to home page after successful login
         window.location.href = '/';
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 4000); // đợi 1 giây rồi chuyển
       })
       .catch(err => {
         setLoading(false);
@@ -104,7 +107,7 @@ function Login() {
                       variant="outline-primary"
                       type="button"
                       className="w-100"
-                      onClick={handleRegister} 
+                      onClick={handleRegister}
                     >
                       Đăng ký
                     </Button>

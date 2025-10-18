@@ -44,16 +44,16 @@ function Register() {
       active: true,       // mặc định active
       avatarURL: ""       // để rỗng nếu chưa upload avatar
     })
-    .then(res => {
-      setLoading(false);
-      setSuccess(true);
-      setTimeout(() => navigate('/login'), 1500);
-    })
-    .catch(err => {
-      setLoading(false);
-      const msg = err?.response?.data?.message || 'Đăng ký thất bại';
-      setError(msg);
-    });
+      .then(res => {
+        setLoading(false);
+        setSuccess(true);
+        setTimeout(() => navigate('/login'), 1500);
+      })
+      .catch(err => {
+        setLoading(false);
+        const msg = err?.response?.data?.message || 'Đăng ký thất bại';
+        setError(msg);
+      });
   };
 
   return (

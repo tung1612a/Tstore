@@ -24,7 +24,7 @@ function App() {
           <Route path="/register" element={<Register />}></Route>
           <Route path="/forgetPass" element={<ForgotPassword />}></Route>
           <Route path="/profile" element={<Profile />}></Route>
-        <Route path="/store/:sellerId" element={<StorePage />}></Route>
+          <Route path="/store/:sellerId" element={<StorePage />}></Route>
           <Route path="/cart" element={<Cart />}></Route>
         </Routes>
       </BrowserRouter>
