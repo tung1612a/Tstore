@@ -52,6 +52,9 @@ const AdminHomepage = () => {
             <Col>
               <h1 className="display-4 fw-bold">Admin Dashboard</h1>
               <p className="lead">Quản lý hệ thống và giám sát hoạt động</p>
+              <Button variant="light" onClick={() => navigate('/')}>
+                Quay lại cửa hàng
+              </Button>
             </Col>
           </Row>
         </Container>
