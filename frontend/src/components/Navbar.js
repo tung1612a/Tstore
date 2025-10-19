@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut } from 'react-icons/fi';
+import { FiUser, FiShoppingCart, FiLogOut, FiMapPin } from 'react-icons/fi';
 import { useCart } from '../hooks/useCart';
 
 function SiteNavbar() {
@@ -43,6 +43,10 @@ function SiteNavbar() {
                   <Dropdown.Item href="/profile">
                     <FiUser className="me-2" />
                     Thông tin cá nhân
+                  </Dropdown.Item>
+                  <Dropdown.Item href="/addresses">
+                    <FiMapPin className="me-2" />
+                    Địa chỉ của tôi
                   </Dropdown.Item>
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>

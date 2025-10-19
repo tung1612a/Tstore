@@ -10,7 +10,7 @@ import ForgotPassword from "./components/Login/ForgotPassword";
 import Cart from "./components/Cart/Cart";
 import Profile from './components/Profile/Profile';
 import StorePage from './components/Store/StorePage';
-
+import AddressPage from './components/Address/AddressPage';
 
 function App() {
   return (
@@ -26,6 +26,7 @@ function App() {
           <Route path="/profile" element={<Profile />}></Route>
           <Route path="/store/:sellerId" element={<StorePage />}></Route>
           <Route path="/cart" element={<Cart />}></Route>
+          <Route path="/addresses" element={<AddressPage />}></Route>
         </Routes>
       </BrowserRouter>
     </Provider>
