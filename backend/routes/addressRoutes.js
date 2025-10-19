@@ -5,7 +5,8 @@ const router = express.Router();
 import {
     addAddress,
     getUserAddresses, // <-- Import hàm mới
-    updateAddress
+    updateAddress,
+    deleteAddress
 } from '../controllers/addressController.js';
 
 import { protect } from '../middleware/authMiddleware.js';
@@ -16,6 +17,7 @@ router.route('/')
     .post(protect, addAddress);
 
 router.route('/:id')
-    .put(protect, updateAddress);
+    .put(protect, updateAddress)
+    .delete(protect, deleteAddress);
 
 export default router;
