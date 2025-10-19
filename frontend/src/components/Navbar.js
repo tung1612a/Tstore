@@ -1,15 +1,20 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings } from 'react-icons/fi';
+import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings, FiMapPin, FiBarChart } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart } from '../store/cartSlice';
 import { useUser } from '../hooks/useUser';
+import { useCart } from '../hooks/useCart';
+import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 function SiteNavbar() {
   const dispatch = useDispatch();
   const items = useSelector(state => state.cart.items);
   const { getUserRole } = useUser();
   const [user, setUser] = useState(null);
+  const { logout, isAdmin, isSeller } = useAuth();
+  const navigate = useNavigate();
 
   // Load cart khi component mount
   useEffect(() => {
