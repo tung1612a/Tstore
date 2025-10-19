@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut, FiPackage } from 'react-icons/fi';
+import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart } from '../store/cartSlice';
 import { useUser } from '../hooks/useUser';
@@ -28,10 +28,8 @@ function SiteNavbar() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    setUser(null);
-    window.location.href = '/';
+    logout();
+    navigate('/');
   };
 
   return (
@@ -57,6 +55,30 @@ function SiteNavbar() {
                     <FiUser className="me-2" />
                     {getUserRole() === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
                   </Dropdown.Item>
+                  <Dropdown.Item href="/addresses">
+                    <FiMapPin className="me-2" />
+                    Địa chỉ của tôi
+                  </Dropdown.Item>
+                  {isAdmin() && (
+                    <>
+                      <Dropdown.Divider />
+                      <Dropdown.Item href="/admin">
+                        <FiBarChart className="me-2" />
+                        Admin Homepage
+                      </Dropdown.Item>
+                    </>
+                  )}
+
+                  {isSeller() && (
+                    <>
+                      <Dropdown.Divider />
+                      <Dropdown.Item href="/seller">
+                        <FiSettings className="me-2" />
+                        Seller Homepage
+                      </Dropdown.Item>
+                    </>
+                  )}
+
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>
                     <FiLogOut className="me-2" />

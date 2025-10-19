@@ -1,48 +1,33 @@
 import React, { useState } from 'react';
-import axios from 'axios';
 import { Container, Row, Col, Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 function Login() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ username: "", password: "" });
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const navigate = useNavigate();
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    // Send credentials to backend. The backend accepts either `email` or `username`.
-    axios.post('/api/auth/login', {
-      email: form.username, // if your frontend uses username as email field, send as email
-      username: form.username,
-      password: form.password,
-    })
-      .then(res => {
-        setLoading(false);
-        const { token, user } = res.data;
-        // Save token and user to localStorage for later use
-        if (token) localStorage.setItem('token', token);
-        if (user) localStorage.setItem('user', JSON.stringify(user));
-        setError("Đăng nhập thành công!"); // hoặc dùng state success
-        // Redirect to home page after successful login
-        window.location.href = '/';
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 4000); // đợi 1 giây rồi chuyển
-      })
-      .catch(err => {
-        setLoading(false);
-        const msg = err?.response?.data?.message || 'Tên đăng nhập hoặc mật khẩu không đúng!';
-        setError(msg);
-      });
+    const result = await login(form.username, form.password);
+    
+    if (result.success) {
+      navigate('/');
+    } else {
+      setError(result.message);
+    }
+    
+    setLoading(false);
   };
 
   const handleRegister = () => {
