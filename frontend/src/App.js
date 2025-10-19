@@ -19,6 +19,7 @@ import SellerHomepage from './components/Seller/SellerHomepage';
 import RoleRedirect from './components/RoleRedirect';
 
 import AddressPage from './components/Address/AddressPage';
+import AdminUser from "./components/Admin/AdminUser";
 function App() {
   return (
     <Provider store={store}>
@@ -39,6 +40,8 @@ function App() {
             
             {/* Admin Routes */}
             <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminHomepage /></ProtectedRoute>}></Route>
+
+            <Route path="/admin/users" element={<AdminUser/>}></Route>
 
             <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>}></Route>
             

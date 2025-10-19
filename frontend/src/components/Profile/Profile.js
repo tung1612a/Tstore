@@ -48,14 +48,14 @@ function Profile() {
               <Row className="g-4">
                 <Col md={4} className="text-center">
                   <div className="mb-3">
-                    <div 
+                    <div
                       className="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto"
                       style={{ width: '120px', height: '120px' }}
                     >
                       {user.avatarURL ? (
-                        <img 
-                          src={user.avatarURL} 
-                          alt="Avatar" 
+                        <img
+                          src={user.avatarURL}
+                          alt="Avatar"
                           className="rounded-circle"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                         />
@@ -69,7 +69,7 @@ function Profile() {
                     Cập nhật ảnh
                   </Button>
                 </Col>
-                
+
                 <Col md={8}>
                   <div className="mb-4">
                     <h5 className="text-primary mb-3">Thông tin cơ bản</h5>
@@ -107,12 +107,11 @@ function Profile() {
                           <div>
                             <small className="text-muted">Vai trò</small>
                             <div className="fw-medium">
-                              <span className={`badge ${
-                                user.role === 'admin' ? 'bg-danger' : 
+                              <span className={`badge ${user.role === 'admin' ? 'bg-danger' :
                                 user.role === 'seller' ? 'bg-warning' : 'bg-info'
-                              }`}>
-                                {user.role === 'admin' ? 'Quản trị viên' : 
-                                 user.role === 'seller' ? 'Người bán' : 'Khách hàng'}
+                                }`}>
+                                {user.role === 'admin' ? 'Quản trị viên' :
+                                  user.role === 'seller' ? 'Người bán' : 'Khách hàng'}
                               </span>
                             </div>
                           </div>
@@ -135,6 +134,13 @@ function Profile() {
               </Row>
             </Card.Body>
           </Card>
+        </Col>
+      </Row>
+      <Row className="justify-content-center mt-3">
+        <Col lg={8} className="text-end">
+          <Button className="btn-back-to-store" onClick={() => navigate('/')}>
+            Quay lại cửa hàng
+          </Button>
         </Col>
       </Row>
     </Container>
