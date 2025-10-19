@@ -4,14 +4,15 @@ import React from "react"
 import { Card, Badge, Button } from "react-bootstrap"
 import { FiHeart, FiShoppingCart, FiStar } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
-import { useCart } from "../../hooks/useCart"
+import { useDispatch } from "react-redux"
+import { addToCart } from "../../store/cartSlice"
 
 function ProductCard({ product }) {
   const price = product.price?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
   const [isLiked, setIsLiked] = React.useState(false)
   const [isAddingToCart, setIsAddingToCart] = React.useState(false)
   const navigate = useNavigate()
-  const { addItem } = useCart()
+  const dispatch = useDispatch()
 
   // Helper function for adding to cart
   const handleAddToCart = async (e) => {
@@ -22,7 +23,7 @@ function ProductCard({ product }) {
     setIsAddingToCart(true)
     
     try {
-      addItem(product, 1)
+      await dispatch(addToCart({ productId: product._id, quantity: 1 })).unwrap()
     } catch (error) {
       console.error('Error adding to cart:', error)
       alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')

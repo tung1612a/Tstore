@@ -10,6 +10,9 @@ import ForgotPassword from "./components/Login/ForgotPassword";
 import Cart from "./components/Cart/Cart";
 import Profile from './components/Profile/Profile';
 import StorePage from './components/Store/StorePage';
+import Checkout from './components/Checkout/Checkout';
+import OrderHistory from './components/Orders/OrderHistory';
+import OrderDetails from './components/Orders/OrderDetails';
 
 
 function App() {
@@ -26,6 +29,9 @@ function App() {
           <Route path="/profile" element={<Profile />}></Route>
           <Route path="/store/:sellerId" element={<StorePage />}></Route>
           <Route path="/cart" element={<Cart />}></Route>
+          <Route path="/checkout" element={<Checkout />}></Route>
+          <Route path="/orders" element={<OrderHistory />}></Route>
+          <Route path="/orders/:id" element={<OrderDetails />}></Route>
         </Routes>
       </BrowserRouter>
     </Provider>

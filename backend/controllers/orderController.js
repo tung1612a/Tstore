@@ -1,0 +1,235 @@
+import Order from '../models/Order.js';
+import OrderItem from '../models/OrderItem.js';
+import Product from '../models/Product.js';
+import Address from '../models/Address.js';
+import Payment from '../models/Payment.js';
+
+export const createOrder = async (req, res) => {
+  try {
+    const { items, addressId, couponId } = req.body;
+    const buyerId = req.user.id;
+
+    const address = await Address.findById(addressId);
+    if (!address || address.user.toString() !== buyerId) {
+      return res.status(404).json({ message: 'Không tìm thấy địa chỉ hoặc không có quyền truy cập' });
+    }
+
+    let totalPrice = 0;
+    const orderItems = [];
+
+    for (const item of items) {
+      const product = await Product.findById(item.productId);
+      if (!product) {
+        return res.status(404).json({ message: `Không tìm thấy sản phẩm ${item.productId}` });
+      }
+
+      const itemTotal = product.price * item.quantity;
+      totalPrice += itemTotal;
+
+      orderItems.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: product.price
+      });
+    }
+
+    const order = new Order({
+      buyerId,
+      addressId,
+      totalPrice,
+      couponId
+    });
+
+    const savedOrder = await order.save();
+
+    for (const item of orderItems) {
+      const orderItem = new OrderItem({
+        orderId: savedOrder._id,
+        ...item
+      });
+      await orderItem.save();
+    }
+
+    const populatedOrder = await Order.findById(savedOrder._id)
+      .populate('buyerId', 'name email')
+      .populate('addressId', 'fullName phone street city state country');
+
+    res.status(201).json(populatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi tạo đơn hàng', error: error.message });
+  }
+};
+
+export const getBuyerOrders = async (req, res) => {
+  try {
+    const buyerId = req.user.id;
+    const { status, page = 1, limit = 10 } = req.query;
+
+    let query = { buyerId };
+    if (status) {
+      query.status = status;
+    }
+
+    const orders = await Order.find(query)
+      .populate('addressId', 'fullName phone street city state country')
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit);
+
+    const total = await Order.countDocuments(query);
+
+    res.json({
+      orders,
+      totalPages: Math.ceil(total / limit),
+      currentPage: page,
+      total
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi lấy đơn hàng', error: error.message });
+  }
+};
+
+export const getSellerOrders = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+    const { status, page = 1, limit = 10, fromDate, toDate, paymentStatus } = req.query;
+
+    // Tìm các orderId có items thuộc sản phẩm của seller này
+    const orderIdDocs = await OrderItem.aggregate([
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: '_id',
+          as: 'product'
+        }
+      },
+      { $unwind: '$product' },
+      {
+        $match: {
+          'product.sellerId': OrderItem.db.base.Types.ObjectId(sellerId)
+        }
+      },
+      { $group: { _id: '$orderId' } }
+    ]);
+
+    const orderIds = orderIdDocs.map(doc => doc._id);
+    if (orderIds.length === 0) {
+      return res.json({ orders: [], totalPages: 0, currentPage: page, total: 0 });
+    }
+
+    const query = { _id: { $in: orderIds } };
+    if (status) query.status = status;
+
+    if (fromDate || toDate) {
+      query.createdAt = {};
+      if (fromDate) query.createdAt.$gte = new Date(fromDate);
+      if (toDate) query.createdAt.$lte = new Date(toDate);
+    }
+
+    const total = await Order.countDocuments(query);
+    let orders = await Order.find(query)
+      .populate('buyerId', 'name email')
+      .populate('addressId', 'fullName phone street city state country')
+      .sort({ createdAt: -1 })
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit));
+
+    if (paymentStatus) {
+      const payments = await Payment.find({ status: paymentStatus, orderId: { $in: orders.map(o => o._id) } }).select('orderId');
+      const allowedOrderIds = new Set(payments.map(p => String(p.orderId)));
+      orders = orders.filter(o => allowedOrderIds.has(String(o._id)));
+    }
+
+    res.json({
+      orders,
+      totalPages: Math.ceil(total / Number(limit)),
+      currentPage: Number(page),
+      total
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi lấy đơn hàng', error: error.message });
+  }
+};
+
+export const getOrderDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const order = await Order.findById(id)
+      .populate('buyerId', 'name email phone')
+      .populate('addressId', 'fullName phone street city state country');
+
+    if (!order) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+    }
+
+    if (order.buyerId._id.toString() !== userId) {
+      return res.status(401).json({ message: 'Không được phép truy cập đơn hàng này' });
+    }
+
+    const orderItems = await OrderItem.find({ orderId: id })
+      .populate('productId', 'title price image imageURL description');
+
+    res.json({
+      order,
+      items: orderItems
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi lấy chi tiết đơn hàng', error: error.message });
+  }
+};
+
+export const updateOrderStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+    }
+
+    if (!['pending', 'paid', 'shipped', 'completed', 'cancelled'].includes(status)) {
+      return res.status(400).json({ message: 'Trạng thái không hợp lệ' });
+    }
+    order.status = status;
+
+    await order.save();
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi cập nhật trạng thái đơn hàng', error: error.message });
+  }
+};
+
+export const cancelOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { reason } = req.body;
+    const userId = req.user.id;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+    }
+
+    if (order.buyerId.toString() !== userId) {
+      return res.status(401).json({ message: 'Chỉ buyer mới được hủy đơn hàng' });
+    }
+
+    if (!['pending', 'confirmed'].includes(order.status)) {
+      return res.status(400).json({ message: 'Không thể hủy đơn hàng ở trạng thái này' });
+    }
+
+    order.status = 'cancelled';
+    if (reason) order.notes = reason;
+
+    await order.save();
+
+    res.json(order);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi hủy đơn hàng', error: error.message });
+  }
+};
