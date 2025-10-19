@@ -10,8 +10,8 @@ import { useNavigate } from 'react-router-dom';
 
 function SiteNavbar() {
   const dispatch = useDispatch();
-  const items = useSelector(state => state.cart.items);
-  const { getUserRole } = useUser();
+  const items = useSelector((state) => state.cart.items);
+  const { role } = useUser();
   const [user, setUser] = useState(null);
   const { logout, isAdmin, isSeller } = useAuth();
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ function SiteNavbar() {
                   </Dropdown.Item>
                   <Dropdown.Item href="/orders">
                     <FiUser className="me-2" />
-                    {getUserRole() === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
+                    {role === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
                   </Dropdown.Item>
                   <Dropdown.Item href="/addresses">
                     <FiMapPin className="me-2" />
@@ -121,5 +121,3 @@ function SiteNavbar() {
 }
 
 export default SiteNavbar;
-
-
