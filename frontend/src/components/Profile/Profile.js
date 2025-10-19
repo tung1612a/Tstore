@@ -1,35 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Container, Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
 import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 function Profile() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    const token = localStorage.getItem('token');
-    
-    if (!userData || !token) {
-      navigate('/login');
-      return;
-    }
-
-    try {
-      setUser(JSON.parse(userData));
-    } catch (err) {
-      console.error('Error parsing user data:', err);
-      navigate('/login');
-    } finally {
-      setLoading(false);
-    }
-  }, [navigate]);
-
   const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+    logout();
     navigate('/');
   };
 
