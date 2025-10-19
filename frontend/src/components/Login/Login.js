@@ -22,14 +22,7 @@ function Login() {
     const result = await login(form.username, form.password);
     
     if (result.success) {
-      // Redirect based on user role
-      if (result.user.role === 'admin') {
-        navigate('/admin');
-      } else if (result.user.role === 'seller') {
-        navigate('/seller');
-      } else {
-        navigate('/');
-      }
+      navigate('/');
     } else {
       setError(result.message);
     }
