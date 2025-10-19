@@ -35,7 +35,25 @@ export const getUserAddresses = async (req, res) => {
         res.status(500).json({ message: 'Lỗi server khi lấy danh sách địa chỉ', error: error.message });
     }
 };
+export const deleteAddress = async (req, res) => {
+    try {
+        const address = await Address.findById(req.params.id);
 
+        if (!address) {
+            return res.status(404).json({ message: "Không tìm thấy địa chỉ" });
+        }
+
+        // Kiểm tra xem địa chỉ này có thuộc về user hiện tại không
+        if (address.user.toString() !== req.user.id) {
+            return res.status(401).json({ message: "Không được phép xóa địa chỉ này" });
+        }
+
+        await Address.findByIdAndDelete(req.params.id);
+        res.json({ message: "Xóa địa chỉ thành công" });
+    } catch (error) {
+        res.status(500).json({ message: "Lỗi server khi xóa địa chỉ", error: error.message });
+    }
+};
 // @desc    Cập nhật một địa chỉ
 // @route   PUT /api/address/:id
 // @access  Private

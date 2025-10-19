@@ -34,7 +34,10 @@ function SiteNavbar() {
                     <FiUser className="me-2" />
                     Thông tin cá nhân
                   </Dropdown.Item>
-                  
+                  <Dropdown.Item href="/addresses">
+                    <FiMapPin className="me-2" />
+                    Địa chỉ của tôi
+                  </Dropdown.Item>
                   {isAdmin() && (
                     <>
                       <Dropdown.Divider />
@@ -44,7 +47,7 @@ function SiteNavbar() {
                       </Dropdown.Item>
                     </>
                   )}
-                  
+
                   {isSeller() && (
                     <>
                       <Dropdown.Divider />
@@ -54,7 +57,7 @@ function SiteNavbar() {
                       </Dropdown.Item>
                     </>
                   )}
-                  
+
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>
                     <FiLogOut className="me-2" />

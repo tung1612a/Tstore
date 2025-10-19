@@ -18,7 +18,7 @@ import AdminHomepage from './components/Admin/AdminHomepage';
 import SellerHomepage from './components/Seller/SellerHomepage';
 import RoleRedirect from './components/RoleRedirect';
 
-
+import AddressPage from './components/Address/AddressPage';
 function App() {
   return (
     <Provider store={store}>
@@ -33,7 +33,7 @@ function App() {
             <Route path="/store/:sellerId" element={<StorePage />}></Route>
             <Route path="/cart" element={<Cart />}></Route>
             <Route path="/redirect" element={<RoleRedirect />}></Route>
-            
+            <Route path="/addresses" element={<AddressPage />} />
             {/* Protected Routes */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}></Route>
             
