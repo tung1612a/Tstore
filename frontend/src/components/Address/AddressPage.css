@@ -1,7 +1,9 @@
 .address-page {
   max-width: 1000px;
+  margin: 0 auto;
 }
 
+/* Tiêu đề trang */
 .address-page h1 {
   color: #333;
   font-weight: 700;
@@ -9,6 +11,30 @@
   margin-bottom: 2rem;
 }
 
+/* Bọc phần tiêu đề và nút Back */
+.address-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+/* Nút quay về trang home */
+.back-home-btn {
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  background-color: #f0f0f0;
+  transition: 0.3s;
+}
+
+.back-home-btn:hover {
+  background-color: #e2e2e2;
+  border-color: #999;
+}
+
+/* Tabs */
 .nav-tabs {
   border-bottom: 2px solid #ddd;
 }
