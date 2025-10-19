@@ -12,6 +12,9 @@ import ForgotPassword from "./components/Login/ForgotPassword";
 import Cart from "./components/Cart/Cart";
 import Profile from './components/Profile/Profile';
 import StorePage from './components/Store/StorePage';
+import Checkout from './components/Checkout/Checkout';
+import OrderHistory from './components/Orders/OrderHistory';
+import OrderDetails from './components/Orders/OrderDetails';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import SellerDashboard from './components/Seller/SellerDashboard';
 import AdminHomepage from './components/Admin/AdminHomepage';
@@ -23,6 +26,22 @@ import AdminUser from "./components/Admin/AdminUser";
 function App() {
   return (
     <Provider store={store}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />}></Route>
+          {/* <Route path="/login" element={<Login />}></Route> */}
+          <Route path="/product/:id" element={<ProductDetail />} />
+          <Route path="/login" element={<Login />}></Route>
+          <Route path="/register" element={<Register />}></Route>
+          <Route path="/forgetPass" element={<ForgotPassword />}></Route>
+          <Route path="/profile" element={<Profile />}></Route>
+          <Route path="/store/:sellerId" element={<StorePage />}></Route>
+          <Route path="/cart" element={<Cart />}></Route>
+          <Route path="/checkout" element={<Checkout />}></Route>
+          <Route path="/orders" element={<OrderHistory />}></Route>
+          <Route path="/orders/:id" element={<OrderDetails />}></Route>
+        </Routes>
+      </BrowserRouter>
       <AuthProvider>
         <BrowserRouter>
           <Routes>

@@ -1,11 +1,32 @@
 import express from "express";
+import { protect } from "../middleware/authMiddleware.js";
+import {
+  getCart,
+  addToCart,
+  removeFromCart,
+  updateQuantity,
+  clearCart
+} from "../controllers/cartController.js";
 
-// Minimal cart router to unblock server startup
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.json({ message: "Cart API" });
-});
+// Tất cả routes đều cần đăng nhập
+router.use(protect);
+
+// Lấy giỏ hàng
+router.get("/", getCart);
+
+// Thêm sản phẩm vào giỏ hàng
+router.post("/add", addToCart);
+
+// Cập nhật số lượng sản phẩm
+router.put("/update", updateQuantity);
+
+// Xóa sản phẩm khỏi giỏ hàng
+router.delete("/remove/:productId", removeFromCart);
+
+// Xóa tất cả sản phẩm
+router.delete("/clear", clearCart);
 
 export default router;
 

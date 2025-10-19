@@ -1,14 +1,31 @@
 import React from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut, FiMapPin, FiBarChart, FiSettings } from 'react-icons/fi';
-import { useCart } from '../hooks/useCart';
-import { useAuth } from '../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings } from 'react-icons/fi';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchCart } from '../store/cartSlice';
+import { useUser } from '../hooks/useUser';
 
 function SiteNavbar() {
-  const { items } = useCart();
-  const { user, logout, isAdmin, isSeller } = useAuth();
-  const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const items = useSelector(state => state.cart.items);
+  const { getUserRole } = useUser();
+  const [user, setUser] = useState(null);
+
+  // Load cart khi component mount
+  useEffect(() => {
+    dispatch(fetchCart());
+  }, [dispatch]);
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      try {
+        setUser(JSON.parse(userData));
+      } catch (err) {
+        console.error('Error parsing user data:', err);
+      }
+    }
+  }, []);
 
   const handleLogout = () => {
     logout();
@@ -33,6 +50,10 @@ function SiteNavbar() {
                   <Dropdown.Item href="/profile">
                     <FiUser className="me-2" />
                     Thông tin cá nhân
+                  </Dropdown.Item>
+                  <Dropdown.Item href="/orders">
+                    <FiUser className="me-2" />
+                    {getUserRole() === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
                   </Dropdown.Item>
                   <Dropdown.Item href="/addresses">
                     <FiMapPin className="me-2" />
@@ -71,11 +92,18 @@ function SiteNavbar() {
                 Đăng nhập
               </Nav.Link>
             )}
+            <Nav.Link href="/orders">
+              <FiPackage className="me-1" />
+              Đơn hàng
+            </Nav.Link>
             <Nav.Link href="/cart" className="position-relative">
               <FiShoppingCart className="me-1" />
               Giỏ hàng
               {!!items.length && (
-                <span className="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle" style={{ fontSize: '0.7rem', minWidth: '18px', height: '18px' }}>
+                <span
+                  className="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle"
+                  style={{ fontSize: '0.7rem', minWidth: '18px', height: '18px' }}
+                >
                   {items.length}
                 </span>
               )}
