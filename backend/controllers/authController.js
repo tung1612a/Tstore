@@ -39,13 +39,21 @@ export const login = async (req, res) => {
     const isMatch = await user.matchPassword(password);
     if (!isMatch) return res.status(401).json({ message: "Invalid password" });
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: "1d" });
+    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || "fallback_secret_key", { expiresIn: "1d" });
 
     // Remove password before returning user object
     const userObj = user.toObject ? user.toObject() : { ...user };
     delete userObj.password;
 
     res.json({ token, user: userObj });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+export const getMe = async (req, res) => {
+  try {
+    res.json(req.user);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
