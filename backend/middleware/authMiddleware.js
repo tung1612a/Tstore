@@ -21,3 +21,13 @@ export const adminOnly = (req, res, next) => {
   if (req.user && req.user.role === "admin") next();
   else res.status(403).json({ message: "Admin access required" });
 };
+
+export const sellerOnly = (req, res, next) => {
+  if (req.user && req.user.role === "seller") next();
+  else res.status(403).json({ message: "Seller access required" });
+};
+
+export const adminOrSeller = (req, res, next) => {
+  if (req.user && (req.user.role === "admin" || req.user.role === "seller")) next();
+  else res.status(403).json({ message: "Admin or Seller access required" });
+};

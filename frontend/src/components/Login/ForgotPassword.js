@@ -9,24 +9,41 @@ function ForgotPassword() {
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
 
-    if (!email.includes('@')) {
+    if (!email.includes('@')) { 
       setError('Vui lòng nhập email hợp lệ!');
       return;
     }
 
     setLoading(true);
 
-    // Giả lập API gửi email đặt lại mật khẩu
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/check-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || "Lỗi không xác định");
+      }
+
       setSuccess(true);
-      setTimeout(() => navigate('/login'), 2000); // chuyển về login sau khi gửi thành công
-    }, 2000);
+
+      // Sau 2s chuyển hướng về login
+      setTimeout(() => navigate('/login'), 2000);
+
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -38,7 +55,7 @@ function ForgotPassword() {
               <h3 className="text-center mb-4 fw-bold">Quên mật khẩu</h3>
 
               {error && <Alert variant="danger">{error}</Alert>}
-              {success && <Alert variant="success">Email khôi phục đã được gửi! Vui lòng kiểm tra hộp thư.</Alert>}
+              {success && <Alert variant="success">Email khôi phục đã được xác nhận! Vui lòng kiểm tra hộp thư.</Alert>}
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formEmail">
@@ -56,7 +73,7 @@ function ForgotPassword() {
                   <Button variant="primary" type="submit" disabled={loading}>
                     {loading ? (
                       <>
-                        <Spinner animation="border" size="sm" className="me-2" /> Đang gửi...
+                        <Spinner animation="border" size="sm" className="me-2" /> Đang kiểm tra...
                       </>
                     ) : (
                       'Gửi yêu cầu'
