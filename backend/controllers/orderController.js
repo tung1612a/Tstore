@@ -29,7 +29,7 @@ export const createOrder = async (req, res) => {
       orderItems.push({
         productId: item.productId,
         quantity: item.quantity,
-        unitPrice: product.price
+        unitPrice: product.price,
       });
     }
 
@@ -37,7 +37,7 @@ export const createOrder = async (req, res) => {
       buyerId,
       addressId,
       totalPrice,
-      couponId
+      couponId,
     });
 
     const savedOrder = await order.save();
@@ -45,7 +45,7 @@ export const createOrder = async (req, res) => {
     for (const item of orderItems) {
       const orderItem = new OrderItem({
         orderId: savedOrder._id,
-        ...item
+        ...item,
       });
       await orderItem.save();
     }
@@ -82,7 +82,7 @@ export const getBuyerOrders = async (req, res) => {
       orders,
       totalPages: Math.ceil(total / limit),
       currentPage: page,
-      total
+      total,
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi lấy đơn hàng', error: error.message });
@@ -101,19 +101,19 @@ export const getSellerOrders = async (req, res) => {
           from: 'products',
           localField: 'productId',
           foreignField: '_id',
-          as: 'product'
-        }
+          as: 'product',
+        },
       },
       { $unwind: '$product' },
       {
         $match: {
-          'product.sellerId': OrderItem.db.base.Types.ObjectId(sellerId)
-        }
+          'product.sellerId': new OrderItem.db.base.Types.ObjectId(sellerId),
+        },
       },
-      { $group: { _id: '$orderId' } }
+      { $group: { _id: '$orderId' } },
     ]);
 
-    const orderIds = orderIdDocs.map(doc => doc._id);
+    const orderIds = orderIdDocs.map((doc) => doc._id);
     if (orderIds.length === 0) {
       return res.json({ orders: [], totalPages: 0, currentPage: page, total: 0 });
     }
@@ -136,16 +136,18 @@ export const getSellerOrders = async (req, res) => {
       .skip((Number(page) - 1) * Number(limit));
 
     if (paymentStatus) {
-      const payments = await Payment.find({ status: paymentStatus, orderId: { $in: orders.map(o => o._id) } }).select('orderId');
-      const allowedOrderIds = new Set(payments.map(p => String(p.orderId)));
-      orders = orders.filter(o => allowedOrderIds.has(String(o._id)));
+      const payments = await Payment.find({ status: paymentStatus, orderId: { $in: orders.map((o) => o._id) } }).select(
+        'orderId'
+      );
+      const allowedOrderIds = new Set(payments.map((p) => String(p.orderId)));
+      orders = orders.filter((o) => allowedOrderIds.has(String(o._id)));
     }
 
     res.json({
       orders,
       totalPages: Math.ceil(total / Number(limit)),
       currentPage: Number(page),
-      total
+      total,
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi lấy đơn hàng', error: error.message });
@@ -156,6 +158,7 @@ export const getOrderDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user.id;
+    const { role } = req.user;
 
     const order = await Order.findById(id)
       .populate('buyerId', 'name email phone')
@@ -165,16 +168,60 @@ export const getOrderDetails = async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
     }
 
-    if (order.buyerId._id.toString() !== userId) {
+    let orderItems;
+
+    if (role === 'seller') {
+      // Nếu là seller, chỉ lấy các items có product thuộc về seller
+      orderItems = await OrderItem.aggregate([
+        {
+          $match: { orderId: new OrderItem.db.base.Types.ObjectId(id) },
+        },
+        {
+          $lookup: {
+            from: 'products',
+            localField: 'productId',
+            foreignField: '_id',
+            as: 'product',
+          },
+        },
+        { $unwind: '$product' },
+        {
+          $match: {
+            'product.sellerId': new OrderItem.db.base.Types.ObjectId(userId),
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            quantity: 1,
+            unitPrice: 1,
+            'productId._id': '$product._id',
+            'productId.title': '$product.title',
+            'productId.price': '$product.price',
+            'productId.image': '$product.image',
+            'productId.imageURL': '$product.imageURL',
+            'productId.description': '$product.description',
+          },
+        },
+      ]);
+
+      // Nếu không có items nào thuộc về seller này
+      if (orderItems.length === 0) {
+        return res.status(401).json({ message: 'Không có sản phẩm nào của bạn trong đơn hàng này' });
+      }
+    } else if (order.buyerId._id.toString() === userId) {
+      // Nếu là buyer và là chủ đơn hàng, lấy tất cả items
+      orderItems = await OrderItem.find({ orderId: id }).populate(
+        'productId',
+        'title price image imageURL description'
+      );
+    } else {
       return res.status(401).json({ message: 'Không được phép truy cập đơn hàng này' });
     }
 
-    const orderItems = await OrderItem.find({ orderId: id })
-      .populate('productId', 'title price image imageURL description');
-
     res.json({
       order,
-      items: orderItems
+      items: orderItems,
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi lấy chi tiết đơn hàng', error: error.message });

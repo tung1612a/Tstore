@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart, clearCart } from '../../store/cartSlice';
@@ -8,14 +8,13 @@ import './Checkout.css';
 const Checkout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const items = useSelector(state => state.cart.items);
-  const totalAmount = items.reduce((t,i)=>t+i.quantity*i.price,0);
+  const items = useSelector((state) => state.cart.items);
+  const totalAmount = items.reduce((t, i) => t + i.quantity * i.price, 0);
 
-  // Load cart khi component mount
   useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
-  
+
   const [addresses, setAddresses] = useState([]);
   const [selectedAddress, setSelectedAddress] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -29,7 +28,7 @@ const Checkout = () => {
     city: '',
     state: '',
     country: 'Vietnam',
-    isDefault: false
+    isDefault: false,
   });
   const [currentStep, setCurrentStep] = useState(1);
 
@@ -43,15 +42,15 @@ const Checkout = () => {
       const token = localStorage.getItem('token');
       const response = await fetch('http://localhost:5000/api/address', {
         headers: {
-          'Authorization': `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setAddresses(data);
         // Tự động chọn địa chỉ mặc định
-        const defaultAddress = data.find(addr => addr.isDefault);
+        const defaultAddress = data.find((addr) => addr.isDefault);
         if (defaultAddress) {
           setSelectedAddress(defaultAddress._id);
         }
@@ -69,9 +68,9 @@ const Checkout = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(newAddress)
+        body: JSON.stringify(newAddress),
       });
 
       if (response.ok) {
@@ -86,7 +85,7 @@ const Checkout = () => {
           city: '',
           state: '',
           country: 'Vietnam',
-          isDefault: false
+          isDefault: false,
         });
       }
     } catch (error) {
@@ -103,58 +102,58 @@ const Checkout = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      
+
       // Tạo đơn hàng
       const orderData = {
-        items: items.map(item => ({
+        items: items.map((item) => ({
           productId: item._id,
-          quantity: item.quantity
+          quantity: item.quantity,
         })),
         addressId: selectedAddress,
         storeId: items[0]?.storeId || 'default',
-        notes
+        notes,
       };
 
       const orderResponse = await fetch('http://localhost:5000/api/orders', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify(orderData)
+        body: JSON.stringify(orderData),
       });
 
       if (orderResponse.ok) {
         const order = await orderResponse.json();
-        
+
         const paymentData = {
           orderId: order._id,
-          method: paymentMethod
+          method: paymentMethod,
         };
 
         const paymentResponse = await fetch('http://localhost:5000/api/payments', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify(paymentData)
+          body: JSON.stringify(paymentData),
         });
 
         if (paymentResponse.ok) {
           const payment = await paymentResponse.json();
-          
+
           // Xử lý thanh toán
           const processResponse = await fetch(`http://localhost:5000/api/payments/${payment._id}/process`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
+              Authorization: `Bearer ${token}`,
             },
-          body: JSON.stringify({
-            status: 'paid',
-            transactionId: `TXN_${Date.now()}`
-          })
+            body: JSON.stringify({
+              status: 'paid',
+              transactionId: `TXN_${Date.now()}`,
+            }),
           });
 
           if (processResponse.ok) {
@@ -163,7 +162,8 @@ const Checkout = () => {
             } catch (error) {
               console.error('Error clearing cart:', error);
             }
-            navigate('/orders', { state: { orderId: order._id } });
+            // navigate('/orders', { state: { orderId: order._id } });
+            navigate('/');
           }
         }
       }
@@ -193,7 +193,7 @@ const Checkout = () => {
   const steps = [
     { id: 1, title: 'Địa chỉ giao hàng', icon: <FiMapPin /> },
     { id: 2, title: 'Phương thức thanh toán', icon: <FiCreditCard /> },
-    { id: 3, title: 'Xác nhận đơn hàng', icon: <FiCheck /> }
+    { id: 3, title: 'Xác nhận đơn hàng', icon: <FiCheck /> },
   ];
 
   return (
@@ -203,9 +203,9 @@ const Checkout = () => {
         <div className="checkout-header">
           <h1>Thanh toán</h1>
           <div className="checkout-steps">
-            {steps.map(step => (
-              <div 
-                key={step.id} 
+            {steps.map((step) => (
+              <div
+                key={step.id}
                 className={`step ${currentStep >= step.id ? 'active' : ''} ${currentStep === step.id ? 'current' : ''}`}
               >
                 <div className="step-icon">{step.icon}</div>
@@ -225,10 +225,7 @@ const Checkout = () => {
                     <FiMapPin className="section-icon" />
                     Địa chỉ giao hàng
                   </h2>
-                  <button 
-                    className="btn-add-address"
-                    onClick={() => setShowAddressForm(!showAddressForm)}
-                  >
+                  <button className="btn-add-address" onClick={() => setShowAddressForm(!showAddressForm)}>
                     <FiPlus size={16} />
                     Thêm địa chỉ mới
                   </button>
@@ -236,9 +233,9 @@ const Checkout = () => {
 
                 {addresses.length > 0 ? (
                   <div className="address-grid">
-                    {addresses.map(address => (
-                      <div 
-                        key={address._id} 
+                    {addresses.map((address) => (
+                      <div
+                        key={address._id}
                         className={`address-card ${selectedAddress === address._id ? 'selected' : ''}`}
                         onClick={() => setSelectedAddress(address._id)}
                       >
@@ -247,9 +244,13 @@ const Checkout = () => {
                           {address.isDefault && <span className="default-badge">Mặc định</span>}
                         </div>
                         <div className="address-details">
-                          <p><strong>SĐT:</strong> {address.phone}</p>
+                          <p>
+                            <strong>SĐT:</strong> {address.phone}
+                          </p>
                           <p>{address.street}</p>
-                          <p>{address.city}, {address.state}, {address.country}</p>
+                          <p>
+                            {address.city}, {address.state}, {address.country}
+                          </p>
                         </div>
                         <div className="address-actions">
                           <button className="btn-edit">
@@ -277,14 +278,14 @@ const Checkout = () => {
                           type="text"
                           placeholder="Họ và tên *"
                           value={newAddress.fullName}
-                          onChange={(e) => setNewAddress({...newAddress, fullName: e.target.value})}
+                          onChange={(e) => setNewAddress({ ...newAddress, fullName: e.target.value })}
                           required
                         />
                         <input
                           type="tel"
                           placeholder="Số điện thoại *"
                           value={newAddress.phone}
-                          onChange={(e) => setNewAddress({...newAddress, phone: e.target.value})}
+                          onChange={(e) => setNewAddress({ ...newAddress, phone: e.target.value })}
                           required
                         />
                       </div>
@@ -292,7 +293,7 @@ const Checkout = () => {
                         type="text"
                         placeholder="Địa chỉ cụ thể *"
                         value={newAddress.street}
-                        onChange={(e) => setNewAddress({...newAddress, street: e.target.value})}
+                        onChange={(e) => setNewAddress({ ...newAddress, street: e.target.value })}
                         required
                       />
                       <div className="form-row">
@@ -300,14 +301,14 @@ const Checkout = () => {
                           type="text"
                           placeholder="Thành phố *"
                           value={newAddress.city}
-                          onChange={(e) => setNewAddress({...newAddress, city: e.target.value})}
+                          onChange={(e) => setNewAddress({ ...newAddress, city: e.target.value })}
                           required
                         />
                         <input
                           type="text"
                           placeholder="Tỉnh/Thành phố *"
                           value={newAddress.state}
-                          onChange={(e) => setNewAddress({...newAddress, state: e.target.value})}
+                          onChange={(e) => setNewAddress({ ...newAddress, state: e.target.value })}
                           required
                         />
                       </div>
@@ -315,7 +316,7 @@ const Checkout = () => {
                         <input
                           type="checkbox"
                           checked={newAddress.isDefault}
-                          onChange={(e) => setNewAddress({...newAddress, isDefault: e.target.checked})}
+                          onChange={(e) => setNewAddress({ ...newAddress, isDefault: e.target.checked })}
                         />
                         <span>Đặt làm địa chỉ mặc định</span>
                       </label>
@@ -323,18 +324,16 @@ const Checkout = () => {
                         <button type="button" className="btn-cancel" onClick={() => setShowAddressForm(false)}>
                           Hủy
                         </button>
-                        <button type="submit" className="btn-primary">Thêm địa chỉ</button>
+                        <button type="submit" className="btn-primary">
+                          Thêm địa chỉ
+                        </button>
                       </div>
                     </form>
                   </div>
                 )}
 
                 <div className="step-actions">
-                  <button 
-                    className="btn-primary"
-                    onClick={() => setCurrentStep(2)}
-                    disabled={!selectedAddress}
-                  >
+                  <button className="btn-primary" onClick={() => setCurrentStep(2)} disabled={!selectedAddress}>
                     Tiếp tục
                   </button>
                 </div>
@@ -437,16 +436,10 @@ const Checkout = () => {
                 </div>
 
                 <div className="step-actions">
-                  <button 
-                    className="btn-secondary"
-                    onClick={() => setCurrentStep(1)}
-                  >
+                  <button className="btn-secondary" onClick={() => setCurrentStep(1)}>
                     Quay lại
                   </button>
-                  <button 
-                    className="btn-primary"
-                    onClick={() => setCurrentStep(3)}
-                  >
+                  <button className="btn-primary" onClick={() => setCurrentStep(3)}>
                     Tiếp tục
                   </button>
                 </div>
@@ -466,7 +459,7 @@ const Checkout = () => {
                 <div className="order-summary">
                   <h3>Thông tin đơn hàng</h3>
                   <div className="summary-items">
-                    {items.map(item => (
+                    {items.map((item) => (
                       <div key={item._id} className="summary-item">
                         <img src={item.image || item.imageURL || '/placeholder.jpg'} alt={item.title} />
                         <div className="item-details">
@@ -474,9 +467,7 @@ const Checkout = () => {
                           <p>Số lượng: {item.quantity}</p>
                           <p className="item-price">{item.price.toLocaleString()}đ</p>
                         </div>
-                        <div className="item-total">
-                          {(item.price * item.quantity).toLocaleString()}đ
-                        </div>
+                        <div className="item-total">{(item.price * item.quantity).toLocaleString()}đ</div>
                       </div>
                     ))}
                   </div>
@@ -498,17 +489,10 @@ const Checkout = () => {
                 </div>
 
                 <div className="step-actions">
-                  <button 
-                    className="btn-secondary"
-                    onClick={() => setCurrentStep(2)}
-                  >
+                  <button className="btn-secondary" onClick={() => setCurrentStep(2)}>
                     Quay lại
                   </button>
-                  <button 
-                    className="btn-primary btn-checkout"
-                    onClick={handleCheckout}
-                    disabled={loading}
-                  >
+                  <button className="btn-primary btn-checkout" onClick={handleCheckout} disabled={loading}>
                     {loading ? 'Đang xử lý...' : 'Đặt hàng ngay'}
                   </button>
                 </div>
@@ -521,12 +505,14 @@ const Checkout = () => {
             <div className="sidebar-card">
               <h3>Tóm tắt đơn hàng</h3>
               <div className="sidebar-items">
-                {items.map(item => (
+                {items.map((item) => (
                   <div key={item._id} className="sidebar-item">
                     <img src={item.image || item.imageURL || '/placeholder.jpg'} alt={item.title} />
                     <div className="item-info">
                       <h5>{item.title}</h5>
-                      <p>{item.quantity} x {item.price.toLocaleString()}đ</p>
+                      <p>
+                        {item.quantity} x {item.price.toLocaleString()}đ
+                      </p>
                     </div>
                   </div>
                 ))}

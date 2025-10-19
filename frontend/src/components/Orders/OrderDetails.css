@@ -1,6 +1,5 @@
 /* Order Details Styles */
 .order-details {
-  min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 20px 0;
 }
@@ -20,7 +19,7 @@
   border-radius: 20px;
   padding: 25px;
   margin-bottom: 30px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .back-btn {
@@ -81,7 +80,7 @@
   background: white;
   border-radius: 20px;
   padding: 30px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .info-section h2 {
@@ -193,7 +192,9 @@
   font-weight: 600;
 }
 
-.btn-edit, .btn-save, .btn-cancel {
+.btn-edit,
+.btn-save,
+.btn-cancel {
   width: 32px;
   height: 32px;
   border: none;
@@ -220,7 +221,9 @@
   color: white;
 }
 
-.btn-edit:hover, .btn-save:hover, .btn-cancel:hover {
+.btn-edit:hover,
+.btn-save:hover,
+.btn-cancel:hover {
   transform: scale(1.1);
 }
 
@@ -317,7 +320,7 @@
 
 .item-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
 
 .item-image {
@@ -373,7 +376,7 @@
   background: white;
   border-radius: 20px;
   padding: 30px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .action-cards {
@@ -392,7 +395,7 @@
 
 .action-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
 }
 
 .action-card h3 {
@@ -416,7 +419,11 @@
 }
 
 /* Buttons */
-.btn-confirm, .btn-ship, .btn-deliver, .btn-cancel, .btn-primary {
+.btn-confirm,
+.btn-ship,
+.btn-deliver,
+.btn-cancel,
+.btn-primary {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -482,7 +489,8 @@
 }
 
 /* Loading and Error States */
-.loading-container, .error-container {
+.loading-container,
+.error-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -490,7 +498,7 @@
   padding: 100px 20px;
   background: white;
   border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   text-align: center;
 }
 
@@ -505,11 +513,16 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
-.loading-container p, .error-container h2 {
+.loading-container p,
+.error-container h2 {
   color: #666;
   font-size: 1.1rem;
   margin: 0;
@@ -525,54 +538,58 @@
   .order-details-container {
     padding: 0 15px;
   }
-  
+
   .order-header {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
   }
-  
+
   .header-content {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
   }
-  
+
   .header-content h1 {
     font-size: 1.5rem;
   }
-  
+
   .info-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .item-card {
     flex-direction: column;
   }
-  
+
   .item-image {
     width: 100%;
     height: 200px;
   }
-  
+
   .action-cards {
     grid-template-columns: 1fr;
   }
-  
+
   .action-buttons {
     flex-direction: column;
   }
-  
-  .btn-confirm, .btn-ship, .btn-deliver, .btn-cancel, .btn-primary {
+
+  .btn-confirm,
+  .btn-ship,
+  .btn-deliver,
+  .btn-cancel,
+  .btn-primary {
     width: 100%;
     justify-content: center;
   }
-  
+
   .tracking-edit {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .tracking-input {
     min-width: auto;
   }
@@ -582,15 +599,15 @@
   .order-header {
     padding: 20px;
   }
-  
+
   .info-section {
     padding: 20px;
   }
-  
+
   .item-card {
     padding: 15px;
   }
-  
+
   .action-card {
     padding: 20px;
   }
