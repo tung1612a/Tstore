@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut, FiMapPin } from 'react-icons/fi';
+import { FiUser, FiShoppingCart, FiLogOut, FiMapPin, FiBarChart, FiSettings } from 'react-icons/fi';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';

@@ -35,35 +35,18 @@ function App() {
             <Route path="/redirect" element={<RoleRedirect />}></Route>
             
             {/* Protected Routes */}
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }></Route>
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}></Route>
             
             {/* Admin Routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminHomepage />
-              </ProtectedRoute>
-            }></Route>
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }></Route>
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminHomepage /></ProtectedRoute>}></Route>
+
+            <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>}></Route>
             
             {/* Seller Routes */}
-            <Route path="/seller" element={
-              <ProtectedRoute requiredRole="seller">
-                <SellerHomepage />
-              </ProtectedRoute>
-            }></Route>
-            <Route path="/seller/dashboard" element={
-              <ProtectedRoute requiredRole="seller">
-                <SellerDashboard />
-              </ProtectedRoute>
-            }></Route>
+            <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}></Route>
+
+            <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}></Route>
+            
           </Routes>
         </BrowserRouter>
       </AuthProvider>
