@@ -97,10 +97,10 @@ function SiteNavbar() {
                 Đăng nhập
               </Nav.Link>
             )}
-            <Nav.Link href="/orders">
+            {/* <Nav.Link href="/orders">
               <FiPackage className="me-1" />
               Đơn hàng
-            </Nav.Link>
+            </Nav.Link> */}
             <Nav.Link href="/cart" className="position-relative">
               <FiShoppingCart className="me-1" />
               Giỏ hàng
