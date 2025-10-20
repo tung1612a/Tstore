@@ -17,5 +17,4 @@ const productSchema = new mongoose.Schema({
   auctionEndTime: { type: Date, default: null },
 }, { timestamps: true });
 
-// Bây giờ chỉ cần 2 tham số vì collection đã đổi tên thành "products"
 export default mongoose.model("Product", productSchema);

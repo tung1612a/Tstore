@@ -142,9 +142,9 @@ function Profile() {
                   </div>
 
                   <div className="d-flex gap-2">
-                    <Button variant="primary">
+                    <Button variant="primary" onClick={() => navigate('/change-password')}>
                       <FiEdit className="me-1" />
-                      Chỉnh sửa thông tin
+                      Đổi mật khẩu
                     </Button>
                     <Button variant="outline-danger" onClick={handleLogout}>
                       <FiLogOut className="me-1" />

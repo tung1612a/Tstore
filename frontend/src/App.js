@@ -11,6 +11,7 @@ import ProductDetail from "./components/Product/ProductDetail"
 import ForgotPassword from "./components/Login/ForgotPassword";
 import Cart from "./components/Cart/Cart";
 import Profile from './components/Profile/Profile';
+import ChangePassword from './components/Profile/ChangePassword';
 import StorePage from './components/Store/StorePage';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import SellerDashboard from './components/Seller/SellerDashboard';
@@ -18,7 +19,7 @@ import AdminHomepage from './components/Admin/AdminHomepage';
 import SellerHomepage from './components/Seller/SellerHomepage';
 import RoleRedirect from './components/RoleRedirect';
 
-
+import AddressPage from './components/Address/AddressPage';
 function App() {
   return (
     <Provider store={store}>
@@ -33,37 +34,21 @@ function App() {
             <Route path="/store/:sellerId" element={<StorePage />}></Route>
             <Route path="/cart" element={<Cart />}></Route>
             <Route path="/redirect" element={<RoleRedirect />}></Route>
-            
+            <Route path="/addresses" element={<AddressPage />} />
             {/* Protected Routes */}
-            <Route path="/profile" element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            }></Route>
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}></Route>
+            <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>}></Route>
             
             {/* Admin Routes */}
-            <Route path="/admin" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminHomepage />
-              </ProtectedRoute>
-            }></Route>
-            <Route path="/admin/dashboard" element={
-              <ProtectedRoute requiredRole="admin">
-                <AdminDashboard />
-              </ProtectedRoute>
-            }></Route>
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminHomepage /></ProtectedRoute>}></Route>
+
+            <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>}></Route>
             
             {/* Seller Routes */}
-            <Route path="/seller" element={
-              <ProtectedRoute requiredRole="seller">
-                <SellerHomepage />
-              </ProtectedRoute>
-            }></Route>
-            <Route path="/seller/dashboard" element={
-              <ProtectedRoute requiredRole="seller">
-                <SellerDashboard />
-              </ProtectedRoute>
-            }></Route>
+            <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}></Route>
+
+            <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}></Route>
+            
           </Routes>
         </BrowserRouter>
       </AuthProvider>

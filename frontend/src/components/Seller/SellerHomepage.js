@@ -54,6 +54,9 @@ const SellerHomepage = () => {
             <Col>
               <h1 className="display-4 fw-bold">Seller Dashboard</h1>
               <p className="lead">Quản lý cửa hàng và bán hàng hiệu quả</p>
+              <Button variant="light" onClick={() => navigate('/')}>
+                Quay lại cửa hàng
+              </Button>
             </Col>
           </Row>
         </Container>

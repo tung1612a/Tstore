@@ -10,7 +10,7 @@ export const getSellerDashboard = async (req, res) => {
     const totalProducts = await Product.countDocuments({ sellerId });
     const totalOrders = await Order.countDocuments({ sellerId });
     
-    // Tính tổng doanh thu
+    // Tính tổng doanh thu  
     const orders = await Order.find({ sellerId, status: "completed" });
     const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
     

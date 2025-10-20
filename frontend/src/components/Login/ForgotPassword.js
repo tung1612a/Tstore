@@ -14,7 +14,7 @@ function ForgotPassword() {
     setError('');
     setSuccess(false);
 
-    if (!email.includes('@')) { 
+    if (!email.includes('@')) {
       setError('Vui lòng nhập email hợp lệ!');
       return;
     }
@@ -22,22 +22,20 @@ function ForgotPassword() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/check-email", {
+      const res = await fetch("/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ email }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Lỗi không xác định");
+        throw new Error(data.message || "Có lỗi xảy ra");
       }
 
       setSuccess(true);
-
-      // Sau 2s chuyển hướng về login
-      setTimeout(() => navigate('/login'), 2000);
+      setTimeout(() => navigate('/login'), 3000);
 
     } catch (err) {
       setError(err.message);
@@ -55,7 +53,7 @@ function ForgotPassword() {
               <h3 className="text-center mb-4 fw-bold">Quên mật khẩu</h3>
 
               {error && <Alert variant="danger">{error}</Alert>}
-              {success && <Alert variant="success">Email khôi phục đã được xác nhận! Vui lòng kiểm tra hộp thư.</Alert>}
+              {success && <Alert variant="success">Mật khẩu mới đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư.</Alert>}
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formEmail">
@@ -73,7 +71,7 @@ function ForgotPassword() {
                   <Button variant="primary" type="submit" disabled={loading}>
                     {loading ? (
                       <>
-                        <Spinner animation="border" size="sm" className="me-2" /> Đang kiểm tra...
+                        <Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...
                       </>
                     ) : (
                       'Gửi yêu cầu'
