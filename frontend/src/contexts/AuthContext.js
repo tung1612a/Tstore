@@ -13,6 +13,7 @@ const authReducer = (state, action) => {
   switch (action.type) {
     case 'LOGIN_SUCCESS':
       localStorage.setItem('token', action.payload.token);
+      localStorage.setItem('user', JSON.stringify(action.payload.user));
       return {
         ...state,
         user: action.payload.user,
@@ -22,6 +23,7 @@ const authReducer = (state, action) => {
       };
     case 'LOGOUT':
       localStorage.removeItem('token');
+      localStorage.removeItem('user');
       return {
         ...state,
         user: null,
@@ -35,6 +37,7 @@ const authReducer = (state, action) => {
         loading: action.payload
       };
     case 'SET_USER':
+      localStorage.setItem('user', JSON.stringify(action.payload));
       return {
         ...state,
         user: action.payload,
@@ -53,8 +56,11 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
-      if (token) {
+      const userData = localStorage.getItem('user');
+      
+      if (token && userData) {
         try {
+          // Kiểm tra token với server
           const response = await fetch('http://localhost:5000/api/auth/me', {
             headers: {
               'Authorization': `Bearer ${token}`
@@ -62,14 +68,16 @@ export const AuthProvider = ({ children }) => {
           });
           
           if (response.ok) {
-            const userData = await response.json();
-            dispatch({ type: 'SET_USER', payload: userData });
+            const serverUserData = await response.json();
+            dispatch({ type: 'SET_USER', payload: serverUserData });
           } else {
             localStorage.removeItem('token');
+            localStorage.removeItem('user');
             dispatch({ type: 'LOGOUT' });
           }
         } catch (error) {
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
           dispatch({ type: 'LOGOUT' });
         }
       } else {

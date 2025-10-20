@@ -1,26 +1,35 @@
 import React from 'react';
 import { Card, Button, Form, Row, Col } from 'react-bootstrap';
 import { FiTrash2, FiMinus, FiPlus } from 'react-icons/fi';
-import { useCart } from '../../hooks/useCart';
+import { useDispatch } from 'react-redux';
+import { updateQuantity, removeFromCart } from '../../store/cartSlice';
 import { formatPrice } from '../../utils/formatters';
 
 function CartItem({ item }) {
-  const { removeItem, updateItemQuantity } = useCart();
+  const dispatch = useDispatch();
   
   // Helper functions
-  const handleQuantityChange = (newQuantity) => {
+  const handleQuantityChange = async (newQuantity) => {
     if (newQuantity >= 1) {
-      updateItemQuantity(item._id, newQuantity);
+      try {
+        await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
+      } catch (error) {
+        alert('Có lỗi xảy ra khi cập nhật số lượng');
+      }
     }
   };
   
-  const handleRemove = () => {
-    removeItem(item._id);
+  const handleRemove = async () => {
+    try {
+      await dispatch(removeFromCart(item._id)).unwrap();
+    } catch (error) {
+      alert('Có lỗi xảy ra khi xóa sản phẩm');
+    }
   };
 
-  const handleQuantityInputChange = (e) => {
+  const handleQuantityInputChange = async (e) => {
     const value = parseInt(e.target.value) || 1;
-    handleQuantityChange(value);
+    await handleQuantityChange(value);
   };
   
   // Calculate total price for this item

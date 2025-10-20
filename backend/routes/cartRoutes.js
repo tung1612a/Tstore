@@ -1,13 +1,14 @@
-import express from "express";
+import express from 'express';
+import { protect } from '../middleware/authMiddleware.js';
+import { getCart, addToCart, removeFromCart, updateQuantity, clearCart } from '../controllers/cartController.js';
 
-// Minimal cart router to unblock server startup
 const router = express.Router();
 
-router.get("/", (req, res) => {
-  res.json({ message: "Cart API" });
-});
+router.use(protect);
+router.get('/', getCart);
+router.post('/add', addToCart);
+router.put('/update', updateQuantity);
+router.delete('/remove/:productId', removeFromCart);
+router.delete('/clear', clearCart);
 
 export default router;
-
-
-

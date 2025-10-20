@@ -1,59 +1,76 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Provider } from 'react-redux';
-import { store } from './store/store';
-import { AuthProvider } from './contexts/AuthContext';
-import ProtectedRoute from './components/ProtectedRoute';
+import { Provider } from "react-redux";
+import { store } from "./store/store";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
 import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
-import Home from './components/Home/Home';
-import Login from './components/Login/Login';
-import Register from './components/Register/Register';
-import ProductDetail from "./components/Product/ProductDetail"
+
+// Components
+import Home from "./components/Home/Home";
+import Login from "./components/Login/Login";
+import Register from "./components/Register/Register";
+import ProductDetail from "./components/Product/ProductDetail";
 import ForgotPassword from "./components/Login/ForgotPassword";
 import Cart from "./components/Cart/Cart";
-import Profile from './components/Profile/Profile';
-import ChangePassword from './components/Profile/ChangePassword';
-import StorePage from './components/Store/StorePage';
-import AdminDashboard from './components/Admin/AdminDashboard';
-import SellerDashboard from './components/Seller/SellerDashboard';
-import AdminHomepage from './components/Admin/AdminHomepage';
-import SellerHomepage from './components/Seller/SellerHomepage';
-import RoleRedirect from './components/RoleRedirect';
+import Profile from "./components/Profile/Profile";
+import ChangePassword from "./components/Profile/ChangePassword";
+import StorePage from "./components/Store/StorePage";
+import Checkout from "./components/Checkout/Checkout";
+import OrderHistory from "./components/Orders/OrderHistory";
+import OrderDetails from "./components/Orders/OrderDetails";
+import AdminDashboard from "./components/Admin/AdminDashboard";
+import SellerDashboard from "./components/Seller/SellerDashboard";
+import AdminHomepage from "./components/Admin/AdminHomepage";
+import SellerHomepage from "./components/Seller/SellerHomepage";
+import RoleRedirect from "./components/RoleRedirect";
+import AddressPage from "./components/Address/AddressPage";
+import AdminUser from "./components/Admin/AdminUser";
 
-import AddressPage from './components/Address/AddressPage';
 function App() {
   return (
     <Provider store={store}>
       <AuthProvider>
         <BrowserRouter>
+
           <Routes>
-            <Route path="/" element={<Home />}></Route>
+            {/* Public routes */}
+            <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetail />} />
-            <Route path="/login" element={<Login />}></Route>
-            <Route path="/register" element={<Register />}></Route>
-            <Route path="/forgetPass" element={<ForgotPassword />}></Route>
-            <Route path="/store/:sellerId" element={<StorePage />}></Route>
-            <Route path="/cart" element={<Cart />}></Route>
-            <Route path="/redirect" element={<RoleRedirect />}></Route>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgetPass" element={<ForgotPassword />} />
+            <Route path="/store/:sellerId" element={<StorePage />} />
+
+
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
+            <Route path="/redirect" element={<RoleRedirect />} />
             <Route path="/addresses" element={<AddressPage />} />
-            {/* Protected Routes */}
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}></Route>
-            <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>}></Route>
             
-            {/* Admin Routes */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminHomepage /></ProtectedRoute>}></Route>
+            <Route path="/orders" element={<OrderHistory />} />
+            <Route path="/orders/:id" element={<OrderDetails />} />
 
-            <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>}></Route>
-            
-            {/* Seller Routes */}
-            <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}></Route>
+            {/* Protected routes */}
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}/>
+            <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
-            <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}></Route>
-            
+            {/* Admin routes */}
+            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminHomepage /></ProtectedRoute>}/>
+
+            <Route path="/admin/users" element={<AdminUser />} />
+
+            {/* <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>}/> */}
+
+            {/* Seller routes */}
+            <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>
+
+            <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}/>
+
           </Routes>
         </BrowserRouter>
       </AuthProvider>
     </Provider>
-  )
+  );
 }
 
-export default App
+export default App;

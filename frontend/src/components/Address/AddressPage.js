@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Container, Tabs, Tab, Alert } from "react-bootstrap"
+import { Container, Tabs, Tab, Alert, Button } from "react-bootstrap"
 import { useNavigate } from "react-router-dom"
 import AddressForm from "./AddressForm"
 import AddressList from "./AddressList"
@@ -45,6 +45,10 @@ const AddressPage = () => {
         setRefreshTrigger((prev) => prev + 1)
         setActiveTab("list")
     }
+    const handleBackHome = () => {
+        navigate("/")  // hoặc "/home" tùy route bạn cấu hình
+    }
+
 
     if (loading) {
         return (
@@ -65,7 +69,9 @@ const AddressPage = () => {
     return (
         <Container className="address-page mt-5 mb-5">
             <h1 className="mb-4">Quản lý địa chỉ</h1>
-
+            <button className="back-home-btn" onClick={handleBackHome}>
+                ← Quay về trang Home
+            </button>
             <Tabs id="address-tabs" activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3">
                 <Tab eventKey="list" title="Danh sách địa chỉ">
                     <AddressList refreshTrigger={refreshTrigger} onEdit={handleEdit} />
