@@ -42,7 +42,7 @@ function SiteNavbar() {
                     <FiUser className="me-2" />
                     Thông tin cá nhân
                   </Dropdown.Item>
-                  <Dropdown.Item href="/orders">
+                  <Dropdown.Item href={user?.role === 'seller' ? '/seller/orders' : '/orders'}>
                     <FiUser className="me-2" />
                     {user?.role === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
                   </Dropdown.Item>
