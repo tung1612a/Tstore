@@ -143,7 +143,7 @@ const SellerHomepage = () => {
               </Card.Header>
               <Card.Body>
                 <p className="text-muted">Theo dõi và xử lý đơn hàng từ khách hàng</p>
-                <Button variant="success" onClick={() => navigate('/seller/orders')}>
+                <Button variant="success" onClick={() => navigate('/orders')}>
                   <FiShoppingCart className="me-2" />
                   Xem đơn hàng
                 </Button>
