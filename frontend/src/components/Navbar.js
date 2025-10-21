@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 function SiteNavbar() {
   const dispatch = useDispatch();
   const items = useSelector((state) => state.cart.items);
-  const { user, logout, isAdmin, isSeller } = useAuth();
+  const { user, logout, isAdmin, isDevAdmin, isSeller, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   // Load cart khi component mount
@@ -55,7 +55,41 @@ function SiteNavbar() {
                       <Dropdown.Divider />
                       <Dropdown.Item href="/admin">
                         <FiBarChart className="me-2" />
-                        Admin Homepage
+                        Admin Dashboard
+                      </Dropdown.Item>
+                      <Dropdown.Item href="/admin/products">
+                        <FiPackage className="me-2" />
+                        Quản lý sản phẩm
+                      </Dropdown.Item>
+                      <Dropdown.Item href="/admin/orders">
+                        <FiPackage className="me-2" />
+                        Quản lý đơn hàng
+                      </Dropdown.Item>
+                      <Dropdown.Item href="/admin/users">
+                        <FiUser className="me-2" />
+                        Quản lý người dùng
+                      </Dropdown.Item>
+                    </>
+                  )}
+
+                  {isDevAdmin() && (
+                    <>
+                      <Dropdown.Divider />
+                      <Dropdown.Item href="/dev-admin">
+                        <FiBarChart className="me-2" />
+                        Dev Admin
+                      </Dropdown.Item>
+                      <Dropdown.Item href="/admin/system">
+                        <FiSettings className="me-2" />
+                        Hệ thống
+                      </Dropdown.Item>
+                      <Dropdown.Item href="/admin/logs">
+                        <FiBarChart className="me-2" />
+                        Logs & Monitoring
+                      </Dropdown.Item>
+                      <Dropdown.Item href="/admin/database">
+                        <FiSettings className="me-2" />
+                        Database
                       </Dropdown.Item>
                     </>
                   )}
