@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { Container, Row, Col, Button, Badge, Spinner, Alert, Breadcrumb } from "react-bootstrap"
+import { useAuth } from "../../contexts/AuthContext"
+import { useSelector, useDispatch } from "react-redux"
+import { addToCart, addToCartLocal } from "../../store/cartSlice"
 import {
     FiHeart,
     FiShoppingCart,
@@ -13,18 +16,26 @@ import {
     FiTruck,
     FiShield,
     FiRefreshCw,
+    FiHome,
+    FiChevronLeft,
 } from "react-icons/fi"
 import "./ProductDetail.css"
 
 function ProductDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
+    const { user, isAuthenticated } = useAuth()
     const [product, setProduct] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
     const [quantity, setQuantity] = useState(1)
     const [isLiked, setIsLiked] = useState(false)
     const [selectedImage, setSelectedImage] = useState(0)
+    const [isAddingToCart, setIsAddingToCart] = useState(false)
+    
+    // Redux state
+    const cartItems = useSelector(state => state.cart.items)
+    const dispatch = useDispatch()
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -49,9 +60,61 @@ function ProductDetail() {
         setQuantity(Math.max(1, quantity + delta))
     }
 
-    const handleAddToCart = () => {
-        console.log(`Thêm ${quantity} sản phẩm vào giỏ hàng`)
-        // TODO: Implement cart logic
+    // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
+    const isOwnProduct = user && user.role === 'seller' && (
+        product?.sellerId?._id === user._id || 
+        product?.sellerId === user._id ||
+        product?.seller?._id === user._id ||
+        product?.seller === user._id
+    )
+
+    const handleAddToCart = async () => {
+        // Kiểm tra nếu chưa đăng nhập
+        if (!isAuthenticated) {
+            alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
+            navigate('/login')
+            return
+        }
+        
+        // Kiểm tra nếu seller cố mua sản phẩm của chính mình
+        if (isOwnProduct) {
+            alert('Bạn không thể mua sản phẩm của chính mình!')
+            return
+        }
+        
+        if (isAddingToCart) return
+        
+        setIsAddingToCart(true)
+        
+        try {
+            // Tạo payload với đầy đủ thông tin sản phẩm
+            const cartPayload = {
+                productId: product._id,
+                quantity: quantity,
+                product: {
+                    _id: product._id,
+                    title: product.title,
+                    price: product.price,
+                    image: product.image || product.imageURL,
+                    imageURL: product.imageURL || product.image
+                }
+            }
+            
+            try {
+                await dispatch(addToCart(cartPayload)).unwrap()
+            } catch (apiError) {
+                console.warn('API failed, using local cart:', apiError)
+                // Fallback to local cart if API fails
+                dispatch(addToCartLocal(cartPayload))
+            }
+            
+            alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`)
+        } catch (error) {
+            console.error('Error adding to cart:', error)
+            alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
+        } finally {
+            setIsAddingToCart(false)
+        }
     }
 
     if (loading) {
@@ -102,19 +165,105 @@ function ProductDetail() {
 
     return (
         <div className="product-detail-page">
+            {/* Sticky Navigation Bar */}
+            <div 
+                className="bg-white border-bottom shadow-sm sticky-top" 
+                style={{ zIndex: 1000 }}
+            >
+                <Container className="py-3">
+                    <div className="d-flex align-items-center justify-content-between">
+                        <div className="d-flex align-items-center">
+                            <Button 
+                                variant="outline-secondary" 
+                                onClick={() => navigate(-1)}
+                                className="d-flex align-items-center me-3"
+                                size="sm"
+                            >
+                                <FiChevronLeft className="me-1" />
+                                Quay lại
+                            </Button>
+                            <Button 
+                                variant="outline-primary" 
+                                onClick={() => navigate("/")}
+                                className="d-flex align-items-center"
+                                size="sm"
+                            >
+                                <FiHome className="me-1" />
+                                Trang chủ
+                            </Button>
+                        </div>
+                        <div className="d-flex align-items-center">
+                            <h5 className="mb-0 text-muted">{product.title}</h5>
+                        </div>
+                        <div className="d-flex align-items-center">
+                            <Button 
+                                variant="outline-danger" 
+                                size="sm" 
+                                className="me-2"
+                                onClick={() => setIsLiked(!isLiked)}
+                            >
+                                <FiHeart size={16} fill={isLiked ? "#ee4d2d" : "none"} />
+                            </Button>
+                            <Button 
+                                variant="outline-info" 
+                                size="sm" 
+                                className="me-2 position-relative"
+                                onClick={() => navigate('/cart')}
+                            >
+                                <FiShoppingCart size={16} />
+                                {cartItems.length > 0 && (
+                                    <Badge 
+                                        bg="danger" 
+                                        className="position-absolute top-0 start-100 translate-middle rounded-pill"
+                                        style={{ fontSize: '8px', minWidth: '16px', height: '16px' }}
+                                    >
+                                        {cartItems.length}
+                                    </Badge>
+                                )}
+                            </Button>
+                            <Button 
+                                variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"} 
+                                size="sm" 
+                                onClick={handleAddToCart}
+                                disabled={isOwnProduct || isAddingToCart}
+                                style={{
+                                    background: !isAuthenticated 
+                                        ? "transparent"
+                                        : isOwnProduct 
+                                            ? "#6c757d" 
+                                            : isAddingToCart
+                                                ? "#6c757d"
+                                                : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+                                    border: !isAuthenticated ? "2px solid #007bff" : "none",
+                                }}
+                            >
+                                <FiShoppingCart className="me-1" size={16} />
+                                {!isAuthenticated 
+                                    ? 'Đăng nhập' 
+                                    : isOwnProduct 
+                                        ? 'Sản phẩm của bạn' 
+                                        : isAddingToCart
+                                            ? 'Đang thêm...'
+                                            : 'Thêm vào giỏ'
+                                }
+                            </Button>
+                        </div>
+                    </div>
+                </Container>
+            </div>
+
             <Container className="py-4">
+
                 {/* Breadcrumb */}
                 <Breadcrumb className="mb-4">
                     <Breadcrumb.Item onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
                         Trang chủ
                     </Breadcrumb.Item>
+                    <Breadcrumb.Item onClick={() => navigate(-1)} style={{ cursor: "pointer" }}>
+                        Danh sách sản phẩm
+                    </Breadcrumb.Item>
                     <Breadcrumb.Item active>{product.title}</Breadcrumb.Item>
                 </Breadcrumb>
-
-                <Button variant="link" className="mb-3 p-0 text-decoration-none" onClick={() => navigate(-1)}>
-                    <FiArrowLeft className="me-2" />
-                    Quay lại
-                </Button>
 
                 <Row className="g-4">
                     {/* Product Images */}
@@ -223,23 +372,44 @@ function ProductDetail() {
 
                             {/* Action Buttons */}
                             <div className="action-buttons mb-4">
-                                <Button variant="outline-danger" size="lg" className="me-3" onClick={() => setIsLiked(!isLiked)}>
-                                    <FiHeart size={20} fill={isLiked ? "#ee4d2d" : "none"} />
-                                </Button>
-                                <Button variant="primary" size="lg" className="add-to-cart-btn flex-grow-1" onClick={handleAddToCart}>
-                                    <FiShoppingCart className="me-2" size={20} />
-                                    Thêm vào giỏ hàng
-                                </Button>
-                                {(product.sellerId?._id || product.sellerId) && (
-                                  <Button 
-                                    variant="outline-secondary" 
-                                    size="lg" 
-                                    className="ms-3" 
-                                    onClick={() => navigate(`/store/${product.sellerId?._id || product.sellerId}`)}
-                                  >
-                                    Xem cửa hàng
-                                  </Button>
-                                )}
+                                <div className="d-flex gap-2">
+                                    <Button 
+                                        variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"} 
+                                        size="lg" 
+                                        className="add-to-cart-btn flex-grow-1" 
+                                        onClick={handleAddToCart}
+                                        disabled={isOwnProduct || isAddingToCart}
+                                        style={{
+                                            background: !isAuthenticated 
+                                                ? "transparent"
+                                                : isOwnProduct 
+                                                    ? "#6c757d" 
+                                                    : isAddingToCart
+                                                        ? "#6c757d"
+                                                        : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+                                            border: !isAuthenticated ? "2px solid #007bff" : "none",
+                                        }}
+                                    >
+                                        <FiShoppingCart className="me-2" size={20} />
+                                        {!isAuthenticated 
+                                            ? 'Đăng nhập để mua' 
+                                            : isOwnProduct 
+                                                ? 'Sản phẩm của bạn' 
+                                                : isAddingToCart
+                                                    ? 'Đang thêm...'
+                                                    : 'Thêm vào giỏ hàng'
+                                        }
+                                    </Button>
+                                    {(product.sellerId?._id || product.sellerId) && (
+                                      <Button 
+                                        variant="outline-secondary" 
+                                        size="lg" 
+                                        onClick={() => navigate(`/store/${product.sellerId?._id || product.sellerId}`)}
+                                      >
+                                        Xem cửa hàng
+                                      </Button>
+                                    )}
+                                </div>
                             </div>
 
                             {/* Features */}
@@ -299,6 +469,7 @@ function ProductDetail() {
                     </Col>
                 </Row>
             </Container>
+
         </div>
     )
 }
