@@ -159,7 +159,7 @@ const AdminDashboard = () => {
         </Row>
         <Row>
           <Col>
-            <Button variant="secondary" onClick={() => navigate('/')}>
+            <Button variant="secondary" onClick={() => navigate('/login')}>
               Đăng xuất
             </Button>
           </Col>
