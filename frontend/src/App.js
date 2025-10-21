@@ -26,6 +26,7 @@ import DevAdmin from "./components/Admin/DevAdmin";
 import RoleRedirect from "./components/RoleRedirect";
 import AddressPage from "./components/Address/AddressPage";
 import AdminUser from "./components/Admin/AdminUser";
+import ListProduct from "./components/DevAdmin/ListProduct";
 
 function App() {
   return (
@@ -59,9 +60,12 @@ function App() {
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminHomepage /></ProtectedRoute>}/>
             {/* <Route path="/dev-admin" element={<DevAdmin />} /> */}
 
+            {/* DevAdmin routes */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="devadmin"><AdminDashboard /></ProtectedRoute>}/>
+
             <Route path="/admin/users" element={<AdminUser />} />
 
-            <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="devadmin"><AdminDashboard /></ProtectedRoute>}/>
+            <Route path="/admin/products" element={<ListProduct />} />
 
             {/* Seller routes */}
             <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>
