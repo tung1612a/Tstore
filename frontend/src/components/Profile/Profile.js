@@ -107,11 +107,14 @@ function Profile() {
                           <div>
                             <small className="text-muted">Vai trò</small>
                             <div className="fw-medium">
-                              <span className={`badge ${user.role === 'admin' ? 'bg-danger' :
-                                user.role === 'seller' ? 'bg-warning' : 'bg-info'
-                                }`}>
-                                {user.role === 'admin' ? 'Quản trị viên' :
-                                  user.role === 'seller' ? 'Người bán' : 'Khách hàng'}
+                              <span className={`badge ${
+                                user.role === 'devadmin' ? 'bg-danger' :
+                                user.role === 'admin' ? 'bg-warning' :
+                                user.role === 'seller' ? 'bg-primary' : 'bg-info'
+                              }`}>
+                                {user.role === 'devadmin' ? 'Dev Admin' :
+                                 user.role === 'admin' ? 'Admin' :
+                                 user.role === 'seller' ? 'Người bán' : 'Khách hàng'}
                               </span>
                             </div>
                           </div>

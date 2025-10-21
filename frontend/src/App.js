@@ -22,6 +22,7 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import SellerDashboard from "./components/Seller/SellerDashboard";
 import AdminHomepage from "./components/Admin/AdminHomepage";
 import SellerHomepage from "./components/Seller/SellerHomepage";
+import DevAdmin from "./components/Admin/DevAdmin";
 import RoleRedirect from "./components/RoleRedirect";
 import AddressPage from "./components/Address/AddressPage";
 import AdminUser from "./components/Admin/AdminUser";
@@ -55,7 +56,8 @@ function App() {
             <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
             {/* Admin routes */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminHomepage /></ProtectedRoute>}/>
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminHomepage /></ProtectedRoute>}/>
+            <Route path="/dev-admin" element={<DevAdmin />} />
 
             <Route path="/admin/users" element={<AdminUser />} />
 
