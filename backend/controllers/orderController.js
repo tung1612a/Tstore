@@ -6,7 +6,7 @@ import Payment from '../models/Payment.js';
 
 export const createOrder = async (req, res) => {
   try {
-    const { items, addressId, couponId } = req.body;
+    const { items, addressId, couponId, paymentMethod = 'cod', notes } = req.body;
     const buyerId = req.user.id;
 
     const address = await Address.findById(addressId);
@@ -33,11 +33,17 @@ export const createOrder = async (req, res) => {
       });
     }
 
+    // Xác định status dựa trên payment method
+    const orderStatus = paymentMethod === 'cod' ? 'pending' : 'paid';
+
     const order = new Order({
       buyerId,
       addressId,
       totalPrice,
       couponId,
+      paymentMethod,
+      notes,
+      status: orderStatus,
     });
 
     const savedOrder = await order.save();
@@ -112,7 +118,6 @@ export const getSellerOrders = async (req, res) => {
       },
       { $group: { _id: '$orderId' } },
     ]);
-
     const orderIds = orderIdDocs.map((doc) => doc._id);
     if (orderIds.length === 0) {
       return res.json({ orders: [], totalPages: 0, currentPage: page, total: 0 });
@@ -151,6 +156,78 @@ export const getSellerOrders = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi lấy đơn hàng', error: error.message });
+  }
+};
+
+export const getSellerOrderStats = async (req, res) => {
+  try {
+    const sellerId = req.user.id;
+
+    // Tìm các orderId có items thuộc sản phẩm của seller này
+    const orderIdDocs = await OrderItem.aggregate([
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'productId',
+          foreignField: '_id',
+          as: 'product',
+        },
+      },
+      { $unwind: '$product' },
+      {
+        $match: {
+          'product.sellerId': new OrderItem.db.base.Types.ObjectId(sellerId),
+        },
+      },
+      { $group: { _id: '$orderId' } },
+    ]);
+
+    const orderIds = orderIdDocs.map((doc) => doc._id);
+    
+    if (orderIds.length === 0) {
+      return res.json({
+        pending: 0,
+        confirmed: 0,
+        shipped: 0,
+        totalRevenue: 0
+      });
+    }
+
+    // Aggregate stats
+    const stats = await Order.aggregate([
+      {
+        $match: { _id: { $in: orderIds } }
+      },
+      {
+        $group: {
+          _id: null,
+          pending: {
+            $sum: { $cond: [{ $eq: ['$status', 'pending'] }, 1, 0] }
+          },
+          confirmed: {
+            $sum: { $cond: [{ $eq: ['$status', 'confirmed'] }, 1, 0] }
+          },
+          shipped: {
+            $sum: { $cond: [{ $eq: ['$status', 'shipped'] }, 1, 0] }
+          },
+          totalRevenue: { $sum: '$totalPrice' }
+        }
+      }
+    ]);
+
+    const result = stats.length > 0 ? stats[0] : {
+      pending: 0,
+      confirmed: 0,
+      shipped: 0,
+      totalRevenue: 0
+    };
+
+    // Remove _id field
+    delete result._id;
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi lấy thống kê', error: error.message });
   }
 };
 
@@ -248,6 +325,47 @@ export const updateOrderStatus = async (req, res) => {
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi cập nhật trạng thái đơn hàng', error: error.message });
+  }
+};
+
+export const confirmOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const sellerId = req.user.id;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+    }
+
+    // Kiểm tra xem order có sản phẩm của seller này không
+    const orderItems = await OrderItem.find({ orderId: id }).populate('productId', 'sellerId');
+    const hasSellerProducts = orderItems.some(item => 
+      item.productId.sellerId.toString() === sellerId
+    );
+
+    if (!hasSellerProducts) {
+      return res.status(401).json({ message: 'Không có sản phẩm nào của bạn trong đơn hàng này' });
+    }
+
+    if (order.status !== 'pending') {
+      return res.status(400).json({ message: 'Chỉ có thể xác nhận đơn hàng ở trạng thái pending' });
+    }
+
+    order.status = 'confirmed';
+    order.confirmedAt = new Date();
+    order.confirmedBy = sellerId;
+
+    await order.save();
+
+    const populatedOrder = await Order.findById(id)
+      .populate('buyerId', 'name email')
+      .populate('addressId', 'fullName phone street city state country')
+      .populate('confirmedBy', 'name email');
+
+    res.json(populatedOrder);
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi xác nhận đơn hàng', error: error.message });
   }
 };
 
