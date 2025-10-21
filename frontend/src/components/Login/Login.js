@@ -19,15 +19,27 @@ function Login() {
     setError("");
     setLoading(true);
 
-    const result = await login(form.username, form.password);
-    
-    if (result.success) {
-      navigate('/');
-    } else {
-      setError(result.message);
+    try {
+      const result = await login(form.username, form.password);
+
+      if (result.success) {
+        // Giả sử role nằm trong result.user.role
+        const userRole = result.user?.role;
+
+        if (userRole === "devadmin") {
+          navigate("/admin/dashboard");
+        } else {
+          navigate("/");
+        }
+      } else {
+        setError(result.message || "Đăng nhập thất bại");
+      }
+    } catch (err) {
+      console.error(err);
+      setError("Có lỗi xảy ra, vui lòng thử lại");
+    } finally {
+      setLoading(false);
     }
-    
-    setLoading(false);
   };
 
   const handleRegister = () => {

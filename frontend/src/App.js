@@ -57,11 +57,11 @@ function App() {
 
             {/* Admin routes */}
             <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminHomepage /></ProtectedRoute>}/>
-            <Route path="/dev-admin" element={<DevAdmin />} />
+            {/* <Route path="/dev-admin" element={<DevAdmin />} /> */}
 
             <Route path="/admin/users" element={<AdminUser />} />
 
-            {/* <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>}/> */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="devadmin"><AdminDashboard /></ProtectedRoute>}/>
 
             {/* Seller routes */}
             <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>
@@ -72,7 +72,6 @@ function App() {
         </BrowserRouter>
       </AuthProvider>
     </Provider>
-    //Thay doi username va email
   );
 }
 

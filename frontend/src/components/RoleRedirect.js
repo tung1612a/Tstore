@@ -9,9 +9,11 @@ const RoleRedirect = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === 'admin') {
-        navigate('/admin');
+        navigate('/');
       } else if (user.role === 'seller') {
-        navigate('/seller');
+        navigate('/');
+      } else if (user.role === 'devadmin') {
+        navigate('/admin');
       } else {
         navigate('/');
       }

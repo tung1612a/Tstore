@@ -55,24 +55,24 @@ function SiteNavbar() {
                       <Dropdown.Divider />
                       <Dropdown.Item href="/admin">
                         <FiBarChart className="me-2" />
-                        Admin Dashboard
+                        Admin Bussiness Dashboard
                       </Dropdown.Item>
-                      <Dropdown.Item href="/admin/products">
+                      {/* <Dropdown.Item href="/admin/products">
                         <FiPackage className="me-2" />
                         Quản lý sản phẩm
-                      </Dropdown.Item>
-                      <Dropdown.Item href="/admin/orders">
+                      </Dropdown.Item> */}
+                      {/* <Dropdown.Item href="/admin/orders">
                         <FiPackage className="me-2" />
                         Quản lý đơn hàng
-                      </Dropdown.Item>
-                      <Dropdown.Item href="/admin/users">
+                      </Dropdown.Item> */}
+                      {/* <Dropdown.Item href="/admin/users">
                         <FiUser className="me-2" />
                         Quản lý người dùng
-                      </Dropdown.Item>
+                      </Dropdown.Item> */}
                     </>
                   )}
 
-                  {isDevAdmin() && (
+                  {/* {isDevAdmin() && (
                     <>
                       <Dropdown.Divider />
                       <Dropdown.Item href="/dev-admin">
@@ -92,7 +92,7 @@ function SiteNavbar() {
                         Database
                       </Dropdown.Item>
                     </>
-                  )}
+                  )} */}
 
                   {isSeller() && (
                     <>
