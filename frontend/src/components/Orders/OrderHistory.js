@@ -13,6 +13,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { selectUserRole, getRole } from '../../store/userSlice';
 import './OrderHistory.css';
+import { Button } from 'react-bootstrap';
 
 const PAGE_SIZE = 10;
 
@@ -333,6 +334,20 @@ const OrderHistory = () => {
             {isFetchingMore ? <div className="spinner" /> : <div className="muted">Kéo để tải thêm...</div>}
           </div>
         )}
+      </div>
+      <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px" }}>
+        <Button
+          href="/"
+          style={{
+            fontSize: "14px",
+            padding: "4px 10px",
+            borderRadius: "6px",
+            backgroundColor: "#007bff",
+            border: "none"
+          }}
+        >
+          Quay lại cửa hàng
+        </Button>
       </div>
     </div>
   );

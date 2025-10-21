@@ -155,7 +155,7 @@ const AdminUser = () => {
                   <th className="p-3">Tên người dùng</th>
                   <th className="p-3">Email</th>
                   <th className="p-3 text-center">Vai trò</th>
-                  <th className="p-3 text-center">Trạng thái</th>
+                  {/* <th className="p-3 text-center">Trạng thái</th> */}
                   <th className="p-3 text-center">Thao tác</th>
                 </tr>
               </thead>
@@ -198,7 +198,7 @@ const AdminUser = () => {
                           {user.role?.toUpperCase() || "N/A"}
                         </span>
                       </td>
-                      <td className="text-center">
+                      {/* <td className="text-center">
                         <span
                           style={{
                             padding: "4px 10px",
@@ -210,7 +210,7 @@ const AdminUser = () => {
                         >
                           {user.isActive ? "Hoạt động" : "Khóa"}
                         </span>
-                      </td>
+                      </td> */}
                       <td className="text-center">
                         <Button
                           variant="outline-primary"
