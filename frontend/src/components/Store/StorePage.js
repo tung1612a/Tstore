@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Container, Row, Col, Spinner, Alert, Button, Card } from 'react-bootstrap'
+import { Container, Row, Col, Spinner, Alert, Button, Card, Badge, Offcanvas } from 'react-bootstrap'
+import { FiArrowLeft, FiHome, FiStar, FiUsers, FiPackage, FiShield, FiShoppingCart, FiX } from 'react-icons/fi'
+import { useSelector, useDispatch } from 'react-redux'
 import ProductCard from '../Product/ProductCard'
 import './StorePage.css'
 
@@ -10,6 +12,11 @@ function StorePage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [showCart, setShowCart] = useState(false)
+  
+  // Redux state
+  const cartItems = useSelector(state => state.cart.items)
+  const dispatch = useDispatch()
 
   useEffect(() => {
     let mounted = true
@@ -33,55 +40,249 @@ function StorePage() {
 
   return (
     <Container className="py-4">
-      <div className="mb-3 d-flex align-items-center justify-content-between">
-        <Button variant="link" onClick={() => navigate(-1)}>&larr; Quay lại</Button>
+      {/* Navigation Header */}
+      <div className="mb-4 d-flex align-items-center justify-content-between">
+        <Button 
+          variant="outline-secondary" 
+          onClick={() => navigate(-1)}
+          className="d-flex align-items-center"
+        >
+          <FiArrowLeft className="me-2" />
+          Quay lại
+        </Button>
+        <div className="d-flex align-items-center">
+          <div className="d-flex align-items-center text-muted me-4">
+            <FiHome className="me-2" />
+            <span>Cửa hàng</span>
+          </div>
+          <Button 
+            variant="outline-primary" 
+            onClick={() => setShowCart(true)}
+            className="d-flex align-items-center position-relative"
+          >
+            <FiShoppingCart className="me-2" />
+            Giỏ hàng
+            {cartItems.length > 0 && (
+              <Badge 
+                bg="danger" 
+                className="position-absolute top-0 start-100 translate-middle rounded-pill"
+                style={{ fontSize: '10px', minWidth: '18px', height: '18px' }}
+              >
+                {cartItems.length}
+              </Badge>
+            )}
+          </Button>
+        </div>
       </div>
 
+      {/* Store Header */}
       {header && (
-        <Card className="mb-4 overflow-hidden border-0 shadow-sm store-header-card">
-          <div className="store-hero">
-            {header.bannerImageURL && (
-              <div className="store-hero-banner" style={{ backgroundImage: `url(${header.bannerImageURL})` }} />
+        <Card className="mb-5 overflow-hidden border-0 shadow-lg store-header-card">
+          <div className="store-hero position-relative">
+            {header.bannerImageURL ? (
+              <div 
+                className="store-hero-banner" 
+                style={{ 
+                  backgroundImage: `url(${header.bannerImageURL})`,
+                  height: '200px',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center'
+                }} 
+              />
+            ) : (
+              <div 
+                className="store-hero-banner" 
+                style={{ 
+                  height: '200px',
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                }} 
+              />
             )}
             <div className="store-hero-overlay" />
           </div>
-          <Card.Body>
-            <div className="store-meta">
-              <div className="store-avatar">
-                <span className="fw-bold" style={{ color: '#6c757d' }}>
+          <Card.Body className="p-4">
+            <div className="store-meta d-flex align-items-start">
+              <div className="store-avatar me-4">
+                <div 
+                  className="rounded-circle d-flex align-items-center justify-content-center"
+                  style={{ 
+                    width: '80px', 
+                    height: '80px', 
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    fontSize: '24px',
+                    fontWeight: 'bold'
+                  }}
+                >
                   {(header.storeName || 'Store').slice(0,1).toUpperCase()}
-                </span>
+                </div>
               </div>
-              <div>
-                <h4 className="store-name">{header.storeName}</h4>
-                <div className="text-muted store-status">Trạng thái: {header.status || 'approved'}</div>
+              <div className="flex-grow-1">
+                <div className="d-flex align-items-center mb-2">
+                  <h3 className="store-name mb-0 me-3">{header.storeName}</h3>
+                  <Badge 
+                    bg={header.status === 'approved' ? 'success' : 'warning'}
+                    className="d-flex align-items-center"
+                  >
+                    <FiShield className="me-1" size={12} />
+                    {header.status === 'approved' ? 'Đã xác thực' : 'Chờ xác thực'}
+                  </Badge>
+                </div>
+                <div className="d-flex align-items-center text-muted mb-2">
+                  <FiStar className="me-1" size={16} color="#ffc107" fill="#ffc107" />
+                  <span className="me-3">4.8 (128 đánh giá)</span>
+                  <FiUsers className="me-1" size={16} />
+                  <span className="me-3">1.2k người theo dõi</span>
+                  <FiPackage className="me-1" size={16} />
+                  <span>{products.length} sản phẩm</span>
+                </div>
+                <p className="text-muted mb-0">
+                  Cửa hàng chuyên cung cấp các sản phẩm công nghệ chất lượng cao với giá cả hợp lý
+                </p>
               </div>
             </div>
           </Card.Body>
         </Card>
       )}
 
-      {loading && (
-        <div className="text-center py-5">
-          <Spinner animation="border" />
+      {/* Products Section */}
+      <div className="products-section">
+        <div className="d-flex align-items-center justify-content-between mb-4">
+          <h4 className="mb-0 d-flex align-items-center">
+            <FiPackage className="me-2" />
+            Sản phẩm của cửa hàng
+          </h4>
+          <div className="d-flex align-items-center text-muted">
+            <span className="me-3">Hiển thị {products.length} sản phẩm</span>
+          </div>
         </div>
-      )}
-      {error && (
-        <Alert variant="danger">{error}</Alert>
-      )}
-      {!loading && !error && (
-        <Row className="g-3 store-grid">
-          {products.length === 0 ? (
-            <Col xs={12}>
-              <Alert variant="warning">Chưa có sản phẩm nào</Alert>
-            </Col>
-          ) : products.map((p) => (
-            <Col key={p._id} xs={12} sm={6} md={4} lg={3}>
-              <ProductCard product={p} />
-            </Col>
-          ))}
-        </Row>
-      )}
+
+        {loading && (
+          <div className="text-center py-5">
+            <Spinner animation="border" variant="primary" />
+            <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
+          </div>
+        )}
+
+        {error && (
+          <Alert variant="danger" className="text-center">
+            <Alert.Heading>Không thể tải sản phẩm</Alert.Heading>
+            <p>{error}</p>
+            <Button variant="outline-danger" onClick={() => window.location.reload()}>
+              Thử lại
+            </Button>
+          </Alert>
+        )}
+
+        {!loading && !error && (
+          <>
+            {products.length === 0 ? (
+              <Card className="text-center py-5">
+                <Card.Body>
+                  <FiPackage size={64} className="text-muted mb-3" />
+                  <h5 className="text-muted">Chưa có sản phẩm nào</h5>
+                  <p className="text-muted">Cửa hàng này chưa có sản phẩm nào để hiển thị</p>
+                </Card.Body>
+              </Card>
+            ) : (
+              <Row className="g-4">
+                {products.map((p) => (
+                  <Col key={p._id} xs={12} sm={6} md={4} lg={3}>
+                    <ProductCard product={p} hideStoreButton={true} />
+                  </Col>
+                ))}
+              </Row>
+            )}
+          </>
+        )}
+      </div>
+
+      {/* Cart Offcanvas */}
+      <Offcanvas show={showCart} onHide={() => setShowCart(false)} placement="end">
+        <Offcanvas.Header closeButton>
+          <Offcanvas.Title className="d-flex align-items-center">
+            <FiShoppingCart className="me-2" />
+            Giỏ hàng ({cartItems.length})
+          </Offcanvas.Title>
+        </Offcanvas.Header>
+        <Offcanvas.Body>
+          {cartItems.length === 0 ? (
+            <div className="text-center py-5">
+              <FiShoppingCart size={64} className="text-muted mb-3" />
+              <h5 className="text-muted">Giỏ hàng trống</h5>
+              <p className="text-muted">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
+            </div>
+          ) : (
+            <div className="cart-items">
+              {cartItems.map((item, index) => (
+                <Card key={index} className="mb-3">
+                  <Card.Body className="p-3">
+                    <div className="d-flex align-items-center">
+                      <div className="me-3">
+                        {item.product?.image || item.product?.imageURL ? (
+                          <img 
+                            src={item.product.image || item.product.imageURL} 
+                            alt={item.product.title}
+                            style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }}
+                          />
+                        ) : (
+                          <div 
+                            style={{ 
+                              width: '60px', 
+                              height: '60px', 
+                              background: '#f8f9fa', 
+                              borderRadius: '8px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#6c757d'
+                            }}
+                          >
+                            <FiPackage size={24} />
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex-grow-1">
+                        <h6 className="mb-1">{item.product?.title || 'Sản phẩm'}</h6>
+                        <div className="d-flex align-items-center justify-content-between">
+                          <span className="text-muted">Số lượng: {item.quantity}</span>
+                          <span className="fw-bold text-primary">
+                            {item.product?.price ? 
+                              (item.product.price * item.quantity).toLocaleString("vi-VN", { style: "currency", currency: "VND" }) 
+                              : '0 ₫'
+                            }
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              ))}
+              
+              <div className="cart-summary mt-4 p-3 bg-light rounded">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <span className="fw-bold">Tổng cộng:</span>
+                  <span className="fw-bold text-primary fs-5">
+                    {cartItems.reduce((total, item) => 
+                      total + (item.product?.price || 0) * item.quantity, 0
+                    ).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
+                  </span>
+                </div>
+                <Button 
+                  variant="primary" 
+                  className="w-100"
+                  onClick={() => {
+                    setShowCart(false)
+                    navigate('/cart')
+                  }}
+                >
+                  Xem giỏ hàng chi tiết
+                </Button>
+              </div>
+            </div>
+          )}
+        </Offcanvas.Body>
+      </Offcanvas>
     </Container>
   )
 }

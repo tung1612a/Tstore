@@ -6,19 +6,35 @@ import { FiHeart, FiShoppingCart, FiStar } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { addToCart } from "../../store/cartSlice"
+import { useAuth } from "../../contexts/AuthContext"
 
-function ProductCard({ product }) {
+function ProductCard({ product, hideStoreButton = false }) {
   const price = product.price?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
   const [isLiked, setIsLiked] = React.useState(false)
   const [isAddingToCart, setIsAddingToCart] = React.useState(false)
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const { user } = useAuth()
+
+  // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
+  const isOwnProduct = user && user.role === 'seller' && (
+    product.sellerId?._id === user._id || 
+    product.sellerId === user._id ||
+    product.seller?._id === user._id ||
+    product.seller === user._id
+  )
 
   // Helper function for adding to cart
   const handleAddToCart = async (e) => {
     e.stopPropagation()
     
     if (isAddingToCart) return
+    
+    // Kiểm tra nếu seller cố mua sản phẩm của chính mình
+    if (isOwnProduct) {
+      alert('Bạn không thể mua sản phẩm của chính mình!')
+      return
+    }
     
     setIsAddingToCart(true)
     
@@ -139,14 +155,16 @@ function ProductCard({ product }) {
         </div>
 
         <Button
-          variant="primary"
+          variant={isOwnProduct ? "secondary" : "primary"}
           size="sm"
           className="w-100 d-flex align-items-center justify-content-center"
-          disabled={isAddingToCart}
+          disabled={isAddingToCart || isOwnProduct}
           style={{
-            background: isAddingToCart 
+            background: isOwnProduct 
               ? "#6c757d" 
-              : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+              : isAddingToCart 
+                ? "#6c757d" 
+                : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
             border: "none",
             borderRadius: "8px",
             fontWeight: "600",
@@ -154,9 +172,14 @@ function ProductCard({ product }) {
           onClick={handleAddToCart}
         >
           <FiShoppingCart className="me-2" size={16} />
-          {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
+          {isOwnProduct 
+            ? 'Sản phẩm của bạn' 
+            : isAddingToCart 
+              ? 'Đang thêm...' 
+              : 'Thêm vào giỏ'
+          }
         </Button>
-        {(product.sellerId?._id || product.sellerId) && (
+        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && (
           <Button
             variant="outline-secondary"
             size="sm"
