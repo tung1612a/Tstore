@@ -3,7 +3,6 @@ import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
 import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings, FiMapPin, FiBarChart } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart } from '../store/cartSlice';
-import { useUser } from '../hooks/useUser';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -11,26 +10,13 @@ import { useNavigate } from 'react-router-dom';
 function SiteNavbar() {
   const dispatch = useDispatch();
   const items = useSelector((state) => state.cart.items);
-  const { role } = useUser();
-  const [user, setUser] = useState(null);
-  const { logout, isAdmin, isSeller } = useAuth();
+  const { user, logout, isAdmin, isSeller } = useAuth();
   const navigate = useNavigate();
 
   // Load cart khi component mount
   useEffect(() => {
     dispatch(fetchCart());
   }, [dispatch]);
-
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        setUser(JSON.parse(userData));
-      } catch (err) {
-        console.error('Error parsing user data:', err);
-      }
-    }
-  }, []);
 
   const handleLogout = () => {
     logout();
@@ -58,7 +44,7 @@ function SiteNavbar() {
                   </Dropdown.Item>
                   <Dropdown.Item href="/orders">
                     <FiUser className="me-2" />
-                    {role === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
+                    {user?.role === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
                   </Dropdown.Item>
                   <Dropdown.Item href="/addresses">
                     <FiMapPin className="me-2" />

@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { Container, Row, Col, Spinner, Alert, Button, Card, Badge, Offcanvas } from 'react-bootstrap'
-import { FiArrowLeft, FiHome, FiStar, FiUsers, FiPackage, FiShield, FiShoppingCart, FiX } from 'react-icons/fi'
+import { Container, Row, Col, Spinner, Alert, Button, Card, Badge } from 'react-bootstrap'
+import { FiArrowLeft, FiHome, FiStar, FiUsers, FiPackage, FiShield, FiShoppingCart } from 'react-icons/fi'
 import { useSelector, useDispatch } from 'react-redux'
 import ProductCard from '../Product/ProductCard'
 import './StorePage.css'
@@ -12,7 +12,6 @@ function StorePage() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [showCart, setShowCart] = useState(false)
   
   // Redux state
   const cartItems = useSelector(state => state.cart.items)
@@ -57,7 +56,7 @@ function StorePage() {
           </div>
           <Button 
             variant="outline-primary" 
-            onClick={() => setShowCart(true)}
+            onClick={() => navigate('/cart')}
             className="d-flex align-items-center position-relative"
           >
             <FiShoppingCart className="me-2" />
@@ -197,92 +196,6 @@ function StorePage() {
         )}
       </div>
 
-      {/* Cart Offcanvas */}
-      <Offcanvas show={showCart} onHide={() => setShowCart(false)} placement="end">
-        <Offcanvas.Header closeButton>
-          <Offcanvas.Title className="d-flex align-items-center">
-            <FiShoppingCart className="me-2" />
-            Giỏ hàng ({cartItems.length})
-          </Offcanvas.Title>
-        </Offcanvas.Header>
-        <Offcanvas.Body>
-          {cartItems.length === 0 ? (
-            <div className="text-center py-5">
-              <FiShoppingCart size={64} className="text-muted mb-3" />
-              <h5 className="text-muted">Giỏ hàng trống</h5>
-              <p className="text-muted">Hãy thêm sản phẩm vào giỏ hàng để tiếp tục mua sắm</p>
-            </div>
-          ) : (
-            <div className="cart-items">
-              {cartItems.map((item, index) => (
-                <Card key={index} className="mb-3">
-                  <Card.Body className="p-3">
-                    <div className="d-flex align-items-center">
-                      <div className="me-3">
-                        {item.product?.image || item.product?.imageURL ? (
-                          <img 
-                            src={item.product.image || item.product.imageURL} 
-                            alt={item.product.title}
-                            style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '8px' }}
-                          />
-                        ) : (
-                          <div 
-                            style={{ 
-                              width: '60px', 
-                              height: '60px', 
-                              background: '#f8f9fa', 
-                              borderRadius: '8px',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: '#6c757d'
-                            }}
-                          >
-                            <FiPackage size={24} />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-grow-1">
-                        <h6 className="mb-1">{item.product?.title || 'Sản phẩm'}</h6>
-                        <div className="d-flex align-items-center justify-content-between">
-                          <span className="text-muted">Số lượng: {item.quantity}</span>
-                          <span className="fw-bold text-primary">
-                            {item.product?.price ? 
-                              (item.product.price * item.quantity).toLocaleString("vi-VN", { style: "currency", currency: "VND" }) 
-                              : '0 ₫'
-                            }
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Card.Body>
-                </Card>
-              ))}
-              
-              <div className="cart-summary mt-4 p-3 bg-light rounded">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <span className="fw-bold">Tổng cộng:</span>
-                  <span className="fw-bold text-primary fs-5">
-                    {cartItems.reduce((total, item) => 
-                      total + (item.product?.price || 0) * item.quantity, 0
-                    ).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-                  </span>
-                </div>
-                <Button 
-                  variant="primary" 
-                  className="w-100"
-                  onClick={() => {
-                    setShowCart(false)
-                    navigate('/cart')
-                  }}
-                >
-                  Xem giỏ hàng chi tiết
-                </Button>
-              </div>
-            </div>
-          )}
-        </Offcanvas.Body>
-      </Offcanvas>
     </Container>
   )
 }
