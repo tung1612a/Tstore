@@ -1,6 +1,6 @@
 import express from "express";
 import { protect, sellerOnly } from "../middleware/authMiddleware.js";
-import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders } from "../controllers/sellerController.js";
+import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders, getSellerDebugData } from "../controllers/sellerController.js";
 
 const router = express.Router();
 
@@ -10,6 +10,7 @@ router.use(sellerOnly);
 
 // Dashboard seller
 router.get("/dashboard", getSellerDashboard);
+router.get("/debug", getSellerDebugData);
 
 // Quản lý sản phẩm
 router.get("/products", getSellerProducts);
