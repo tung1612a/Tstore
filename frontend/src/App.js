@@ -22,6 +22,7 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import SellerDashboard from "./components/Seller/SellerDashboard";
 import AdminHomepage from "./components/Admin/AdminHomepage";
 import SellerHomepage from "./components/Seller/SellerHomepage";
+import SellerProducts from "./components/Seller/SellerProducts";
 import OrderManagement from "./components/Orders/OrderManagement";
 import DevAdmin from "./components/Admin/DevAdmin";
 import RoleRedirect from "./components/RoleRedirect";
@@ -72,6 +73,7 @@ function App() {
             <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>
 
             <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}/>
+            <Route path="/seller/products" element={<ProtectedRoute requiredRole="seller"><SellerProducts /></ProtectedRoute>}/>
             <Route path="/seller/orders" element={<ProtectedRoute requiredRole="seller"><OrderManagement /></ProtectedRoute>}/>
 
           </Routes>

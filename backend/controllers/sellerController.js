@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import OrderItem from "../models/OrderItem.js";
+import Inventory from "../models/Inventory.js";
 
 // Dashboard stats cho seller
 export const getSellerDashboard = async (req, res) => {
@@ -233,6 +234,79 @@ export const getSellerOrders = async (req, res) => {
     
     const orders = Array.from(ordersMap.values());
     res.json(orders);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Lấy danh sách tồn kho của seller
+export const getSellerInventories = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    
+    // Lấy tất cả sản phẩm của seller
+    const products = await Product.find({ sellerId });
+    const productIds = products.map(p => p._id);
+    
+    // Lấy inventory records cho các sản phẩm này
+    const inventories = await Inventory.find({ productId: { $in: productIds } })
+      .populate('productId', 'title price stock');
+    
+    res.json(inventories);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Cập nhật tồn kho
+export const updateInventory = async (req, res) => {
+  try {
+    const sellerId = req.user._id;
+    const productId = req.params.id;
+    const { quantity, operation } = req.body;
+    
+    // Kiểm tra sản phẩm có thuộc về seller này không
+    const product = await Product.findOne({ _id: productId, sellerId });
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+    
+    let newStock = product.stock;
+    
+    switch (operation) {
+      case 'add':
+        newStock = product.stock + parseInt(quantity);
+        break;
+      case 'subtract':
+        newStock = Math.max(0, product.stock - parseInt(quantity));
+        break;
+      case 'set':
+        newStock = parseInt(quantity);
+        break;
+      default:
+        return res.status(400).json({ message: "Invalid operation" });
+    }
+    
+    // Cập nhật stock trong Product
+    product.stock = newStock;
+    await product.save();
+    
+    // Tạo hoặc cập nhật inventory record
+    await Inventory.findOneAndUpdate(
+      { productId },
+      {
+        productId,
+        quantity: newStock,
+        lastUpdated: new Date()
+      },
+      { upsert: true, new: true }
+    );
+    
+    res.json({ 
+      message: "Inventory updated successfully",
+      product: product,
+      newStock: newStock
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
