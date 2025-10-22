@@ -1,6 +1,6 @@
 import express from "express";
 import { protect, sellerOnly } from "../middleware/authMiddleware.js";
-import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders, getSellerDebugData, getSellerInventories, updateInventory } from "../controllers/sellerController.js";
+import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders, getSellerDebugData, getSellerInventories, updateInventory, getSellerReports } from "../controllers/sellerController.js";
 
 const router = express.Router();
 
@@ -24,5 +24,8 @@ router.get("/orders", getSellerOrders);
 // Quản lý tồn kho
 router.get("/inventories", getSellerInventories);
 router.put("/inventories/:id", updateInventory);
+
+//Reports
+router.get("/reports", getSellerReports);
 
 export default router;
