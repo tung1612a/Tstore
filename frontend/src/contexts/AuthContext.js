@@ -131,6 +131,10 @@ export const AuthProvider = ({ children }) => {
     return state.user && state.user.role === 'customer';
   };
 
+  const isShipper = () => {
+    return state.user && state.user.role === 'shipper';
+  };
+
   const hasPermission = (permission) => {
     if (!state.user) return false;
     
@@ -163,6 +167,16 @@ export const AuthProvider = ({ children }) => {
       return sellerPermissions.includes(permission);
     }
     
+    // Shipper có quyền riêng
+    if (role === 'shipper') {
+      const shipperPermissions = [
+        'view_assigned_orders',
+        'update_order_status',
+        'manage_delivery'
+      ];
+      return shipperPermissions.includes(permission);
+    }
+    
     // Customer có quyền cơ bản
     if (role === 'customer') {
       const customerPermissions = [
@@ -184,6 +198,7 @@ export const AuthProvider = ({ children }) => {
     isDevAdmin,
     isSeller,
     isCustomer,
+    isShipper,
     hasPermission
   };
 

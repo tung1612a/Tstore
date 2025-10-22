@@ -12,6 +12,8 @@ const RoleRedirect = () => {
         navigate('/');
       } else if (user.role === 'seller') {
         navigate('/');
+      } else if (user.role === 'shipper') {
+        navigate('/');
       } else if (user.role === 'devadmin') {
         navigate('/admin');
       } else {
