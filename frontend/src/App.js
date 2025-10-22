@@ -24,6 +24,9 @@ import AdminHomepage from "./components/Admin/AdminHomepage";
 import SellerHomepage from "./components/Seller/SellerHomepage";
 import SellerProducts from "./components/Seller/SellerProducts";
 import OrderManagement from "./components/Orders/OrderManagement";
+import ShipperHomepage from "./components/Shipper/ShipperHomepage";
+import ShipperDashboard from "./components/Shipper/ShipperDashboard";
+import ShipperOrders from "./components/Shipper/ShipperOrders";
 import DevAdmin from "./components/Admin/DevAdmin";
 import RoleRedirect from "./components/RoleRedirect";
 import AddressPage from "./components/Address/AddressPage";
@@ -75,6 +78,12 @@ function App() {
             <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}/>
             <Route path="/seller/products" element={<ProtectedRoute requiredRole="seller"><SellerProducts /></ProtectedRoute>}/>
             <Route path="/seller/orders" element={<ProtectedRoute requiredRole="seller"><OrderManagement /></ProtectedRoute>}/>
+
+            {/* Shipper routes */}
+            <Route path="/shipper" element={<ProtectedRoute requiredRole="shipper"><ShipperHomepage /></ProtectedRoute>}/>
+            <Route path="/shipper/dashboard" element={<ProtectedRoute requiredRole="shipper"><ShipperDashboard /></ProtectedRoute>}/>
+            <Route path="/shipper/orders" element={<ProtectedRoute requiredRole="shipper"><ShipperOrders /></ProtectedRoute>}/>
+            <Route path="/shipper/orders/:id" element={<ProtectedRoute requiredRole="shipper"><ShipperOrders /></ProtectedRoute>}/>
 
           </Routes>
         </BrowserRouter>

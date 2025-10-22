@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings, FiMapPin, FiBarChart } from 'react-icons/fi';
+import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings, FiMapPin, FiBarChart, FiTruck } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart } from '../store/cartSlice';
 import { useCart } from '../hooks/useCart';
@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 function SiteNavbar() {
   const dispatch = useDispatch();
   const items = useSelector((state) => state.cart.items);
-  const { user, logout, isAdmin, isDevAdmin, isSeller, hasPermission } = useAuth();
+  const { user, logout, isAdmin, isDevAdmin, isSeller, isShipper, hasPermission } = useAuth();
   const navigate = useNavigate();
 
   // Load cart khi component mount
@@ -42,9 +42,9 @@ function SiteNavbar() {
                     <FiUser className="me-2" />
                     Thông tin cá nhân
                   </Dropdown.Item>
-                  <Dropdown.Item href={user?.role === 'seller' ? '/seller/orders' : '/orders'}>
+                  <Dropdown.Item href={user?.role === 'seller' ? '/seller/orders' : user?.role === 'shipper' ? '/shipper/orders' : '/orders'}>
                     <FiUser className="me-2" />
-                    {user?.role === 'seller' ? 'Quản lý đơn hàng' : 'Lịch sử đơn hàng'}
+                    {user?.role === 'seller' ? 'Quản lý đơn hàng' : user?.role === 'shipper' ? 'Đơn hàng giao' : 'Lịch sử đơn hàng'}
                   </Dropdown.Item>
                   <Dropdown.Item href="/addresses">
                     <FiMapPin className="me-2" />
@@ -100,6 +100,16 @@ function SiteNavbar() {
                       <Dropdown.Item href="/seller">
                         <FiSettings className="me-2" />
                         Seller Homepage
+                      </Dropdown.Item>
+                    </>
+                  )}
+
+                  {isShipper() && (
+                    <>
+                      <Dropdown.Divider />
+                      <Dropdown.Item href="/shipper">
+                        <FiTruck className="me-2" />
+                        Shipper Dashboard
                       </Dropdown.Item>
                     </>
                   )}

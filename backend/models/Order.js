@@ -10,6 +10,10 @@ const orderSchema = new mongoose.Schema({
   notes: { type: String },
   confirmedAt: { type: Date },
   confirmedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  shipperId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  shippedAt: { type: Date },
+  deliveredAt: { type: Date },
+  trackingNumber: { type: String },
 }, { timestamps: true });
 
 export default mongoose.model("Order", orderSchema);
