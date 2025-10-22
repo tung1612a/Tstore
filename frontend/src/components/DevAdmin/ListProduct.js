@@ -313,7 +313,7 @@ const styles = {
     },
     buttonRow: {
         display: "flex",
-        gap: "80%",
+        gap: "75%",
         marginBottom: "20px",
     },
     addButton: {
