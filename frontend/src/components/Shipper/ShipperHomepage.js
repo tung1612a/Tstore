@@ -100,6 +100,17 @@ const ShipperHomepage = () => {
           </Card>
         </Col>
       </Row>
+      <Row>
+        <Col>
+          <Button 
+            variant="secondary" 
+            className="mt-4"
+            onClick={() => navigate('/')}
+          >
+            Quay lại cửa hàng
+          </Button>
+        </Col>
+      </Row>
     </Container>
   );
 };

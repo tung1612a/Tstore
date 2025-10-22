@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Badge, Button, Table } from 'react-bootstrap
 import { FiTruck, FiPackage, FiClock, FiDollarSign, FiEye, FiCheckCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
-const ShipperDashboard = () => {
+const   ShipperDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -82,6 +82,9 @@ const ShipperDashboard = () => {
             <h2>Shipper Dashboard</h2>
             <Button variant="outline-primary" onClick={() => navigate('/shipper/orders')}>
               Xem tất cả đơn hàng
+            </Button>
+            <Button variant="primary" onClick={() => navigate('/shipper')}>
+              Quay lại dashboard
             </Button>
           </div>
         </Col>

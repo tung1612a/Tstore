@@ -254,8 +254,9 @@ const AdminUser = () => {
                               user.role === "admin"
                                 ? "#f44336"
                                 : user.role === "seller"
-                                  ? "#42a5f5"
-                                  : "#66bb6a",
+                                  ? "#42a5f5" : user.role === "shipper"
+                                  ? "#66bb6a" : user.role === "customer"
+                                  ? "#00d612ff" : "#ff0062ff",
                           }}
                         >
                           {user.role?.toUpperCase()}
@@ -346,6 +347,7 @@ const AdminUser = () => {
                   <option value="seller">Seller</option>
                   <option value="customer">Customer</option>
                   <option value="devadmin">DevAdmin</option>
+                  <option value="shipper">Shipper</option>
                 </Form.Select>
               </Form.Group>
             </Form>
