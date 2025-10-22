@@ -19,6 +19,7 @@
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.4",
     "react-scripts": "5.0.1",
+    "recharts": "^3.3.0",
     "redux": "^5.0.1",
     "tailwindcss": "^4.1.14",
     "web-vitals": "^2.1.4"

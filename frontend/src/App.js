@@ -32,6 +32,7 @@ import RoleRedirect from "./components/RoleRedirect";
 import AddressPage from "./components/Address/AddressPage";
 import AdminUser from "./components/Admin/AdminUser";
 import ListProduct from "./components/DevAdmin/ListProduct";
+import SellerReports from "./components/Seller/SellerReport";
 
 function App() {
   return (
@@ -78,6 +79,7 @@ function App() {
             {/* <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}/> */}
             <Route path="/seller/products" element={<ProtectedRoute requiredRole="seller"><SellerProducts /></ProtectedRoute>}/>
             <Route path="/seller/orders" element={<ProtectedRoute requiredRole="seller"><OrderManagement /></ProtectedRoute>}/>
+            <Route path="/seller/reports" element={<ProtectedRoute requiredRole="seller"><SellerReports /></ProtectedRoute>}/>
 
             {/* Shipper routes */}
             <Route path="/shipper" element={<ProtectedRoute requiredRole="shipper"><ShipperHomepage /></ProtectedRoute>}/>
