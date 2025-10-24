@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import SellerApplication from "../models/SellerApplication.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
@@ -127,6 +128,158 @@ export const checkEmail = async (req, res) => {
 
 
 
+};
+
+// Become seller for authenticated user - tạo đơn đăng ký
+export const becomeSeller = async (req, res) => {
+  try {
+    const { phone, businessName, businessDescription, taxCode, cccd } = req.body;
+    const userId = req.user._id;
+    const user = req.user;
+
+    if (!phone || !businessName || !taxCode || !cccd) {
+      return res.status(400).json({ message: "Phone, business name, tax code and CCCD are required" });
+    }
+
+    // Validation cho mã số thuế (10-13 số)
+    if (!/^\d{10,13}$/.test(taxCode)) {
+      return res.status(400).json({ message: "Tax code must be 10-13 digits" });
+    }
+
+    // Validation cho CCCD (12 số)
+    if (!/^\d{12}$/.test(cccd)) {
+      return res.status(400).json({ message: "CCCD must be exactly 12 digits" });
+    }
+
+    // Kiểm tra xem user đã có đơn đăng ký pending chưa
+    const existingApplication = await SellerApplication.findOne({
+      userId: userId,
+      status: 'pending'
+    });
+
+    if (existingApplication) {
+      return res.status(400).json({ message: "You already have a pending seller application" });
+    }
+
+    // Kiểm tra xem user đã là seller chưa
+    if (user.role === 'seller') {
+      return res.status(400).json({ message: "You are already a seller" });
+    }
+
+    // Tạo đơn đăng ký seller
+    const application = await SellerApplication.create({
+      userId: userId,
+      fullName: user.fullName,
+      email: user.email,
+      phone: phone,
+      businessName: businessName,
+      businessDescription: businessDescription || '',
+      taxCode: taxCode,
+      cccd: cccd,
+      status: 'pending'
+    });
+
+    res.json({
+      message: "Seller application submitted successfully. Please wait for admin approval.",
+      application: application
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get seller applications for admin
+export const getSellerApplications = async (req, res) => {
+  try {
+    const { status } = req.query;
+    let filter = {};
+    
+    if (status) {
+      filter.status = status;
+    }
+
+    const applications = await SellerApplication.find(filter)
+      .populate('userId', 'fullName email role')
+      .populate('reviewedBy', 'fullName email')
+      .sort({ createdAt: -1 });
+
+    res.json(applications);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Review seller application (approve/reject)
+export const reviewSellerApplication = async (req, res) => {
+  try {
+    const { applicationId } = req.params;
+    const { action, rejectionReason, notes } = req.body;
+    const adminId = req.user._id;
+
+    if (!['approve', 'reject'].includes(action)) {
+      return res.status(400).json({ message: "Action must be 'approve' or 'reject'" });
+    }
+
+    const application = await SellerApplication.findById(applicationId);
+    if (!application) {
+      return res.status(404).json({ message: "Application not found" });
+    }
+
+    if (application.status !== 'pending') {
+      return res.status(400).json({ message: "Application has already been reviewed" });
+    }
+
+    // Cập nhật trạng thái đơn đăng ký
+    application.status = action === 'approve' ? 'approved' : 'rejected';
+    application.reviewedBy = adminId;
+    application.reviewedAt = new Date();
+    application.rejectionReason = action === 'reject' ? rejectionReason : '';
+    application.notes = notes || '';
+
+    await application.save();
+
+    // Nếu approve, cập nhật role của user thành seller
+    if (action === 'approve') {
+      await User.findByIdAndUpdate(application.userId, {
+        role: 'seller',
+        phone: application.phone,
+        businessName: application.businessName,
+        businessDescription: application.businessDescription,
+        taxCode: application.taxCode,
+        cccd: application.cccd
+      });
+    }
+
+    res.json({
+      message: `Application ${action}d successfully`,
+      application: application
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Get user's seller application status
+export const getMySellerApplication = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    const application = await SellerApplication.findOne({ userId })
+      .populate('reviewedBy', 'fullName email')
+      .sort({ createdAt: -1 });
+
+    if (!application) {
+      return res.status(404).json({ message: "No seller application found" });
+    }
+
+    res.json(application);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
 };
 
 // Change password for authenticated user

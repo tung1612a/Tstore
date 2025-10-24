@@ -6,6 +6,7 @@ import { fetchCart } from '../store/cartSlice';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import BecomeSellerButton from './BecomeSellerButton';
 
 function SiteNavbar() {
   const dispatch = useDispatch();
@@ -31,6 +32,13 @@ function SiteNavbar() {
         <Navbar.Collapse id="basic-navbar-nav">
           <div className="me-auto" />
           <Nav>
+            {/* Become Seller Button - chỉ hiển thị khi chưa đăng nhập hoặc chưa là seller */}
+            {(!user || user.role !== 'seller') && (
+              <div className="me-3 d-flex align-items-center">
+                <BecomeSellerButton compact={true} />
+              </div>
+            )}
+            
             {user ? (
               <Dropdown align="end">
                 <Dropdown.Toggle as={Nav.Link} className="d-flex align-items-center">

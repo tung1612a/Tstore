@@ -8,6 +8,10 @@ const userSchema = new mongoose.Schema({
   phone: { type: String },
   role: { type: String, enum: ["customer", "seller", "admin", "devadmin", "shipper"], default: "customer" },
   active: { type: Boolean, default: true },
+  businessName: { type: String },
+  businessDescription: { type: String },
+  taxCode: { type: String },
+  cccd: { type: String },
 }, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
