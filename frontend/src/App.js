@@ -33,6 +33,7 @@ import AddressPage from "./components/Address/AddressPage";
 import AdminUser from "./components/Admin/AdminUser";
 import ListProduct from "./components/DevAdmin/ListProduct";
 import SellerReports from "./components/Seller/SellerReport";
+import SellerApplications from "./components/Admin/SellerApplications";
 
 function App() {
   return (
@@ -72,6 +73,8 @@ function App() {
             <Route path="/admin/users" element={<AdminUser />} />
 
             <Route path="/admin/products" element={<ListProduct />} />
+
+            <Route path="/admin/seller-applications" element={<ProtectedRoute requiredRole="admin"><SellerApplications /></ProtectedRoute>} />
 
             {/* Seller routes */}
             <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>

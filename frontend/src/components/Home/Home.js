@@ -8,6 +8,7 @@ import HeroCarousel from "../HeroCarousel"
 import Footer from "../Footer"
 import CategoriesRow from "../CategoriesRow"
 import SearchBar from "../SearchBar"
+import SellerFeatures from "../SellerFeatures"
 
 // QUAN TRỌNG: Cập nhật đường dẫn import cho các component Product
 import ProductCard from "../Product/ProductCard"
@@ -101,6 +102,9 @@ function App() {
               ))}
             </div>
             <ProductList keyword={keyword} categoryId={categoryId} />
+            
+            <SellerFeatures />
+            
             <div className="section-header">
               <h2 className="section-title">Tất cả sản phẩm</h2>
               <p className="section-subtitle">Bộ sưu tập đầy đủ các sản phẩm chất lượng</p>
