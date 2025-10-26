@@ -32,8 +32,8 @@ function SiteNavbar() {
         <Navbar.Collapse id="basic-navbar-nav">
           <div className="me-auto" />
           <Nav>
-            {/* Become Seller Button - chỉ hiển thị khi chưa đăng nhập hoặc chưa là seller */}
-            {(!user || user.role !== 'seller') && (
+            {/* Become Seller Button - chỉ hiển thị khi user đã đăng nhập và role là 'customer' */}
+            {user && user.role === 'customer' && (
               <div className="me-3 d-flex align-items-center">
                 <BecomeSellerButton compact={true} />
               </div>
