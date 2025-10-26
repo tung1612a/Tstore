@@ -522,10 +522,19 @@ const OrderManagement = () => {
                             </span>
                           </td>
                           <td className="py-3 px-4">
-                            <span className={`badge ${getStatusBadgeClass(order.status)} d-flex align-items-center gap-1 px-3 py-2`}>
-                              {getStatusIcon(order.status)}
-                              {getStatusText(order.status)}
-                            </span>
+                            <div>
+                              <span className={`badge ${getStatusBadgeClass(order.status)} d-flex align-items-center gap-1 px-3 py-2 mb-1`}>
+                                {getStatusIcon(order.status)}
+                                {getStatusText(order.status)}
+                              </span>
+                              {order.status === 'cancelled' && order.cancellationReason && (
+                                <div className="mt-1">
+                                  <small className="text-danger d-block" style={{ fontSize: '0.75rem', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis' }} title={order.cancellationReason}>
+                                    <strong>Lý do:</strong> {order.cancellationReason}
+                                  </small>
+                                </div>
+                              )}
+                            </div>
                           </td>
                           <td className="py-3 px-4">
                             <div className="d-flex align-items-center">
@@ -825,12 +834,23 @@ const OrderManagement = () => {
                         <div className="bg-secondary bg-opacity-10 rounded-circle p-2 me-3">
                           <FiMessageSquare className="text-secondary" size={20} />
                         </div>
-                        <h6 className="mb-0 fw-semibold">Ghi chú</h6>
+                        <h6 className="mb-0 fw-semibold">
+                          {selectedOrder.order.status === 'cancelled' ? 'Lý do hủy đơn' : 'Ghi chú'}
+                        </h6>
                       </div>
                       <div className="ps-5">
-                        <div className="bg-white p-3 rounded border">
-                          {selectedOrder.order.notes || (
-                            <span className="text-muted fst-italic">Không có ghi chú</span>
+                        <div className={`bg-white p-3 rounded border ${selectedOrder.order.status === 'cancelled' ? 'border-danger' : ''}`}>
+                          {(selectedOrder.order.status === 'cancelled' && selectedOrder.order.cancellationReason) ? (
+                            <div>
+                              <span className="badge bg-danger mb-2">Lý do hủy</span>
+                              <p className="mb-0">{selectedOrder.order.cancellationReason}</p>
+                            </div>
+                          ) : selectedOrder.order.notes ? (
+                            <span>{selectedOrder.order.notes}</span>
+                          ) : (
+                            <span className="text-muted fst-italic">
+                              {selectedOrder.order.status === 'cancelled' ? 'Không có lý do' : 'Không có ghi chú'}
+                            </span>
                           )}
                         </div>
                       </div>

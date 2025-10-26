@@ -8,6 +8,7 @@ const orderSchema = new mongoose.Schema({
   couponId: { type: mongoose.Schema.Types.ObjectId, ref: "Coupon" },
   paymentMethod: { type: String, enum: ["cod", "bank_transfer", "momo", "zalopay"], default: "cod" },
   notes: { type: String },
+  cancellationReason: { type: String },
   confirmedAt: { type: Date },
   confirmedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   shipperId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

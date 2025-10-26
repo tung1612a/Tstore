@@ -23,6 +23,13 @@ export const createOrder = async (req, res) => {
         return res.status(404).json({ message: `Không tìm thấy sản phẩm ${item.productId}` });
       }
 
+      // Kiểm tra số lượng tồn kho
+      if (product.stock < item.quantity) {
+        return res.status(400).json({ 
+          message: `Sản phẩm "${product.title}" không đủ hàng. Chỉ còn ${product.stock} sản phẩm trong kho.` 
+        });
+      }
+
       const itemTotal = product.price * item.quantity;
       totalPrice += itemTotal;
 
@@ -54,6 +61,12 @@ export const createOrder = async (req, res) => {
         ...item,
       });
       await orderItem.save();
+
+      // Giảm số lượng sản phẩm trong kho
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { stock: -item.quantity } }
+      );
     }
 
     const populatedOrder = await Order.findById(savedOrder._id)
@@ -389,9 +402,18 @@ export const cancelOrder = async (req, res) => {
     }
 
     order.status = 'cancelled';
-    if (reason) order.notes = reason;
+    if (reason) order.cancellationReason = reason;
 
     await order.save();
+
+    // Hoàn lại số lượng sản phẩm vào kho
+    const orderItems = await OrderItem.find({ orderId: id });
+    for (const item of orderItems) {
+      await Product.findByIdAndUpdate(
+        item.productId,
+        { $inc: { stock: item.quantity } }
+      );
+    }
 
     res.json(order);
   } catch (error) {
