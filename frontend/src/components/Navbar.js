@@ -38,12 +38,12 @@ function SiteNavbar() {
                 <BecomeSellerButton compact={true} />
               </div>
             )}
-            
+
             {user ? (
               <Dropdown align="end">
                 <Dropdown.Toggle as={Nav.Link} className="d-flex align-items-center">
                   <FiUser className="me-1" />
-                  Hello, {user.fullName || 'Tài khoản'}
+                  Xin chào, {user.fullName || 'Tài khoản'}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
                   <Dropdown.Item href="/profile">

@@ -20,7 +20,7 @@ import {
     FiChevronLeft,
 } from "react-icons/fi"
 import "./ProductDetail.css"
-
+import Footer from "../Footer"
 function ProductDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
@@ -32,7 +32,7 @@ function ProductDetail() {
     const [isLiked, setIsLiked] = useState(false)
     const [selectedImage, setSelectedImage] = useState(0)
     const [isAddingToCart, setIsAddingToCart] = useState(false)
-    
+
     // Redux state
     const cartItems = useSelector(state => state.cart.items)
     const dispatch = useDispatch()
@@ -62,7 +62,7 @@ function ProductDetail() {
 
     // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
     const isOwnProduct = user && user.role === 'seller' && (
-        product?.sellerId?._id === user._id || 
+        product?.sellerId?._id === user._id ||
         product?.sellerId === user._id ||
         product?.seller?._id === user._id ||
         product?.seller === user._id
@@ -75,17 +75,17 @@ function ProductDetail() {
             navigate('/login')
             return
         }
-        
+
         // Kiểm tra nếu seller cố mua sản phẩm của chính mình
         if (isOwnProduct) {
             alert('Bạn không thể mua sản phẩm của chính mình!')
             return
         }
-        
+
         if (isAddingToCart) return
-        
+
         setIsAddingToCart(true)
-        
+
         try {
             // Tạo payload với đầy đủ thông tin sản phẩm
             const cartPayload = {
@@ -99,7 +99,7 @@ function ProductDetail() {
                     imageURL: product.imageURL || product.image
                 }
             }
-            
+
             try {
                 await dispatch(addToCart(cartPayload)).unwrap()
             } catch (apiError) {
@@ -107,7 +107,7 @@ function ProductDetail() {
                 // Fallback to local cart if API fails
                 dispatch(addToCartLocal(cartPayload))
             }
-            
+
             alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`)
         } catch (error) {
             console.error('Error adding to cart:', error)
@@ -166,15 +166,15 @@ function ProductDetail() {
     return (
         <div className="product-detail-page">
             {/* Sticky Navigation Bar */}
-            <div 
-                className="bg-white border-bottom shadow-sm sticky-top" 
+            <div
+                className="bg-white border-bottom shadow-sm sticky-top"
                 style={{ zIndex: 1000 }}
             >
                 <Container className="py-3">
                     <div className="d-flex align-items-center justify-content-between">
                         <div className="d-flex align-items-center">
-                            <Button 
-                                variant="outline-secondary" 
+                            <Button
+                                variant="outline-secondary"
                                 onClick={() => navigate(-1)}
                                 className="d-flex align-items-center me-3"
                                 size="sm"
@@ -182,8 +182,8 @@ function ProductDetail() {
                                 <FiChevronLeft className="me-1" />
                                 Quay lại
                             </Button>
-                            <Button 
-                                variant="outline-primary" 
+                            <Button
+                                variant="outline-primary"
                                 onClick={() => navigate("/")}
                                 className="d-flex align-items-center"
                                 size="sm"
@@ -196,24 +196,24 @@ function ProductDetail() {
                             <h5 className="mb-0 text-muted">{product.title}</h5>
                         </div>
                         <div className="d-flex align-items-center">
-                            <Button 
-                                variant="outline-danger" 
-                                size="sm" 
+                            <Button
+                                variant="outline-danger"
+                                size="sm"
                                 className="me-2"
                                 onClick={() => setIsLiked(!isLiked)}
                             >
                                 <FiHeart size={16} fill={isLiked ? "#ee4d2d" : "none"} />
                             </Button>
-                            <Button 
-                                variant="outline-info" 
-                                size="sm" 
+                            <Button
+                                variant="outline-info"
+                                size="sm"
                                 className="me-2 position-relative"
                                 onClick={() => navigate('/cart')}
                             >
                                 <FiShoppingCart size={16} />
                                 {cartItems.length > 0 && (
-                                    <Badge 
-                                        bg="danger" 
+                                    <Badge
+                                        bg="danger"
                                         className="position-absolute top-0 start-100 translate-middle rounded-pill"
                                         style={{ fontSize: '8px', minWidth: '16px', height: '16px' }}
                                     >
@@ -221,16 +221,16 @@ function ProductDetail() {
                                     </Badge>
                                 )}
                             </Button>
-                            <Button 
-                                variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"} 
-                                size="sm" 
+                            <Button
+                                variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
+                                size="sm"
                                 onClick={handleAddToCart}
                                 disabled={isOwnProduct || isAddingToCart}
                                 style={{
-                                    background: !isAuthenticated 
+                                    background: !isAuthenticated
                                         ? "transparent"
-                                        : isOwnProduct 
-                                            ? "#6c757d" 
+                                        : isOwnProduct
+                                            ? "#6c757d"
                                             : isAddingToCart
                                                 ? "#6c757d"
                                                 : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
@@ -238,10 +238,10 @@ function ProductDetail() {
                                 }}
                             >
                                 <FiShoppingCart className="me-1" size={16} />
-                                {!isAuthenticated 
-                                    ? 'Đăng nhập' 
-                                    : isOwnProduct 
-                                        ? 'Sản phẩm của bạn' 
+                                {!isAuthenticated
+                                    ? 'Đăng nhập'
+                                    : isOwnProduct
+                                        ? 'Sản phẩm của bạn'
                                         : isAddingToCart
                                             ? 'Đang thêm...'
                                             : 'Thêm vào giỏ'
@@ -326,9 +326,9 @@ function ProductDetail() {
                                         Giảm 20%
                                     </Badge>
                                     {typeof product.inventoryQuantity === 'number' && (
-                                      <span className="ms-3 text-muted" style={{ fontSize: '14px' }}>
-                                        Còn {product.inventoryQuantity} sản phẩm
-                                      </span>
+                                        <span className="ms-3 text-muted" style={{ fontSize: '14px' }}>
+                                            Còn {product.inventoryQuantity} sản phẩm
+                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -373,17 +373,17 @@ function ProductDetail() {
                             {/* Action Buttons */}
                             <div className="action-buttons mb-4">
                                 <div className="d-flex gap-2">
-                                    <Button 
-                                        variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"} 
-                                        size="lg" 
-                                        className="add-to-cart-btn flex-grow-1" 
+                                    <Button
+                                        variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
+                                        size="lg"
+                                        className="add-to-cart-btn flex-grow-1"
                                         onClick={handleAddToCart}
                                         disabled={isOwnProduct || isAddingToCart}
                                         style={{
-                                            background: !isAuthenticated 
+                                            background: !isAuthenticated
                                                 ? "transparent"
-                                                : isOwnProduct 
-                                                    ? "#6c757d" 
+                                                : isOwnProduct
+                                                    ? "#6c757d"
                                                     : isAddingToCart
                                                         ? "#6c757d"
                                                         : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
@@ -391,23 +391,23 @@ function ProductDetail() {
                                         }}
                                     >
                                         <FiShoppingCart className="me-2" size={20} />
-                                        {!isAuthenticated 
-                                            ? 'Đăng nhập để mua' 
-                                            : isOwnProduct 
-                                                ? 'Sản phẩm của bạn' 
+                                        {!isAuthenticated
+                                            ? 'Đăng nhập để mua'
+                                            : isOwnProduct
+                                                ? 'Sản phẩm của bạn'
                                                 : isAddingToCart
                                                     ? 'Đang thêm...'
                                                     : 'Thêm vào giỏ hàng'
                                         }
                                     </Button>
                                     {(product.sellerId?._id || product.sellerId) && (
-                                      <Button 
-                                        variant="outline-secondary" 
-                                        size="lg" 
-                                        onClick={() => navigate(`/store/${product.sellerId?._id || product.sellerId}`)}
-                                      >
-                                        Xem cửa hàng
-                                      </Button>
+                                        <Button
+                                            variant="outline-secondary"
+                                            size="lg"
+                                            onClick={() => navigate(`/store/${product.sellerId?._id || product.sellerId}`)}
+                                        >
+                                            Xem cửa hàng
+                                        </Button>
                                     )}
                                 </div>
                             </div>
@@ -469,7 +469,7 @@ function ProductDetail() {
                     </Col>
                 </Row>
             </Container>
-
+            <Footer />
         </div>
     )
 }

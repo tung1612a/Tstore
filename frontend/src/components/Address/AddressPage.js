@@ -69,9 +69,7 @@ const AddressPage = () => {
     return (
         <Container className="address-page mt-5 mb-5">
             <h1 className="mb-4">Quản lý địa chỉ</h1>
-            <button className="back-home-btn" onClick={handleBackHome}>
-                ← Quay về trang Home
-            </button>
+
             <Tabs id="address-tabs" activeKey={activeTab} onSelect={(k) => setActiveTab(k)} className="mb-3">
                 <Tab eventKey="list" title="Danh sách địa chỉ">
                     <AddressList refreshTrigger={refreshTrigger} onEdit={handleEdit} />
@@ -84,6 +82,9 @@ const AddressPage = () => {
                     />
                 </Tab>
             </Tabs>
+            <button className="back-home-btn" onClick={handleBackHome}>
+                ← Quay về trang Home
+            </button>
         </Container>
     )
 }
