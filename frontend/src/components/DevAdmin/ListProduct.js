@@ -10,6 +10,7 @@ const ListProduct = () => {
     const [editMode, setEditMode] = useState(false);
     const [form, setForm] = useState({
         title: "",
+        stock: "",
         description: "",
         price: "",
         image: "",
@@ -41,7 +42,7 @@ const ListProduct = () => {
 
     const handleAdd = () => {
         setEditMode(false);
-        setForm({ title: "", description: "", price: "", image: "", sellerId: "" });
+        setForm({ title: "",stock: "", description: "", price: "", image: "", sellerId: "" });
         setShowModal(true);
     };
 
@@ -50,6 +51,7 @@ const ListProduct = () => {
         setSelectedProductId(product._id);
         setForm({
             title: product.title,
+            stock: product.stock,
             description: product.description,
             price: product.price,
             image: product.image,
@@ -117,9 +119,9 @@ const ListProduct = () => {
             <h2 style={styles.heading}> Danh sách sản phẩm</h2>
 
             <div style={styles.buttonRow}>
-                <Button style={styles.addButton} onClick={handleAdd}>
+                {/* <Button style={styles.addButton} onClick={handleAdd}>
                     + Thêm sản phẩm
-                </Button>
+                </Button> */}
 
                 <Button
                     variant="secondary"
@@ -147,6 +149,7 @@ const ListProduct = () => {
                                 : p.description}
                         </p>
                         <p style={styles.price}>Giá: {p.price} VND</p>
+                        <p style={styles.seller}>Số lượng: {p.stock}</p>
                         <p style={styles.seller}>
                             Người bán: {p.sellerId?.fullName || "Không xác định"}
                         </p>
@@ -182,10 +185,18 @@ const ListProduct = () => {
                 <Modal.Body>
                     <Form>
                         <Form.Group className="mb-3">
-                            <Form.Label>Tiêu đề</Form.Label>
+                            <Form.Label>Tên sản phẩm</Form.Label>
                             <Form.Control
                                 name="title"
                                 value={form.title}
+                                onChange={handleChange}
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Số lượng tồn kho</Form.Label>
+                            <Form.Control
+                                name="stock"
+                                value={form.stock}
                                 onChange={handleChange}
                             />
                         </Form.Group>
