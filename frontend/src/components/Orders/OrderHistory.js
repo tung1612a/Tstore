@@ -22,8 +22,9 @@ const PAGE_SIZE = 10;
 const statusMeta = {
   pending: { label: 'Chờ xác nhận', color: '#856404', bg: '#fff3cd', icon: <FiPackage /> },
   confirmed: { label: 'Đã xác nhận', color: '#0c5460', bg: '#d1ecf1', icon: <FiCheckCircle /> },
-  paid: { label: 'Đã thanh toán', color: '#155724', bg: '#d4edda', icon: <FiCheckCircle /> },
-  shipped: { label: 'Đã giao hàng', color: '#004085', bg: '#cce7ff', icon: <FiTruck /> },
+  awaiting_delivery: { label: 'Chờ giao hàng', color: '#0c5460', bg: '#d1ecf1', icon: <FiPackage /> },
+  shipping: { label: 'Đang giao hàng', color: '#856404', bg: '#fff3cd', icon: <FiTruck /> },
+  delivered: { label: 'Đã giao hàng', color: '#004085', bg: '#cce7ff', icon: <FiTruck /> },
   completed: { label: 'Hoàn thành', color: '#28a745', bg: '#d4edda', icon: <FiCheckCircle /> },
   cancelled: { label: 'Đã hủy', color: '#721c24', bg: '#f8d7da', icon: <FiXCircle /> },
 };
@@ -39,7 +40,7 @@ function formatDate(dateString) {
 }
 
 // Memoized OrderCard component to prevent unnecessary re-renders
-const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, toggleDetails, handleOpenCancelModal }) => {
+const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, toggleDetails, handleOpenCancelModal, handleOpenConfirmReceivedModal }) => {
   return (
     <div className={`order-card ${expanded[order._id] ? 'expanded' : ''}`}>
       <div className="card-header">
@@ -102,9 +103,10 @@ const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, 
                 ))}
               </div>
             </div>
-            {/* Cancel Button - Only show for pending/confirmed orders */}
-            {!order.status || (order.status !== 'cancelled' && order.status !== 'completed' && order.status !== 'shipped') ? (
-              <div className="order-actions" style={{ padding: '20px', borderTop: '1px solid #eee' }}>
+            {/* Order Actions */}
+            <div className="order-actions" style={{ padding: '20px', borderTop: '1px solid #eee', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+              {/* Cancel Button - Only show for pending/awaiting_delivery orders */}
+              {['pending', 'confirmed', 'awaiting_delivery'].includes(order.status) && (
                 <button 
                   className="btn-cancel-order"
                   onClick={() => handleOpenCancelModal(order)}
@@ -126,8 +128,33 @@ const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, 
                   <FiXCircle size={18} />
                   Hủy đơn hàng
                 </button>
-              </div>
-            ) : null}
+              )}
+              
+                             {/* Confirm Received Button - Only show for delivered orders */}
+               {order.status === 'delivered' && (
+                 <button 
+                   className="btn-confirm-received"
+                   onClick={() => handleOpenConfirmReceivedModal(order)}
+                   style={{
+                     padding: '12px 24px',
+                     background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                     color: 'white',
+                     border: 'none',
+                     borderRadius: '8px',
+                     fontSize: '0.95rem',
+                     fontWeight: '600',
+                     cursor: 'pointer',
+                     transition: 'all 0.3s ease',
+                     display: 'flex',
+                     alignItems: 'center',
+                     gap: '8px'
+                   }}
+                 >
+                   <FiCheckCircle size={18} />
+                   Xác nhận đã nhận hàng
+                 </button>
+               )}
+            </div>
           </>
         )}
       </div>
@@ -155,6 +182,8 @@ const OrderHistory = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showConfirmReceivedModal, setShowConfirmReceivedModal] = useState(false);
+  const [isConfirmingReceived, setIsConfirmingReceived] = useState(false);
 
   useEffect(() => {
     dispatch(getRole());
@@ -264,6 +293,42 @@ const OrderHistory = () => {
     }
   };
 
+  const handleOpenConfirmReceivedModal = (order) => {
+    setSelectedOrder(order);
+    setShowConfirmReceivedModal(true);
+  };
+
+  const handleConfirmReceived = async () => {
+    if (!selectedOrder) return;
+
+    setIsConfirmingReceived(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`http://localhost:5000/api/orders/${selectedOrder._id}/confirm-received`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setOrders((prev) => prev.map((o) => (o._id === selectedOrder._id ? { ...o, status: 'completed' } : o)));
+        setShowConfirmReceivedModal(false);
+        setSelectedOrder(null);
+        alert('Xác nhận đã nhận hàng thành công!');
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Có lỗi xảy ra khi xác nhận nhận hàng');
+      }
+    } catch (error) {
+      console.error('Error confirming received:', error);
+      alert('Có lỗi xảy ra khi xác nhận nhận hàng');
+    } finally {
+      setIsConfirmingReceived(false);
+    }
+  };
+
   if (loading && page === 1) {
     return (
       <div className="order-history">
@@ -332,8 +397,9 @@ const OrderHistory = () => {
               <option value="">Tất cả trạng thái</option>
               <option value="pending">Chờ xác nhận</option>
               <option value="confirmed">Đã xác nhận</option>
-              <option value="paid">Đã thanh toán</option>
-              <option value="shipped">Đã giao hàng</option>
+              <option value="awaiting_delivery">Chờ giao hàng</option>
+              <option value="shipping">Đang giao hàng</option>
+              <option value="delivered">Đã giao hàng</option>
               <option value="completed">Đã hoàn thành</option>
               <option value="cancelled">Đã hủy</option>
             </select>
@@ -356,7 +422,8 @@ const OrderHistory = () => {
                 expanded={expanded}
                 details={details}
                 detailsLoading={detailsLoading}
-                handleOpenCancelModal={handleOpenCancelModal}
+                                 handleOpenCancelModal={handleOpenCancelModal}
+                 handleOpenConfirmReceivedModal={handleOpenConfirmReceivedModal}
                 toggleDetails={async (orderId) => {
                   // First, determine if we're opening or closing
                   const isCurrentlyOpen = expanded[orderId];
@@ -505,6 +572,118 @@ const OrderHistory = () => {
                   <>
                     <FiXCircle size={18} />
                     Xác nhận hủy
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Received Modal */}
+      {showConfirmReceivedModal && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => !isConfirmingReceived && setShowConfirmReceivedModal(false)}
+        >
+          <div 
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '500px',
+              width: '90%',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{ 
+                width: '64px', 
+                height: '64px', 
+                borderRadius: '50%', 
+                background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px'
+              }}>
+                <FiCheckCircle size={32} color="white" />
+              </div>
+              <h2 style={{ margin: '0 0 8px 0', color: '#2c3e50', fontSize: '1.5rem' }}>Xác nhận đã nhận hàng</h2>
+              <p style={{ margin: '0', color: '#6c757d', fontSize: '0.95rem' }}>
+                Đơn hàng #{selectedOrder?._id.slice(-8)}
+              </p>
+            </div>
+            
+            <div style={{ 
+              background: '#f8f9fa', 
+              borderRadius: '12px', 
+              padding: '20px', 
+              marginBottom: '24px' 
+            }}>
+              <p style={{ margin: '0', color: '#495057', lineHeight: '1.6' }}>
+                Bạn có chắc chắn đã nhận được hàng? Sau khi xác nhận, đơn hàng sẽ chuyển sang trạng thái hoàn thành.
+              </p>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowConfirmReceivedModal(false);
+                  setSelectedOrder(null);
+                }}
+                disabled={isConfirmingReceived}
+                style={{
+                  flex: 1,
+                  padding: '12px 24px',
+                  background: '#f8f9fa',
+                  color: '#2c3e50',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  cursor: isConfirmingReceived ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleConfirmReceived}
+                disabled={isConfirmingReceived}
+                style={{
+                  flex: 1,
+                  padding: '12px 24px',
+                  background: isConfirmingReceived ? '#ccc' : 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  cursor: isConfirmingReceived ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isConfirmingReceived ? 'Đang xử lý...' : (
+                  <>
+                    <FiCheckCircle size={18} />
+                    Xác nhận
                   </>
                 )}
               </button>

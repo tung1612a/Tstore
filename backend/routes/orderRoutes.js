@@ -9,6 +9,7 @@ import {
   updateOrderStatus,
   confirmOrder,
   cancelOrder,
+  confirmReceived,
 } from '../controllers/orderController.js';
 
 const router = express.Router();
@@ -22,5 +23,6 @@ router.get('/:id', getOrderDetails);
 router.put('/:id/status', updateOrderStatus);
 router.put('/:id/confirm', confirmOrder);
 router.put('/:id/cancel', cancelOrder);
+router.put('/:id/confirm-received', confirmReceived);
 
 export default router;

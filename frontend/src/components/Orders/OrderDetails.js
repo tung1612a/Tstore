@@ -148,14 +148,26 @@ const OrderDetails = () => {
         bgColor: '#d1ecf1', 
         icon: <FiCheckCircle /> 
       },
-      shipped: { 
-        text: 'Đã giao hàng', 
-        color: '#007bff', 
-        bgColor: '#cce7ff', 
+      awaiting_delivery: { 
+        text: 'Chờ giao hàng', 
+        color: '#17a2b8', 
+        bgColor: '#d1ecf1', 
+        icon: <FiPackage /> 
+      },
+      shipping: { 
+        text: 'Đang giao hàng', 
+        color: '#ffc107', 
+        bgColor: '#fff3cd', 
         icon: <FiTruck /> 
       },
       delivered: { 
-        text: 'Đã nhận hàng', 
+        text: 'Đã giao hàng', 
+        color: '#28a745', 
+        bgColor: '#d4edda', 
+        icon: <FiTruck /> 
+      },
+      completed: { 
+        text: 'Hoàn thành', 
         color: '#28a745', 
         bgColor: '#d4edda', 
         icon: <FiCheckCircle /> 
@@ -237,7 +249,6 @@ const OrderDetails = () => {
         </div>
 
         <div className="order-content">
-          {/* Order Info */}
           <div className="info-section">
             <h2>
               <FiPackage className="section-icon" />
@@ -309,7 +320,6 @@ const OrderDetails = () => {
             </div>
           </div>
 
-          {/* Address Info */}
           <div className="info-section">
             <h2>
               <FiMapPin className="section-icon" />
@@ -327,7 +337,6 @@ const OrderDetails = () => {
             </div>
           </div>
 
-          {/* Seller Info */}
           <div className="info-section">
             <h2>
               <FiUser className="section-icon" />
@@ -342,7 +351,6 @@ const OrderDetails = () => {
             </div>
           </div>
 
-          {/* Order Items */}
           <div className="info-section">
             <h2>
               <FiPackage className="section-icon" />
@@ -372,7 +380,6 @@ const OrderDetails = () => {
             </div>
           </div>
 
-          {/* Actions for Seller */}
           {role === 'seller' && (
             <div className="actions-section">
               <h2>
@@ -445,7 +452,6 @@ const OrderDetails = () => {
             </div>
           )}
 
-          {/* Actions for Buyer */}
           {role === 'buyer' && ['pending', 'confirmed'].includes(order.status) && (
             <div className="actions-section">
               <h2>

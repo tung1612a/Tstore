@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Badge, Button, Table, Form, Modal, Alert } from 'react-bootstrap';
-import { FiEye, FiTruck, FiCheckCircle, FiPackage, FiFilter } from 'react-icons/fi';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Row, Col, Card, Badge, Button, Table, Form, Modal, Alert } from 'react-bootstrap';
+import { FiEye, FiTruck, FiCheckCircle, FiPackage, FiFilter, FiArrowLeft, FiRefreshCw, FiCalendar } from 'react-icons/fi';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import './ShipperOrders.css';
 
 const ShipperOrders = () => {
   const [orders, setOrders] = useState([]);
@@ -10,27 +11,31 @@ const ShipperOrders = () => {
   const [showModal, setShowModal] = useState(false);
   const [showShipModal, setShowShipModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
-  const [trackingNumber, setTrackingNumber] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [searchParams, setSearchParams] = useSearchParams();
   const [alert, setAlert] = useState({ show: false, message: '', variant: '' });
+  const [deliveryResult, setDeliveryResult] = useState('success'); // 'success' or 'failed'
+  const [failureReason, setFailureReason] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const itemsPerPage = 10;
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const status = searchParams.get('status') || '';
-    setStatusFilter(status);
-    fetchOrders(status);
-  }, [searchParams]);
-
-  const fetchOrders = async (status = '') => {
+  const fetchOrders = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
       const token = localStorage.getItem('token');
-      const url = status 
-        ? `http://localhost:5000/api/shipper/orders?status=${status}`
-        : 'http://localhost:5000/api/shipper/orders';
-      
-      const response = await fetch(url, {
+      const params = new URLSearchParams({
+        page: currentPage,
+        limit: itemsPerPage
+      });
+
+      if (statusFilter) {
+        params.append('status', statusFilter);
+      }
+
+      const response = await fetch(`http://localhost:5000/api/shipper/orders?${params.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -38,7 +43,9 @@ const ShipperOrders = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setOrders(data);
+        setOrders(data.orders || data);
+        setTotalPages(data.totalPages || 0);
+        setTotalOrders(data.total || 0);
       } else {
         console.error('Failed to fetch orders');
       }
@@ -47,7 +54,18 @@ const ShipperOrders = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, itemsPerPage, statusFilter]);
+
+  useEffect(() => {
+    fetchOrders();
+  }, [fetchOrders]);
+
+  useEffect(() => {
+    const status = searchParams.get('status') || '';
+    const page = searchParams.get('page') || '1';
+    setStatusFilter(status);
+    setCurrentPage(parseInt(page));
+  }, [searchParams]);
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('vi-VN', {
@@ -57,20 +75,21 @@ const ShipperOrders = () => {
   };
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return new Date(dateString).toLocaleDateString('vi-VN');
+  };
+
+  const formatDateTime = (dateString) => {
+    return new Date(dateString).toLocaleString('vi-VN');
   };
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      paid: { variant: 'info', text: 'Chờ giao' },
-      shipped: { variant: 'warning', text: 'Đang giao' },
-      completed: { variant: 'success', text: 'Đã giao' },
+      pending: { variant: 'warning', text: 'Chờ xác nhận' },
+      confirmed: { variant: 'info', text: 'Đã xác nhận' },
+      awaiting_delivery: { variant: 'info', text: 'Chờ giao hàng' },
+      shipping: { variant: 'warning', text: 'Đang giao hàng' },
+      delivered: { variant: 'success', text: 'Đã giao hàng' },
+      completed: { variant: 'success', text: 'Hoàn thành' },
       cancelled: { variant: 'danger', text: 'Đã hủy' }
     };
     
@@ -78,12 +97,25 @@ const ShipperOrders = () => {
     return <Badge bg={config.variant}>{config.text}</Badge>;
   };
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
   const handleStatusFilter = (status) => {
     setStatusFilter(status);
     if (status) {
-      setSearchParams({ status });
+      setSearchParams({ status, page: '1' });
     } else {
-      setSearchParams({});
+      setSearchParams({ page: '1' });
+    }
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    if (statusFilter) {
+      setSearchParams({ status: statusFilter, page: page.toString() });
+    } else {
+      setSearchParams({ page: page.toString() });
     }
   };
 
@@ -98,7 +130,11 @@ const ShipperOrders = () => {
 
       if (response.ok) {
         const data = await response.json();
-        setSelectedOrder(data);
+        // Backend returns { order, orderItems }, so we need to combine them
+        setSelectedOrder({
+          order: data.order,
+          orderItems: data.orderItems || []
+        });
         setShowModal(true);
       } else {
         showAlert('Không thể tải chi tiết đơn hàng', 'danger');
@@ -109,11 +145,6 @@ const ShipperOrders = () => {
   };
 
   const handleShipOrder = async () => {
-    if (!trackingNumber.trim()) {
-      showAlert('Vui lòng nhập mã tracking', 'warning');
-      return;
-    }
-
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5000/api/shipper/orders/${selectedOrder.order._id}/ship`, {
@@ -121,15 +152,13 @@ const ShipperOrders = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ trackingNumber })
+        }
       });
 
       if (response.ok) {
         showAlert('Cập nhật trạng thái đơn hàng thành công', 'success');
         setShowShipModal(false);
-        setTrackingNumber('');
-        fetchOrders(statusFilter);
+        fetchOrders();
       } else {
         showAlert('Không thể cập nhật trạng thái đơn hàng', 'danger');
       }
@@ -139,6 +168,11 @@ const ShipperOrders = () => {
   };
 
   const handleCompleteOrder = async () => {
+    if (deliveryResult === 'failed' && !failureReason.trim()) {
+      showAlert('Vui lòng nhập lý do thất bại', 'warning');
+      return;
+    }
+
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5000/api/shipper/orders/${selectedOrder.order._id}/complete`, {
@@ -146,13 +180,24 @@ const ShipperOrders = () => {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          success: deliveryResult === 'success',
+          failureReason: deliveryResult === 'failed' ? failureReason : null
+        })
       });
 
       if (response.ok) {
-        showAlert('Đánh dấu đơn hàng hoàn thành thành công', 'success');
+        showAlert(
+          deliveryResult === 'success' 
+            ? 'Đánh dấu đơn hàng giao thành công' 
+            : 'Cập nhật trạng thái giao hàng thất bại thành công', 
+          deliveryResult === 'success' ? 'success' : 'warning'
+        );
         setShowCompleteModal(false);
-        fetchOrders(statusFilter);
+        setDeliveryResult('success');
+        setFailureReason('');
+        fetchOrders();
       } else {
         showAlert('Không thể cập nhật trạng thái đơn hàng', 'danger');
       }
@@ -168,161 +213,273 @@ const ShipperOrders = () => {
 
   if (loading) {
     return (
-      <Container className="py-4">
-        <div className="text-center">
-          <div className="spinner-border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </div>
+      <div className="so-loading-container">
+        <div className="spinner-border" role="status">
+          <span className="visually-hidden">Loading...</span>
         </div>
-      </Container>
+        <p className="mt-3 text-muted">Đang tải dữ liệu...</p>
+      </div>
     );
   }
 
   return (
-    <Container className="py-4">
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <h2>Đơn hàng giao</h2>
-            <Button variant="outline-primary" onClick={() => navigate('/shipper/dashboard')}>
-              Về Dashboard
-            </Button>
-          </div>
-        </Col>
-      </Row>
-
-      {alert.show && (
-        <Alert variant={alert.variant} dismissible onClose={() => setAlert({ show: false, message: '', variant: '' })}>
-          {alert.message}
-        </Alert>
-      )}
-
-      {/* Filters */}
-      <Card className="border-0 shadow-sm mb-4">
-        <Card.Body>
-          <Row className="align-items-center">
-            <Col md={6}>
-              <Form.Label className="fw-bold">
-                <FiFilter className="me-2" />
-                Lọc theo trạng thái:
-              </Form.Label>
-            </Col>
-            <Col md={6}>
-              <Form.Select 
-                value={statusFilter} 
-                onChange={(e) => handleStatusFilter(e.target.value)}
+    <div className="so-wrapper">
+      <div className="so-container">
+        <div className="so-header">
+          <div className="so-header-top">
+            <button 
+              className="so-back-btn"
+              onClick={() => navigate('/shipper/dashboard')}
+              title="Quay lại dashboard"
+            >
+              <FiArrowLeft size={20} />
+              <span>Quay lại</span>
+            </button>
+            <div className="so-header-actions">
+              <button 
+                className="btn btn-outline-primary"
+                onClick={() => fetchOrders(statusFilter)}
+                disabled={loading}
               >
-                <option value="">Tất cả trạng thái</option>
-                <option value="paid">Chờ giao</option>
-                <option value="shipped">Đang giao</option>
-                <option value="completed">Đã giao</option>
-              </Form.Select>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+                <FiRefreshCw className={`me-1 ${loading ? 'so-spinning' : ''}`} />
+                Làm mới
+              </button>
+            </div>
+          </div>
+          <div className="so-header-content">
+            <div>
+              <h1 className="so-page-title">Quản lý đơn hàng giao hàng</h1>
+              <p className="so-page-subtitle">Theo dõi và quản lý đơn hàng của bạn</p>
+            </div>
+          </div>
+        </div>
 
-      {/* Orders Table */}
-      <Card className="border-0 shadow-sm">
-        <Card.Header className="bg-light">
-          <h5 className="mb-0">
-            Danh sách đơn hàng 
-            {statusFilter && (
-              <Badge bg="secondary" className="ms-2">
-                {getStatusBadge(statusFilter)}
-              </Badge>
-            )}
-          </h5>
-        </Card.Header>
-        <Card.Body>
-          {orders.length > 0 ? (
-            <div className="table-responsive">
-              <Table hover>
-                <thead>
-                  <tr>
-                    <th>Mã đơn hàng</th>
-                    <th>Khách hàng</th>
-                    <th>Địa chỉ giao</th>
-                    <th>Tổng tiền</th>
-                    <th>Trạng thái</th>
-                    <th>Ngày tạo</th>
-                    <th>Thao tác</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.map((order) => (
-                    <tr key={order._id}>
-                      <td>
-                        <code>{order._id.slice(-8)}</code>
-                      </td>
-                      <td>
-                        <div>
-                          <div className="fw-bold">{order.buyerId?.fullName}</div>
-                          <small className="text-muted">{order.buyerId?.phone}</small>
-                        </div>
-                      </td>
-                      <td>
-                        <div className="small">
-                          {order.addressId?.address}
-                          {order.addressId?.city && (
-                            <div className="text-muted">{order.addressId.city}</div>
-                          )}
-                        </div>
-                      </td>
-                      <td>{formatCurrency(order.totalPrice)}</td>
-                      <td>{getStatusBadge(order.status)}</td>
-                      <td>
-                        <small>{formatDate(order.createdAt)}</small>
-                      </td>
-                      <td>
-                        <div className="d-flex gap-2">
-                          <Button 
-                            size="sm" 
-                            variant="outline-primary"
-                            onClick={() => handleViewDetails(order._id)}
+        <div className="so-content-wrapper">
+          <div className="row">
+            <div className="col-12">
+
+              {alert.show && (
+                <Alert variant={alert.variant} dismissible onClose={() => setAlert({ show: false, message: '', variant: '' })}>
+                  {alert.message}
+                </Alert>
+              )}
+
+              {/* Filters */}
+              <Card className="border-0 shadow-sm mb-4">
+                <Card.Body>
+                  <Row className="align-items-center">
+                    <Col md={6}>
+                      <Form.Label className="fw-bold">
+                        <FiFilter className="me-2" />
+                        Lọc theo trạng thái:
+                      </Form.Label>
+                    </Col>
+                    <Col md={6}>
+                      <Form.Select 
+                        value={statusFilter} 
+                        onChange={(e) => handleStatusFilter(e.target.value)}
+                      >
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="pending">Chờ xác nhận</option>
+                        <option value="confirmed">Đã xác nhận</option>
+                        <option value="awaiting_delivery">Chờ giao hàng</option>
+                        <option value="shipping">Đang giao hàng</option>
+                        <option value="delivered">Đã giao hàng</option>
+                        <option value="completed">Hoàn thành</option>
+                        <option value="cancelled">Đã hủy</option>
+                      </Form.Select>
+                    </Col>
+                  </Row>
+                </Card.Body>
+              </Card>
+
+              {/* Orders Table */}
+              <Card className="so-orders-card border-0 shadow-sm">
+                <Card.Header className="so-card-header bg-light border-0 py-3">
+                  <div className="d-flex justify-content-between align-items-center gap-3">
+                    <div className="d-flex align-items-center">
+                      <h5 className="mb-0 me-3">Danh sách đơn hàng</h5>
+                      <span className="badge bg-primary">{orders.length} đơn hàng</span>
+                    </div>
+                  </div>
+                </Card.Header>
+                <Card.Body className="p-0">
+                  {orders.length > 0 ? (
+                    <div className="table-responsive">
+                      <Table className="so-table table table-hover mb-0">
+                        <thead className="table-light">
+                          <tr>
+                            <th className="border-0 py-3 px-4 fw-semibold">Mã đơn hàng</th>
+                            <th className="border-0 py-3 px-4 fw-semibold">Khách hàng</th>
+                            <th className="border-0 py-3 px-4 fw-semibold">Địa chỉ giao</th>
+                            <th className="border-0 py-3 px-4 fw-semibold">Tổng tiền</th>
+                            <th className="border-0 py-3 px-4 fw-semibold">Trạng thái</th>
+                            <th className="border-0 py-3 px-4 fw-semibold">Ngày tạo</th>
+                            <th className="border-0 py-3 px-4 fw-semibold text-center">Thao tác</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {orders.map((order, index) => (
+                            <tr key={order._id} className={index % 2 === 0 ? 'table-light' : ''}>
+                              <td className="py-3 px-4">
+                                <div className="d-flex align-items-center">
+                                  <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                                    <FiPackage className="text-primary" size={16} />
+                                  </div>
+                                  <div>
+                                    <code className="fw-bold text-primary">#{order._id.slice(-8)}</code>
+                                    <br />
+                                    <small className="text-muted">ID: {order._id.slice(0, 8)}...</small>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div>
+                                  <div className="fw-bold">{order.buyerId?.fullName}</div>
+                                  <small className="text-muted">{order.buyerId?.phone}</small>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="small">
+                                  {order.addressId?.address}
+                                  {order.addressId?.city && (
+                                    <div className="text-muted">{order.addressId.city}</div>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="text-end">
+                                  <h6 className="mb-0 text-success fw-bold">{formatCurrency(order.totalPrice)}</h6>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4">
+                                {getStatusBadge(order.status)}
+                              </td>
+                              <td className="py-3 px-4">
+                                <div className="d-flex align-items-center">
+                                  <FiCalendar className="text-muted me-2" size={14} />
+                                  <div>
+                                    <div className="fw-semibold">{formatDate(order.createdAt)}</div>
+                                    <small className="text-muted">{new Date(order.createdAt).toLocaleTimeString('vi-VN')}</small>
+                                  </div>
+                                </div>
+                              </td>
+                              <td className="py-3 px-4 text-center">
+                                <div className="d-flex gap-2 justify-content-center">
+                                  <Button 
+                                    size="sm" 
+                                    variant="outline-primary"
+                                    onClick={() => handleViewDetails(order._id)}
+                                    title="Xem chi tiết"
+                                  >
+                                    <FiEye size={14} />
+                                  </Button>
+                                  {order.status === 'awaiting_delivery' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline-warning"
+                                      onClick={() => {
+                                        setSelectedOrder({ order });
+                                        setShowShipModal(true);
+                                      }}
+                                      title="Bắt đầu giao hàng"
+                                    >
+                                      <FiTruck size={14} />
+                                    </Button>
+                                  )}
+                                  {order.status === 'shipping' && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline-success"
+                                      onClick={() => {
+                                        setSelectedOrder({ order });
+                                        setShowCompleteModal(true);
+                                      }}
+                                      title="Hoàn thành giao hàng"
+                                    >
+                                      <FiCheckCircle size={14} />
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </Table>
+                    </div>
+                  ) : (
+                    <div className="text-center py-5">
+                      <FiPackage size={64} className="text-muted mb-3" />
+                      <h5 className="text-muted">Không có đơn hàng nào</h5>
+                      <p className="text-muted">Bạn chưa có đơn hàng nào được assign hoặc đã hoàn thành tất cả.</p>
+                    </div>
+                  )}
+                </Card.Body>
+
+                {totalOrders > 0 && (
+                  <div className="card-footer bg-white border-0 py-3">
+                    <div className="so-pagination-wrapper">
+                      <div className="so-pagination-info">
+                        <span className="text-muted">
+                          Hiển thị trang {currentPage} / {totalPages} - Tổng {totalOrders} đơn hàng
+                        </span>
+                      </div>
+                      <nav>
+                      <ul className="pagination pagination-sm mb-0">
+                        <li className={`page-item ${currentPage === 1 ? 'disabled' : ''}`}>
+                          <button 
+                            className="page-link" 
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage === 1}
                           >
-                            <FiEye size={14} />
-                          </Button>
-                          {order.status === 'paid' && (
-                            <Button 
-                              size="sm" 
-                              variant="outline-warning"
-                              onClick={() => {
-                                setSelectedOrder({ order });
-                                setShowShipModal(true);
-                              }}
-                            >
-                              <FiTruck size={14} />
-                            </Button>
-                          )}
-                          {order.status === 'shipped' && (
-                            <Button 
-                              size="sm" 
-                              variant="outline-success"
-                              onClick={() => {
-                                setSelectedOrder({ order });
-                                setShowCompleteModal(true);
-                              }}
-                            >
-                              <FiCheckCircle size={14} />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </Table>
+                            Trước
+                          </button>
+                        </li>
+                        {[...Array(totalPages)].map((_, index) => {
+                          const page = index + 1;
+                          const isCurrentPage = page === currentPage;
+                          const isNearCurrentPage = Math.abs(page - currentPage) <= 2;
+                          const isFirstPage = page === 1;
+                          const isLastPage = page === totalPages;
+                          
+                          if (!isNearCurrentPage && !isFirstPage && !isLastPage) {
+                            if (page === 2 || page === totalPages - 1) {
+                              return <li key={page} className="page-item disabled"><span className="page-link">...</span></li>;
+                            }
+                            return null;
+                          }
+                          
+                          return (
+                            <li key={page} className={`page-item ${isCurrentPage ? 'active' : ''}`}>
+                              <button 
+                                className="page-link" 
+                                onClick={() => handlePageChange(page)}
+                              >
+                                {page}
+                              </button>
+                            </li>
+                          );
+                        })}
+                        <li className={`page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
+                          <button 
+                            className="page-link" 
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage === totalPages}
+                          >
+                            Sau
+                          </button>
+                        </li>
+                      </ul>
+                    </nav>
+                  </div>
+                </div>
+                )}
+              </Card>
+
             </div>
-          ) : (
-            <div className="text-center py-5">
-              <FiPackage size={64} className="text-muted mb-3" />
-              <h5 className="text-muted">Không có đơn hàng nào</h5>
-              <p className="text-muted">Bạn chưa có đơn hàng nào được assign hoặc đã hoàn thành tất cả.</p>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
+          </div>
+        </div>
+      </div>
 
       {/* Order Details Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
@@ -342,19 +499,18 @@ const ShipperOrders = () => {
                 <Col md={6}>
                   <h6>Thông tin đơn hàng:</h6>
                   <p><strong>Mã đơn hàng:</strong> <code>{selectedOrder.order._id}</code></p>
+                  <p><strong>Ngày đặt:</strong> {formatDateTime(selectedOrder.order.createdAt)}</p>
                   <p><strong>Trạng thái:</strong> {getStatusBadge(selectedOrder.order.status)}</p>
                   <p><strong>Tổng tiền:</strong> {formatCurrency(selectedOrder.order.totalPrice)}</p>
-                  {selectedOrder.order.trackingNumber && (
-                    <p><strong>Mã tracking:</strong> <code>{selectedOrder.order.trackingNumber}</code></p>
-                  )}
                 </Col>
               </Row>
               
               <h6>Địa chỉ giao hàng:</h6>
               <div className="border rounded p-3 mb-3">
-                <p className="mb-1"><strong>{selectedOrder.order.addressId?.address}</strong></p>
-                <p className="mb-1">{selectedOrder.order.addressId?.city}</p>
-                <p className="mb-0">{selectedOrder.order.addressId?.district}</p>
+                <p className="mb-1"><strong>{selectedOrder.order.addressId?.fullName || 'N/A'}</strong></p>
+                <p className="mb-1"><small className="text-muted">SĐT: {selectedOrder.order.addressId?.phone || 'N/A'}</small></p>
+                <p className="mb-1">{selectedOrder.order.addressId?.address || 'N/A'}</p>
+                <p className="mb-0">{selectedOrder.order.addressId?.district || ''} {selectedOrder.order.addressId?.city || ''}</p>
               </div>
 
               <h6>Sản phẩm trong đơn hàng:</h6>
@@ -372,17 +528,88 @@ const ShipperOrders = () => {
                     {selectedOrder.orderItems?.map((item) => (
                       <tr key={item._id}>
                         <td>
-                          <div>
-                            <div className="fw-bold">{item.productId?.title}</div>
+                          <div className="d-flex align-items-center">
+                            {item.productId?.imageURL || item.productId?.image ? (
+                              <img
+                                src={item.productId?.imageURL || item.productId?.image}
+                                alt={item.productId?.title}
+                                style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px', marginRight: '12px' }}
+                              />
+                            ) : (
+                              <div style={{ width: '50px', height: '50px', backgroundColor: '#f0f0f0', borderRadius: '4px', marginRight: '12px' }}></div>
+                            )}
+                            <div>
+                              <div className="fw-bold">{item.productId?.title || 'Sản phẩm không xác định'}</div>
+                              {item.productId?.price && (
+                                <small className="text-muted">Giá gốc: {formatCurrency(item.productId.price)}</small>
+                              )}
+                            </div>
                           </div>
                         </td>
-                        <td>{item.quantity}</td>
+                        <td className="text-center">
+                          <span className="badge bg-primary">{item.quantity}</span>
+                        </td>
                         <td>{formatCurrency(item.unitPrice)}</td>
-                        <td>{formatCurrency(item.unitPrice * item.quantity)}</td>
+                        <td className="fw-bold text-success">{formatCurrency(item.unitPrice * item.quantity)}</td>
                       </tr>
                     ))}
                   </tbody>
+                  <tfoot>
+                    <tr className="table-light">
+                      <td colSpan="3" className="text-end fw-bold">Tổng cộng:</td>
+                      <td className="fw-bold text-success fs-5">
+                        {formatCurrency(selectedOrder.order.totalPrice)}
+                      </td>
+                    </tr>
+                  </tfoot>
                 </Table>
+              </div>
+
+              <hr className="my-4" />
+
+              <div className="row">
+                <Col md={6}>
+                  <h6 className="mb-3">
+                    <FiPackage className="me-2" />
+                    Thông tin thanh toán
+                  </h6>
+                  <div className="ps-3">
+                    <p className="mb-2">
+                      <strong>Phương thức:</strong>{' '}
+                      <span className="badge bg-info">
+                        {selectedOrder.order.paymentMethod === 'cod' ? 'COD' :
+                         selectedOrder.order.paymentMethod === 'bank_transfer' ? 'Chuyển khoản' :
+                         selectedOrder.order.paymentMethod === 'momo' ? 'MoMo' :
+                         selectedOrder.order.paymentMethod === 'zalopay' ? 'ZaloPay' :
+                         selectedOrder.order.paymentMethod}
+                      </span>
+                    </p>
+                    {selectedOrder.order.notes && (
+                      <p className="mb-2">
+                        <strong>Ghi chú:</strong><br />
+                        <em className="text-muted">{selectedOrder.order.notes}</em>
+                      </p>
+                    )}
+                  </div>
+                </Col>
+                <Col md={6}>
+                  <h6 className="mb-3">
+                    <FiCheckCircle className="me-2" />
+                    Trạng thái đơn hàng
+                  </h6>
+                  <div className="ps-3">
+                    <p className="mb-2">
+                      <strong>Hiện tại:</strong>{' '}
+                      {getStatusBadge(selectedOrder.order.status)}
+                    </p>
+                    {selectedOrder.order.deliveryFailureReason && (
+                      <p className="mb-2">
+                        <strong className="text-danger">Lý do thất bại:</strong><br />
+                        <span className="text-danger">{selectedOrder.order.deliveryFailureReason}</span>
+                      </p>
+                    )}
+                  </div>
+                </Col>
               </div>
             </div>
           )}
@@ -400,16 +627,7 @@ const ShipperOrders = () => {
           <Modal.Title>Xác nhận giao hàng</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form.Group className="mb-3">
-            <Form.Label>Mã tracking (tùy chọn)</Form.Label>
-            <Form.Control
-              type="text"
-              placeholder="Nhập mã tracking..."
-              value={trackingNumber}
-              onChange={(e) => setTrackingNumber(e.target.value)}
-            />
-          </Form.Group>
-          <p className="text-muted">
+          <p>
             Bạn có chắc chắn muốn đánh dấu đơn hàng này là "Đang giao"?
           </p>
         </Modal.Body>
@@ -424,23 +642,77 @@ const ShipperOrders = () => {
       </Modal>
 
       {/* Complete Order Modal */}
-      <Modal show={showCompleteModal} onHide={() => setShowCompleteModal(false)}>
+      <Modal show={showCompleteModal} onHide={() => {
+        setShowCompleteModal(false);
+        setDeliveryResult('success');
+        setFailureReason('');
+      }}>
         <Modal.Header closeButton>
-          <Modal.Title>Hoàn thành giao hàng</Modal.Title>
+          <Modal.Title>Xác nhận kết quả giao hàng</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>Bạn có chắc chắn muốn đánh dấu đơn hàng này là "Đã giao" thành công?</p>
+          <Form.Group className="mb-3">
+            <Form.Label className="fw-bold">Kết quả giao hàng:</Form.Label>
+            <div>
+              <Form.Check
+                type="radio"
+                label="Giao hàng thành công"
+                name="deliveryResult"
+                id="success"
+                checked={deliveryResult === 'success'}
+                onChange={() => setDeliveryResult('success')}
+              />
+              <Form.Check
+                type="radio"
+                label="Giao hàng thất bại"
+                name="deliveryResult"
+                id="failed"
+                checked={deliveryResult === 'failed'}
+                onChange={() => setDeliveryResult('failed')}
+              />
+            </div>
+          </Form.Group>
+
+          {deliveryResult === 'failed' && (
+            <Form.Group className="mb-3">
+              <Form.Label>Lý do thất bại (bắt buộc):</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                placeholder="Nhập lý do thất bại giao hàng..."
+                value={failureReason}
+                onChange={(e) => setFailureReason(e.target.value)}
+              />
+              <Form.Text className="text-muted">
+                Ví dụ: Khách hàng không có nhà, Địa chỉ sai, Khách hàng từ chối nhận hàng...
+              </Form.Text>
+            </Form.Group>
+          )}
+
+          <Alert variant={deliveryResult === 'success' ? 'success' : 'warning'} className="mb-0">
+            {deliveryResult === 'success' 
+              ? 'Đơn hàng sẽ được đánh dấu "Đã giao thành công"'
+              : 'Đơn hàng sẽ được đánh dấu "Giao thất bại" và cần lý do chi tiết'
+            }
+          </Alert>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowCompleteModal(false)}>
+          <Button variant="secondary" onClick={() => {
+            setShowCompleteModal(false);
+            setDeliveryResult('success');
+            setFailureReason('');
+          }}>
             Hủy
           </Button>
-          <Button variant="success" onClick={handleCompleteOrder}>
-            Xác nhận hoàn thành
+          <Button 
+            variant={deliveryResult === 'success' ? 'success' : 'warning'}
+            onClick={handleCompleteOrder}
+          >
+            {deliveryResult === 'success' ? 'Xác nhận thành công' : 'Xác nhận thất bại'}
           </Button>
         </Modal.Footer>
       </Modal>
-    </Container>
+    </div>
   );
 };
 
