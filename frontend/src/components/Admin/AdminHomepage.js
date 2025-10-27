@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus } from 'react-icons/fi';
+import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus, FiUserCheck } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,11 +50,8 @@ const AdminHomepage = () => {
         <Container>
           <Row>
             <Col>
-              <h1 className="display-4 fw-bold">Admin Dashboard</h1>
+              <h1 className="display-4 fw-bold">Dev Admin Dashboard</h1>
               <p className="lead">Quản lý hệ thống và giám sát hoạt động</p>
-              <Button variant="light" onClick={() => navigate('/')}>
-                Quay lại cửa hàng
-              </Button>
             </Col>
           </Row>
         </Container>
@@ -148,11 +145,25 @@ const AdminHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-warning text-white">
+                <h5 className="mb-0">Duyệt đơn đăng ký Seller</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">Xem và duyệt các đơn đăng ký trở thành seller</p>
+                <Button variant="warning" onClick={() => navigate('/admin/seller-applications')}>
+                  <FiUserCheck className="me-2" />
+                  Duyệt đơn Seller
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={6} className="mb-4">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Header className="bg-secondary text-white">
                 <h5 className="mb-0">Cài đặt hệ thống</h5>
               </Card.Header>
               <Card.Body>
                 <p className="text-muted">Cấu hình và cài đặt các tham số hệ thống</p>
-                <Button variant="warning" onClick={() => navigate('/admin/settings')}>
+                <Button variant="secondary" onClick={() => navigate('/admin/settings')}>
                   <FiSettings className="me-2" />
                   Cài đặt
                 </Button>

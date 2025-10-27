@@ -1,16 +1,53 @@
-import React from 'react';
-import { Container, Row, Col, Card, Button, Alert, Spinner } from 'react-bootstrap';
-import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin } from 'react-icons/fi';
+import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Button, Alert, Spinner, Badge } from 'react-bootstrap';
+import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin, FiTruck, FiPackage, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 function Profile() {
-  const { user, loading, logout } = useAuth();
+  const { user, loading, logout, isShipper } = useAuth();
   const navigate = useNavigate();
+  const [shipperStats, setShipperStats] = useState(null);
+  const [loadingStats, setLoadingStats] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
+  };
+
+  // Fetch shipper stats if user is a shipper
+  useEffect(() => {
+    if (isShipper()) {
+      fetchShipperStats();
+    }
+  }, [isShipper]);
+
+  const fetchShipperStats = async () => {
+    try {
+      setLoadingStats(true);
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/shipper/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setShipperStats(data);
+      }
+    } catch (error) {
+      console.error('Error fetching shipper stats:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  };
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND'
+    }).format(amount);
   };
 
   if (loading) {
@@ -107,11 +144,16 @@ function Profile() {
                           <div>
                             <small className="text-muted">Vai trò</small>
                             <div className="fw-medium">
-                              <span className={`badge ${user.role === 'admin' ? 'bg-danger' :
-                                user.role === 'seller' ? 'bg-warning' : 'bg-info'
-                                }`}>
-                                {user.role === 'admin' ? 'Quản trị viên' :
-                                  user.role === 'seller' ? 'Người bán' : 'Khách hàng'}
+                              <span className={`badge ${
+                                user.role === 'devadmin' ? 'bg-danger' :
+                                user.role === 'admin' ? 'bg-warning' :
+                                user.role === 'seller' ? 'bg-primary' :
+                                user.role === 'shipper' ? 'bg-success' : 'bg-info'
+                              }`}>
+                                {user.role === 'devadmin' ? 'Dev Admin' :
+                                 user.role === 'admin' ? 'Admin' :
+                                 user.role === 'seller' ? 'Người bán' :
+                                 user.role === 'shipper' ? 'Người giao hàng' : 'Khách hàng'}
                               </span>
                             </div>
                           </div>
@@ -120,11 +162,69 @@ function Profile() {
                     </div>
                   </div>
 
+                  {/* Shipper Stats Section */}
+                  {isShipper() && (
+                    <div className="mb-4">
+                      <h5 className="text-success mb-3">
+                        <FiTruck className="me-2" />
+                        Thống kê giao hàng
+                      </h5>
+                      {loadingStats ? (
+                        <div className="text-center py-3">
+                          <Spinner size="sm" animation="border" variant="success" />
+                          <span className="ms-2 text-muted">Đang tải thống kê...</span>
+                        </div>
+                      ) : shipperStats ? (
+                        <Row className="g-3">
+                          <Col md={3}>
+                            <div className="text-center p-3 border rounded">
+                              <FiCheckCircle size={24} className="text-success mb-2" />
+                              <h6 className="text-success mb-1">{shipperStats.stats?.totalDelivered || 0}</h6>
+                              <small className="text-muted">Đã giao</small>
+                            </div>
+                          </Col>
+                          <Col md={3}>
+                            <div className="text-center p-3 border rounded">
+                              <FiTruck size={24} className="text-warning mb-2" />
+                              <h6 className="text-warning mb-1">{shipperStats.stats?.totalShipping || 0}</h6>
+                              <small className="text-muted">Đang giao</small>
+                            </div>
+                          </Col>
+                          <Col md={3}>
+                            <div className="text-center p-3 border rounded">
+                              <FiClock size={24} className="text-info mb-2" />
+                              <h6 className="text-info mb-1">{shipperStats.stats?.totalPending || 0}</h6>
+                              <small className="text-muted">Chờ giao</small>
+                            </div>
+                          </Col>
+                          <Col md={3}>
+                            <div className="text-center p-3 border rounded">
+                              <FiDollarSign size={24} className="text-primary mb-2" />
+                              <h6 className="text-primary mb-1">{formatCurrency(shipperStats.stats?.totalEarnings || 0)}</h6>
+                              <small className="text-muted">Thu nhập</small>
+                            </div>
+                          </Col>
+                        </Row>
+                      ) : (
+                        <Alert variant="info" className="mb-0">
+                          <FiPackage className="me-2" />
+                          Chưa có thống kê giao hàng
+                        </Alert>
+                      )}
+                    </div>
+                  )}
+
                   <div className="d-flex gap-2">
                     <Button variant="primary" onClick={() => navigate('/change-password')}>
                       <FiEdit className="me-1" />
                       Đổi mật khẩu
                     </Button>
+                    {isShipper() && (
+                      <Button variant="success" onClick={() => navigate('/shipper/dashboard')}>
+                        <FiTruck className="me-1" />
+                        Dashboard Shipper
+                      </Button>
+                    )}
                     <Button variant="outline-danger" onClick={handleLogout}>
                       <FiLogOut className="me-1" />
                       Đăng xuất

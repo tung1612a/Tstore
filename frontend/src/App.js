@@ -22,9 +22,18 @@ import AdminDashboard from "./components/Admin/AdminDashboard";
 import SellerDashboard from "./components/Seller/SellerDashboard";
 import AdminHomepage from "./components/Admin/AdminHomepage";
 import SellerHomepage from "./components/Seller/SellerHomepage";
+import SellerProducts from "./components/Seller/SellerProducts";
+import OrderManagement from "./components/Orders/OrderManagement";
+import ShipperHomepage from "./components/Shipper/ShipperHomepage";
+import ShipperDashboard from "./components/Shipper/ShipperDashboard";
+import ShipperOrders from "./components/Shipper/ShipperOrders";
+import DevAdmin from "./components/Admin/DevAdmin";
 import RoleRedirect from "./components/RoleRedirect";
 import AddressPage from "./components/Address/AddressPage";
 import AdminUser from "./components/Admin/AdminUser";
+import ListProduct from "./components/DevAdmin/ListProduct";
+import SellerReports from "./components/Seller/SellerReport";
+import SellerApplications from "./components/Admin/SellerApplications";
 
 function App() {
   return (
@@ -55,16 +64,31 @@ function App() {
             <Route path="/change-password" element={<ProtectedRoute><ChangePassword /></ProtectedRoute>} />
 
             {/* Admin routes */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><AdminHomepage /></ProtectedRoute>}/>
+            <Route path="/admin" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminHomepage /></ProtectedRoute>}/>
+            {/* <Route path="/dev-admin" element={<DevAdmin />} /> */}
+
+            {/* DevAdmin routes */}
+            <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="devadmin"><AdminDashboard /></ProtectedRoute>}/>
 
             <Route path="/admin/users" element={<AdminUser />} />
 
-            {/* <Route path="/admin/dashboard" element={<ProtectedRoute requiredRole="admin"><AdminDashboard /></ProtectedRoute>}/> */}
+            <Route path="/admin/products" element={<ListProduct />} />
+
+            <Route path="/admin/seller-applications" element={<ProtectedRoute requiredRole="admin"><SellerApplications /></ProtectedRoute>} />
 
             {/* Seller routes */}
             <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>
 
-            <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}/>
+            {/* <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}/> */}
+            <Route path="/seller/products" element={<ProtectedRoute requiredRole="seller"><SellerProducts /></ProtectedRoute>}/>
+            <Route path="/seller/orders" element={<ProtectedRoute requiredRole="seller"><OrderManagement /></ProtectedRoute>}/>
+            <Route path="/seller/reports" element={<ProtectedRoute requiredRole="seller"><SellerReports /></ProtectedRoute>}/>
+
+            {/* Shipper routes */}
+            <Route path="/shipper" element={<ProtectedRoute requiredRole="shipper"><ShipperHomepage /></ProtectedRoute>}/>
+            <Route path="/shipper/dashboard" element={<ProtectedRoute requiredRole="shipper"><ShipperDashboard /></ProtectedRoute>}/>
+            <Route path="/shipper/orders" element={<ProtectedRoute requiredRole="shipper"><ShipperOrders /></ProtectedRoute>}/>
+            <Route path="/shipper/orders/:id" element={<ProtectedRoute requiredRole="shipper"><ShipperOrders /></ProtectedRoute>}/>
 
           </Routes>
         </BrowserRouter>

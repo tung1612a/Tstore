@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
+import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
-  const [recentUsers, setRecentUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => { 
     fetchDashboardData();
   }, []);
 
@@ -22,7 +25,6 @@ const AdminDashboard = () => {
       if (response.ok) {
         const data = await response.json();
         setStats(data.stats);
-        setRecentUsers(data.recentUsers);
       }
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -42,92 +44,127 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="container-fluid">
-      <div className="row">
-        <div className="col-12">
-          <h1 className="mb-4">Admin Dashboard</h1>
-          
-          {/* Stats Cards */}
-          <div className="row mb-4">
-            <div className="col-md-3 mb-3">
-              <div className="card bg-primary text-white">
-                <div className="card-body">
-                  <h5 className="card-title">Total Users</h5>
-                  <h2>{stats?.totalUsers || 0}</h2>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3 mb-3">
-              <div className="card bg-success text-white">
-                <div className="card-body">
-                  <h5 className="card-title">Total Sellers</h5>
-                  <h2>{stats?.totalSellers || 0}</h2>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3 mb-3">
-              <div className="card bg-info text-white">
-                <div className="card-body">
-                  <h5 className="card-title">Total Products</h5>
-                  <h2>{stats?.totalProducts || 0}</h2>
-                </div>
-              </div>
-            </div>
-            <div className="col-md-3 mb-3">
-              <div className="card bg-warning text-white">
-                <div className="card-body">
-                  <h5 className="card-title">Total Orders</h5>
-                  <h2>{stats?.totalOrders || 0}</h2>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Recent Users */}
-          <div className="row">
-            <div className="col-12">
-              <div className="card">
-                <div className="card-header">
-                  <h5 className="card-title mb-0">Recent Users</h5>
-                </div>
-                <div className="card-body">
-                  <div className="table-responsive">
-                    <table className="table table-striped">
-                      <thead>
-                        <tr>
-                          <th>Name</th>
-                          <th>Email</th>
-                          <th>Role</th>
-                          <th>Phone</th>
-                          <th>Created At</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {recentUsers.map(user => (
-                          <tr key={user._id}>
-                            <td>{user.fullName}</td>
-                            <td>{user.email}</td>
-                            <td>
-                              <span className={`badge ${
-                                user.role === 'admin' ? 'bg-danger' :
-                                user.role === 'seller' ? 'bg-warning' : 'bg-primary'
-                              }`}>
-                                {user.role}
-                              </span>
-                            </td>
-                            <td>{user.phone || 'N/A'}</td>
-                            <td>{new Date(user.createdAt).toLocaleDateString()}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+    <div className="min-vh-100 bg-light">
+      {/* Hero Section */}
+      <div className="bg-primary text-white py-5">
+        <Container>
+          <Row>
+            <Col>
+              <h1 className="display-4 fw-bold">Dev Admin Dashboard</h1>
+              <p className="lead">Quản lý hệ thống và giám sát hoạt động</p>
+            </Col>
+          </Row>
+        </Container>
       </div>
+
+      <Container className="py-5">
+        {/* Quick Stats */}
+        <Row className="mb-5">
+          <Col md={3} className="mb-3">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Body className="text-center">
+                <FiUsers className="text-primary mb-3" size={48} />
+                <h3 className="text-primary">{stats?.totalUsers || 0}</h3>
+                <p className="text-muted mb-0">Tổng người dùng</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3} className="mb-3">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Body className="text-center">
+                <FiPackage className="text-success mb-3" size={48} />
+                <h3 className="text-success">{stats?.totalProducts || 0}</h3>
+                <p className="text-muted mb-0">Sản phẩm</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3} className="mb-3">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Body className="text-center">
+                <FiShoppingCart className="text-info mb-3" size={48} />
+                <h3 className="text-info">{stats?.totalOrders || 0}</h3>
+                <p className="text-muted mb-0">Đơn hàng</p>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={3} className="mb-3">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Body className="text-center">
+                <FiUsers className="text-warning mb-3" size={48} />
+                <h3 className="text-warning">{stats?.totalSellers || 0}</h3>
+                <p className="text-muted mb-0">Người bán</p>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+        {/* Quick Actions */}
+        <Row>
+          <Col md={6} className="mb-4">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Header className="bg-primary text-white">
+                <h5 className="mb-0">Quản lý người dùng</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">Xem và quản lý tất cả người dùng trong hệ thống</p>
+                <Button variant="primary" onClick={() => navigate('/admin/users')}>
+                  <FiUsers className="me-2" />
+                  Quản lý Users
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={6} className="mb-4">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Header className="bg-success text-white">
+                <h5 className="mb-0">Báo cáo & Thống kê</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">Xem báo cáo chi tiết và thống kê hệ thống</p>
+                <Button variant="success" onClick={() => navigate('/admin/reports')}>
+                  <FiBarChart className="me-2" />
+                  Xem Báo cáo
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={6} className="mb-4">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Header className="bg-info text-white">
+                <h5 className="mb-0">Quản lý sản phẩm</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">Kiểm duyệt và quản lý sản phẩm của sellers</p>
+                <Button variant="info" onClick={() => navigate('/admin/products')}>
+                  <FiPackage className="me-2" />
+                  Quản lý Sản phẩm
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={6} className="mb-4">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Header className="bg-warning text-white">
+                <h5 className="mb-0">Cài đặt hệ thống</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">Cấu hình và cài đặt các tham số hệ thống</p>
+                <Button variant="warning" onClick={() => navigate('/admin/settings')}>
+                  <FiSettings className="me-2" />
+                  Cài đặt
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+        <Row>
+          <Col>
+            <Button variant="secondary" onClick={() => navigate('/login')}>
+              Đăng xuất
+            </Button>
+          </Col>
+        </Row>
+      </Container>
     </div>
   );
 };

@@ -8,6 +8,7 @@ import HeroCarousel from "../HeroCarousel"
 import Footer from "../Footer"
 import CategoriesRow from "../CategoriesRow"
 import SearchBar from "../SearchBar"
+import SellerFeatures from "../SellerFeatures"
 
 // QUAN TRỌNG: Cập nhật đường dẫn import cho các component Product
 import ProductCard from "../Product/ProductCard"
@@ -90,7 +91,13 @@ function App() {
             <div className="search-container">
               <SearchBar onSearch={setKeyword} />
             </div>
-
+            <div className="section-header">
+              <h2 className="section-title">Danh sách sản phẩm</h2>
+              <p className="section-subtitle">
+                Khám phá các sản phẩm phù hợp với nhu cầu của bạn
+              </p>
+            </div>
+            <ProductList keyword={keyword} categoryId={categoryId} />
             <div className="section-header">
               <h2 className="section-title">Sản phẩm nổi bật</h2>
               <p className="section-subtitle">Khám phá những sản phẩm được yêu thích nhất</p>
@@ -100,12 +107,11 @@ function App() {
                 <ProductCard key={p._id} product={p} />
               ))}
             </div>
-            <ProductList keyword={keyword} categoryId={categoryId} />
-            <div className="section-header">
-              <h2 className="section-title">Tất cả sản phẩm</h2>
-              <p className="section-subtitle">Bộ sưu tập đầy đủ các sản phẩm chất lượng</p>
-            </div>
-            <ProductList keyword={keyword} categoryId={categoryId} />
+
+
+
+
+
             {/* --- THAY ĐỔI CHÍNH --- */}
             {/* Toàn bộ logic hiển thị loading, error, và map qua sản phẩm... */}
             {/* ...giờ được thay thế bằng một dòng duy nhất này. */}

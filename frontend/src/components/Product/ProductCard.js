@@ -5,25 +5,67 @@ import { Card, Badge, Button } from "react-bootstrap"
 import { FiHeart, FiShoppingCart, FiStar } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
-import { addToCart } from "../../store/cartSlice"
+import { addToCart, addToCartLocal } from "../../store/cartSlice"
+import { useAuth } from "../../contexts/AuthContext"
 
-function ProductCard({ product }) {
+function ProductCard({ product, hideStoreButton = false }) {
   const price = product.price?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
   const [isLiked, setIsLiked] = React.useState(false)
   const [isAddingToCart, setIsAddingToCart] = React.useState(false)
   const navigate = useNavigate()
   const dispatch = useDispatch()
+  const { user, isAuthenticated } = useAuth()
+
+  // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
+  const isOwnProduct = user && user.role === 'seller' && (
+    product.sellerId?._id === user._id ||
+    product.sellerId === user._id ||
+    product.seller?._id === user._id ||
+    product.seller === user._id
+  )
 
   // Helper function for adding to cart
   const handleAddToCart = async (e) => {
     e.stopPropagation()
-    
+
     if (isAddingToCart) return
-    
+
+    // Kiểm tra nếu chưa đăng nhập
+    if (!isAuthenticated) {
+      alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
+      navigate('/login')
+      return
+    }
+
+    // Kiểm tra nếu seller cố mua sản phẩm của chính mình
+    if (isOwnProduct) {
+      alert('Bạn không thể mua sản phẩm của chính mình!')
+      return
+    }
+
     setIsAddingToCart(true)
-    
+
     try {
-      await dispatch(addToCart({ productId: product._id, quantity: 1 })).unwrap()
+      // Tạo payload với đầy đủ thông tin sản phẩm
+      const cartPayload = {
+        productId: product._id,
+        quantity: 1,
+        product: {
+          _id: product._id,
+          title: product.title,
+          price: product.price,
+          image: product.image || product.imageURL,
+          imageURL: product.imageURL || product.image
+        }
+      }
+
+      try {
+        await dispatch(addToCart(cartPayload)).unwrap()
+      } catch (apiError) {
+        console.warn('API failed, using local cart:', apiError)
+        // Fallback to local cart if API fails
+        dispatch(addToCartLocal(cartPayload))
+      }
     } catch (error) {
       console.error('Error adding to cart:', error)
       alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
@@ -105,7 +147,7 @@ function ProductCard({ product }) {
           <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
             Cửa hàng: {product.storeInfo.storeName}
           </div>
-        ) : ( (product.sellerId?.fullName || product.seller?.fullName) && (
+        ) : ((product.sellerId?.fullName || product.seller?.fullName) && (
           <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
             Người bán: {product.sellerId?.fullName || product.seller?.fullName}
           </div>
@@ -133,30 +175,41 @@ function ProductCard({ product }) {
           </div>
           {typeof product.inventoryQuantity === 'number' && (
             <div className="text-muted" style={{ fontSize: "12px" }}>
-              Còn {product.inventoryQuantity} sản phẩm
+              Còn {product.stock} sản phẩm
             </div>
           )}
         </div>
 
         <Button
-          variant="primary"
+          variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
           size="sm"
           className="w-100 d-flex align-items-center justify-content-center"
-          disabled={isAddingToCart}
+          disabled={isAddingToCart || isOwnProduct}
           style={{
-            background: isAddingToCart 
-              ? "#6c757d" 
-              : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
-            border: "none",
+            background: !isAuthenticated
+              ? "transparent"
+              : isOwnProduct
+                ? "#6c757d"
+                : isAddingToCart
+                  ? "#6c757d"
+                  : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+            border: !isAuthenticated ? "2px solid #007bff" : "none",
             borderRadius: "8px",
             fontWeight: "600",
           }}
           onClick={handleAddToCart}
         >
           <FiShoppingCart className="me-2" size={16} />
-          {isAddingToCart ? 'Đang thêm...' : 'Thêm vào giỏ'}
+          {!isAuthenticated
+            ? 'Đăng nhập để mua'
+            : isOwnProduct
+              ? 'Sản phẩm của bạn'
+              : isAddingToCart
+                ? 'Đang thêm...'
+                : 'Thêm vào giỏ'
+          }
         </Button>
-        {(product.sellerId?._id || product.sellerId) && (
+        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && (
           <Button
             variant="outline-secondary"
             size="sm"

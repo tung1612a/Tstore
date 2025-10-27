@@ -128,10 +128,10 @@ const SellerHomepage = () => {
                     <FiPackage className="me-2" />
                     Xem tất cả sản phẩm
                   </Button>
-                  <Button variant="outline-primary" onClick={() => navigate('/seller/products/new')}>
+                  {/* <Button variant="outline-primary" onClick={() => navigate('/seller/products/new')}>
                     <FiPlus className="me-2" />
                     Thêm sản phẩm mới
-                  </Button>
+                  </Button> */}
                 </div>
               </Card.Body>
             </Card>

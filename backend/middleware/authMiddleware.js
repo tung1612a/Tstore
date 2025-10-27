@@ -18,7 +18,7 @@ export const protect = async (req, res, next) => {
 };
 
 export const adminOnly = (req, res, next) => {
-  if (req.user && req.user.role === "admin") next();
+  if (req.user && req.user.role === "admin" || req.user.role === "devadmin") next();
   else res.status(403).json({ message: "Admin access required" });
 };
 
@@ -30,4 +30,14 @@ export const sellerOnly = (req, res, next) => {
 export const adminOrSeller = (req, res, next) => {
   if (req.user && (req.user.role === "admin" || req.user.role === "seller")) next();
   else res.status(403).json({ message: "Admin or Seller access required" });
+};
+
+export const shipperOnly = (req, res, next) => {
+  if (req.user && req.user.role === "shipper") next();
+  else res.status(403).json({ message: "Shipper access required" });
+};
+
+export const adminOrShipper = (req, res, next) => {
+  if (req.user && (req.user.role === "admin" || req.user.role === "shipper")) next();
+  else res.status(403).json({ message: "Admin or Shipper access required" });
 };

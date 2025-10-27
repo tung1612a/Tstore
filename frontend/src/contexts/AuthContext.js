@@ -119,6 +119,10 @@ export const AuthProvider = ({ children }) => {
     return state.user && state.user.role === 'admin';
   };
 
+  const isDevAdmin = () => {
+    return state.user && state.user.role === 'devadmin';
+  };
+
   const isSeller = () => {
     return state.user && state.user.role === 'seller';
   };
@@ -127,13 +131,75 @@ export const AuthProvider = ({ children }) => {
     return state.user && state.user.role === 'customer';
   };
 
+  const isShipper = () => {
+    return state.user && state.user.role === 'shipper';
+  };
+
+  const hasPermission = (permission) => {
+    if (!state.user) return false;
+    
+    const role = state.user.role;
+    
+    // DevAdmin có tất cả quyền
+    if (role === 'devadmin') return true;
+    
+    // Admin có quyền business
+    if (role === 'admin') {
+      const adminPermissions = [
+        'manage_products',
+        'manage_orders', 
+        'manage_users',
+        'manage_sellers',
+        'view_analytics',
+        'manage_categories',
+        'manage_promotions'
+      ];
+      return adminPermissions.includes(permission);
+    }
+    
+    // Seller có quyền riêng
+    if (role === 'seller') {
+      const sellerPermissions = [
+        'manage_own_products',
+        'manage_own_orders',
+        'view_own_analytics'
+      ];
+      return sellerPermissions.includes(permission);
+    }
+    
+    // Shipper có quyền riêng
+    if (role === 'shipper') {
+      const shipperPermissions = [
+        'view_assigned_orders',
+        'update_order_status',
+        'manage_delivery'
+      ];
+      return shipperPermissions.includes(permission);
+    }
+    
+    // Customer có quyền cơ bản
+    if (role === 'customer') {
+      const customerPermissions = [
+        'view_products',
+        'place_orders',
+        'manage_own_profile'
+      ];
+      return customerPermissions.includes(permission);
+    }
+    
+    return false;
+  };
+
   const value = {
     ...state,
     login,
     logout,
     isAdmin,
+    isDevAdmin,
     isSeller,
-    isCustomer
+    isCustomer,
+    isShipper,
+    hasPermission
   };
 
   return (

@@ -72,6 +72,21 @@ const cartSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    // Add to cart locally (fallback)
+    addToCartLocal: (state, action) => {
+      const { productId, quantity, product } = action.payload;
+      const existingItem = state.items.find(item => item.productId === productId);
+      
+      if (existingItem) {
+        existingItem.quantity += quantity;
+      } else {
+        state.items.push({
+          productId,
+          quantity,
+          product: product || { _id: productId, title: 'Sản phẩm', price: 0 }
+        });
+      }
+    },
   },
   extraReducers: (builder) => {
     // Fetch cart
@@ -156,5 +171,5 @@ const cartSlice = createSlice({
   }
 });
 
-export const { clearError } = cartSlice.actions;
+export const { clearError, addToCartLocal } = cartSlice.actions;
 export default cartSlice.reducer;

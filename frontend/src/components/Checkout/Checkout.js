@@ -112,6 +112,7 @@ const Checkout = () => {
         addressId: selectedAddress,
         storeId: items[0]?.storeId || 'default',
         notes,
+        paymentMethod,
       };
 
       const orderResponse = await fetch('http://localhost:5000/api/orders', {
@@ -126,45 +127,55 @@ const Checkout = () => {
       if (orderResponse.ok) {
         const order = await orderResponse.json();
 
-        const paymentData = {
-          orderId: order._id,
-          method: paymentMethod,
-        };
+        // Chỉ tạo payment cho các phương thức khác COD
+        if (paymentMethod !== 'cod') {
+          const paymentData = {
+            orderId: order._id,
+            method: paymentMethod,
+          };
 
-        const paymentResponse = await fetch('http://localhost:5000/api/payments', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(paymentData),
-        });
-
-        if (paymentResponse.ok) {
-          const payment = await paymentResponse.json();
-
-          // Xử lý thanh toán
-          const processResponse = await fetch(`http://localhost:5000/api/payments/${payment._id}/process`, {
+          const paymentResponse = await fetch('http://localhost:5000/api/payments', {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
               Authorization: `Bearer ${token}`,
             },
-            body: JSON.stringify({
-              status: 'paid',
-              transactionId: `TXN_${Date.now()}`,
-            }),
+            body: JSON.stringify(paymentData),
           });
 
-          if (processResponse.ok) {
-            try {
-              await dispatch(clearCart()).unwrap();
-            } catch (error) {
-              console.error('Error clearing cart:', error);
+          if (paymentResponse.ok) {
+            const payment = await paymentResponse.json();
+
+            // Xử lý thanh toán
+            const processResponse = await fetch(`http://localhost:5000/api/payments/${payment._id}/process`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                status: 'paid',
+                transactionId: `TXN_${Date.now()}`,
+              }),
+            });
+
+            if (processResponse.ok) {
+              try {
+                await dispatch(clearCart()).unwrap();
+              } catch (error) {
+                console.error('Error clearing cart:', error);
+              }
+              navigate('/');
             }
-            // navigate('/orders', { state: { orderId: order._id } });
-            navigate('/');
           }
+        } else {
+          // Đối với COD, chỉ cần clear cart và chuyển hướng
+          try {
+            await dispatch(clearCart()).unwrap();
+          } catch (error) {
+            console.error('Error clearing cart:', error);
+          }
+          navigate('/');
         }
       }
     } catch (error) {
@@ -290,6 +301,7 @@ const Checkout = () => {
                         />
                       </div>
                       <input
+                        className="form-row"
                         type="text"
                         placeholder="Địa chỉ cụ thể *"
                         value={newAddress.street}
