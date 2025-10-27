@@ -163,7 +163,7 @@ const AdminHomepage = () => {
               </Card.Body>
             </Card>
           </Col>
-          <Col md={6} className="mb-4">
+          {/* <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-info text-white">
                 <h5 className="mb-0">Quản lý sản phẩm</h5>
@@ -176,7 +176,7 @@ const AdminHomepage = () => {
                 </Button>
               </Card.Body>
             </Card>
-          </Col>
+          </Col> */}
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-warning text-white">
