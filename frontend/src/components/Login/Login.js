@@ -27,9 +27,9 @@ function Login() {
         const userRole = result.user?.role;
 
         if (userRole === "devadmin") {
-          navigate("/admin/dashboard");
+          navigate("/admin/dashboard", { state: { loginSuccess: true } });
         } else {
-          navigate("/");
+          navigate("/", { state: { loginSuccess: true } });
         }
       } else {
         setError(result.message || "Đăng nhập thất bại");

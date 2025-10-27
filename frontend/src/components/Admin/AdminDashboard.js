@@ -1,18 +1,43 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus } from 'react-icons/fi';
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Toast,
+  ToastContainer
+} from 'react-bootstrap';
+import {
+  FiUsers,
+  FiPackage,
+  FiShoppingCart,
+  FiBarChart,
+  FiSettings
+} from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AdminDashboard = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // 👈 lấy state từ navigate()
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showToast, setShowToast] = useState(false); // 👈 state cho toast
 
-  useEffect(() => { 
+  useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  // 👇 Kiểm tra nếu vừa đăng nhập thành công (từ Login chuyển sang)
+  useEffect(() => {
+    if (location.state?.loginSuccess) {
+      setShowToast(true);
+      // Xóa state để khi reload lại không hiện lại
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const fetchDashboardData = async () => {
     try {
@@ -157,6 +182,7 @@ const AdminDashboard = () => {
             </Card>
           </Col>
         </Row>
+
         <Row>
           <Col>
             <Button variant="secondary" onClick={() => navigate('/login')}>
@@ -165,6 +191,22 @@ const AdminDashboard = () => {
           </Col>
         </Row>
       </Container>
+
+      {/* ✅ Toast thông báo đăng nhập thành công */}
+      <ToastContainer position="top-end" className="p-3">
+        <Toast
+          bg="success"
+          onClose={() => setShowToast(false)}
+          show={showToast}
+          delay={1500}
+          autohide
+        >
+          <Toast.Header>
+            <strong className="me-auto">Thông báo</strong>
+          </Toast.Header>
+          <Toast.Body className="text-white">Đăng nhập thành công</Toast.Body>
+        </Toast>
+      </ToastContainer>
     </div>
   );
 };
