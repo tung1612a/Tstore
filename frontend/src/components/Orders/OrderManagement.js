@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Dropdown } from 'react-bootstrap';
@@ -19,7 +19,7 @@ import {
   FiMessageSquare,
   FiMenu,
   FiArrowLeft,
-  FiX
+  FiX,
 } from 'react-icons/fi';
 import './OrderManagement.css';
 
@@ -32,6 +32,17 @@ const OrderManagement = () => {
   const [selectedStatus, setSelectedStatus] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [showOrderDetails, setShowOrderDetails] = useState(false);
+  const [showShipperModal, setShowShipperModal] = useState(false);
+  const [shippers, setShippers] = useState([]);
+  const [selectedShipperId, setSelectedShipperId] = useState(null);
+  const [orderToConfirm, setOrderToConfirm] = useState(null);
+  const [shipperSearchTerm, setShipperSearchTerm] = useState('');
+  const [shipperSortBy, setShipperSortBy] = useState('successRate');
+  const [shipperPage, setShipperPage] = useState(1);
+  const [shipperTotalPages, setShipperTotalPages] = useState(1);
+  const [shipperHasMore, setShipperHasMore] = useState(false);
+  const [loadingShippers, setLoadingShippers] = useState(false);
+  const shipperModalRef = useRef(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('newest');
   const [showFilters, setShowFilters] = useState(false);
@@ -46,7 +57,6 @@ const OrderManagement = () => {
     totalRevenue: 0
   });
 
-  // Fetch stats from dedicated API
   const fetchStats = useCallback(async () => {
     try {
       const response = await fetch('http://localhost:5000/api/orders/seller/stats', {
@@ -72,7 +82,6 @@ const OrderManagement = () => {
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      // Build query params
       const params = new URLSearchParams({
         page: currentPage,
         limit: itemsPerPage
@@ -101,11 +110,9 @@ const OrderManagement = () => {
     }
   }, [token, currentPage, itemsPerPage, selectedStatus]);
 
-  // Filter orders client-side for search and sort
   const getFilteredOrders = useCallback(() => {
     let filtered = [...orders];
 
-    // Filter by search term (client-side)
     if (searchTerm) {
       filtered = filtered.filter(order => 
         order._id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -114,7 +121,6 @@ const OrderManagement = () => {
       );
     }
 
-    // Sort orders (client-side)
     filtered.sort((a, b) => {
       switch (sortBy) {
         case 'newest':
@@ -141,25 +147,127 @@ const OrderManagement = () => {
     fetchStats();
   }, [fetchStats]);
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedStatus]);
 
-  const handleConfirmOrder = async (orderId) => {
-    setConfirming(orderId);
+  const fetchShippers = async (page = 1, append = false) => {
+    
     try {
-      const response = await fetch(`http://localhost:5000/api/orders/${orderId}/confirm`, {
-        method: 'PUT',
+      setLoadingShippers(true);
+      const params = new URLSearchParams({
+        page: page,
+        limit: 5,
+        sortBy: shipperSortBy,
+        search: shipperSearchTerm
+      });
+
+      const response = await fetch(`http://localhost:5000/api/shipper/shippers-with-stats?${params.toString()}`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Authorization': `Bearer ${token}`
         }
       });
 
       if (response.ok) {
-        await fetchOrders(); // Refresh orders
-        await fetchStats(); // Refresh stats
+        const data = await response.json();
+        if (append) {
+          setShippers(prev => [...prev, ...data.shippers]);
+        } else {
+          setShippers(data.shippers);
+        }
+        setShipperTotalPages(data.totalPages);
+        setShipperHasMore(data.hasMore);
+      } else {
+        console.error('Failed to fetch shippers');
+      }
+    } catch (error) {
+      console.error('Error fetching shippers:', error);
+    } finally {
+      setLoadingShippers(false);
+    }
+  };
+
+  const handleConfirmOrderClick = async (orderId) => {
+    setOrderToConfirm(orderId);
+    setShipperPage(1);
+    setShipperSearchTerm('');
+    setShipperSortBy('successRate');
+    setSelectedShipperId(null);
+    await fetchShippers(1);
+    setShowShipperModal(true);
+  };
+
+  useEffect(() => {
+    if (showShipperModal) {
+      setShipperPage(1);
+      fetchShippers(1, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shipperSearchTerm, shipperSortBy]);
+
+  useEffect(() => {
+    if (showShipperModal && shipperPage === 1 && shipperSearchTerm === '' && shipperSortBy === 'successRate') {
+      fetchShippers(1, false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showShipperModal]);
+
+  useEffect(() => {
+    if (showShipperModal || showOrderDetails) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [showShipperModal, showOrderDetails]);
+
+  useEffect(() => {
+    if (!shipperModalRef.current || !shipperHasMore || loadingShippers) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = shipperModalRef.current;
+      if (scrollTop + clientHeight >= scrollHeight - 50) {
+        handleLoadMoreShippers();
+      }
+    };
+
+    const modalBody = shipperModalRef.current;
+    modalBody.addEventListener('scroll', handleScroll);
+
+    return () => {
+      modalBody.removeEventListener('scroll', handleScroll);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shipperHasMore, loadingShippers]);
+
+  const handleLoadMoreShippers = () => {
+    const nextPage = shipperPage + 1;
+    setShipperPage(nextPage);
+    fetchShippers(nextPage, true);
+  };
+
+  const handleConfirmOrder = async () => {
+    if (!orderToConfirm) return;
+    
+    setConfirming(orderToConfirm);
+    try {
+      const response = await fetch(`http://localhost:5000/api/orders/${orderToConfirm}/confirm`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ shipperId: selectedShipperId })
+      });
+
+      if (response.ok) {
+        await fetchOrders();
+        await fetchStats();
+        setShowShipperModal(false);
+        setSelectedShipperId(null);
+        setOrderToConfirm(null);
         alert('Đơn hàng đã được xác nhận thành công!');
       } else {
         const error = await response.json();
@@ -192,7 +300,6 @@ const OrderManagement = () => {
   };
 
 
-  // Get filtered orders for display
   const filteredOrders = getFilteredOrders();
 
   const handlePageChange = (page) => {
@@ -205,14 +312,16 @@ const OrderManagement = () => {
         return <FiClock className="text-warning" />;
       case 'confirmed':
         return <FiCheckCircle className="text-info" />;
-      case 'paid':
-        return <FiPackage className="text-primary" />;
-      case 'shipped':
-        return <FiTruck className="text-secondary" />;
+      case 'awaiting_delivery':
+        return <FiPackage className="text-info" />;
+      case 'shipping':
+        return <FiTruck className="text-warning" />;
+      case 'delivered':
+        return <FiTruck className="text-success" />;
       case 'completed':
         return <FiCheck className="text-success" />;
       case 'cancelled':
-        return <FiCheck className="text-danger" />;
+        return <FiX className="text-danger" />;
       default:
         return <FiClock className="text-muted" />;
     }
@@ -224,10 +333,12 @@ const OrderManagement = () => {
         return 'bg-warning';
       case 'confirmed':
         return 'bg-info';
-      case 'paid':
-        return 'bg-primary';
-      case 'shipped':
-        return 'bg-secondary';
+      case 'awaiting_delivery':
+        return 'bg-info';
+      case 'shipping':
+        return 'bg-warning';
+      case 'delivered':
+        return 'bg-success';
       case 'completed':
         return 'bg-success';
       case 'cancelled':
@@ -243,10 +354,12 @@ const OrderManagement = () => {
         return 'Chờ xác nhận';
       case 'confirmed':
         return 'Đã xác nhận';
-      case 'paid':
-        return 'Đã thanh toán';
-      case 'shipped':
-        return 'Đang giao';
+      case 'awaiting_delivery':
+        return 'Chờ giao hàng';
+      case 'shipping':
+        return 'Đang giao hàng';
+      case 'delivered':
+        return 'Đã giao hàng';
       case 'completed':
         return 'Hoàn thành';
       case 'cancelled':
@@ -300,7 +413,6 @@ const OrderManagement = () => {
   return (
     <div className="om-wrapper">
       <div className="om-container">
-        {/* Header Section with Back Button */}
         <div className="om-header">
           <div className="om-header-top">
             <button 
@@ -344,7 +456,6 @@ const OrderManagement = () => {
           <div className="row">
             <div className="col-12">
 
-          {/* Stats Cards */}
           <div className="row mb-4">
             <div className="col-md-3 mb-3">
               <div className="om-stats-card h-100">
@@ -392,7 +503,6 @@ const OrderManagement = () => {
             </div>
           </div>
 
-          {/* Filters Section */}
           {showFilters && (
             <div className="card border-0 shadow-sm mb-4">
               <div className="card-body">
@@ -422,8 +532,9 @@ const OrderManagement = () => {
                       <option value="all">Tất cả đơn hàng</option>
                       <option value="pending">Chờ xác nhận</option>
                       <option value="confirmed">Đã xác nhận</option>
-                      <option value="paid">Đã thanh toán</option>
-                      <option value="shipped">Đang giao</option>
+                      <option value="awaiting_delivery">Chờ giao hàng</option>
+                      <option value="shipping">Đang giao hàng</option>
+                      <option value="delivered">Đã giao hàng</option>
                       <option value="completed">Hoàn thành</option>
                       <option value="cancelled">Đã hủy</option>
                     </select>
@@ -568,7 +679,7 @@ const OrderManagement = () => {
                                 {order.status === 'pending' && (
                                   <>
                                     <Dropdown.Item 
-                                      onClick={() => handleConfirmOrder(order._id)}
+                                      onClick={() => handleConfirmOrderClick(order._id)}
                                       disabled={confirming === order._id}
                                       className="d-flex align-items-center text-success"
                                     >
@@ -610,7 +721,6 @@ const OrderManagement = () => {
               )}
             </div>
 
-            {/* Pagination */}
             {totalOrders > 0 && (
               <div className="card-footer bg-white border-0 py-3">
                 <div className="om-pagination-wrapper">
@@ -676,7 +786,6 @@ const OrderManagement = () => {
         </div>
       </div>
 
-      {/* Order Details Modal */}
       {showOrderDetails && selectedOrder && (
         <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <div className="modal-dialog modal-xl">
@@ -703,7 +812,6 @@ const OrderManagement = () => {
               </div>
               <div className="modal-body p-0">
                 <div className="row g-0">
-                  {/* Customer Info */}
                   <div className="col-md-6 p-4 border-end">
                     <div className="d-flex align-items-center mb-3">
                       <div className="bg-info bg-opacity-10 rounded-circle p-2 me-3">
@@ -724,7 +832,6 @@ const OrderManagement = () => {
                     </div>
                   </div>
 
-                  {/* Address Info */}
                   <div className="col-md-6 p-4">
                     <div className="d-flex align-items-center mb-3">
                       <div className="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
@@ -751,7 +858,6 @@ const OrderManagement = () => {
 
                 <hr className="my-0" />
 
-                {/* Order Items */}
                 <div className="p-4">
                   <div className="d-flex align-items-center mb-3">
                     <div className="bg-success bg-opacity-10 rounded-circle p-2 me-3">
@@ -800,7 +906,6 @@ const OrderManagement = () => {
 
                 <hr className="my-0" />
 
-                {/* Order Summary */}
                 <div className="p-4 bg-light">
                   <div className="row">
                     <div className="col-md-6">
@@ -872,7 +977,7 @@ const OrderManagement = () => {
                     type="button"
                     className="btn btn-success"
                     onClick={() => {
-                      handleConfirmOrder(selectedOrder.order._id);
+                      handleConfirmOrderClick(selectedOrder.order._id);
                       setShowOrderDetails(false);
                     }}
                     disabled={confirming === selectedOrder.order._id}
@@ -890,6 +995,176 @@ const OrderManagement = () => {
                     )}
                   </button>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showShipperModal && (
+        <div className="modal show d-block" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <div className="modal-dialog modal-lg">
+            <div className="modal-content border-0 shadow-lg">
+              <div className="modal-header bg-primary text-white">
+                <div className="d-flex align-items-center">
+                  <div className="bg-white bg-opacity-20 rounded-circle p-2 me-3">
+                    <FiTruck size={20} />
+                  </div>
+                  <div>
+                    <h5 className="modal-title mb-0">Chọn người giao hàng</h5>
+                    <small className="opacity-75">Chọn shipper để giao đơn hàng này</small>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  className="btn-close btn-close-white"
+                  onClick={() => {
+                    setShowShipperModal(false);
+                    setSelectedShipperId(null);
+                    setOrderToConfirm(null);
+                  }}
+                ></button>
+              </div>
+              <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto' }} ref={shipperModalRef}>
+                <div className="row mb-3">
+                  <div className="col-md-6">
+                    <div className="input-group">
+                      <span className="input-group-text">
+                        <FiSearch />
+                      </span>
+                      <input
+                        type="text"
+                        className="form-control"
+                        placeholder="Tìm kiếm shipper..."
+                        value={shipperSearchTerm}
+                        onChange={(e) => setShipperSearchTerm(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="col-md-6">
+                    <select
+                      className="form-select"
+                      value={shipperSortBy}
+                      onChange={(e) => setShipperSortBy(e.target.value)}
+                    >
+                      <option value="successRate">Sắp xếp: Tỷ lệ thành công</option>
+                      <option value="totalOrders">Sắp xếp: Tổng số đơn</option>
+                      <option value="name">Sắp xếp: Theo tên</option>
+                    </select>
+                  </div>
+                </div>
+
+                {loadingShippers && shippers.length === 0 ? (
+                  <div className="text-center py-5">
+                    <div className="spinner-border" role="status">
+                      <span className="visually-hidden">Loading...</span>
+                    </div>
+                    <p className="mt-3 text-muted">Đang tải shippers...</p>
+                  </div>
+                ) : shippers.length > 0 ? (
+                  <>
+                    <div className="d-flex flex-column gap-2">
+                      {shippers.map((shipper) => (
+                      <div 
+                        key={shipper._id}
+                        className={`card ${selectedShipperId === shipper._id ? 'border-primary' : 'border-secondary'}`}
+                        style={{ 
+                          cursor: 'pointer',
+                          transition: 'all 0.3s',
+                          borderWidth: selectedShipperId === shipper._id ? '2px' : '1px'
+                        }}
+                        onClick={() => setSelectedShipperId(shipper._id)}
+                      >
+                        <div className="card-body p-3">
+                          <div className="d-flex align-items-center">
+                            <div className={`bg-primary bg-opacity-10 rounded-circle p-2 ${selectedShipperId === shipper._id ? 'bg-primary' : ''}`}>
+                              <FiTruck className={selectedShipperId === shipper._id ? 'text-white' : 'text-primary'} size={20} />
+                            </div>
+                            <div className="ms-3 flex-grow-1">
+                              <h6 className="mb-0">{shipper.fullName}</h6>
+                              <small className="text-muted">{shipper.email}</small>
+                              {shipper.phone && <div><small className="text-muted">{shipper.phone}</small></div>}
+                            </div>
+                            
+                            {/* Stats - displayed in one line */}
+                            <div className="d-flex align-items-center gap-3 me-3">
+                              <div className="text-center px-2">
+                                <div className="fw-bold text-primary">{shipper.stats.totalOrders}</div>
+                                <small className="text-muted">Tổng</small>
+                              </div>
+                              <div className="text-center px-2">
+                                <div className="fw-bold text-success">{shipper.stats.completedOrders}</div>
+                                <small className="text-muted">Thành công</small>
+                              </div>
+                              <div className="text-center px-2">
+                                <div className="fw-bold text-danger">{shipper.stats.cancelledOrders}</div>
+                                <small className="text-muted">Thất bại</small>
+                              </div>
+                              <div className="text-center px-2">
+                                <div className="fw-bold text-warning">{shipper.stats.successRate}%</div>
+                                <small className="text-muted">Tỷ lệ</small>
+                              </div>
+                            </div>
+
+                            {selectedShipperId === shipper._id && (
+                              <div>
+                                <FiCheckCircle className="text-success" size={24} />
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                        ))}
+                    </div>
+
+                    {loadingShippers && (
+                    <div className="text-center py-3">
+                      <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                      <span className="text-muted">Đang tải thêm shippers...</span>
+                    </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="text-center py-5">
+                    <FiTruck size={48} className="text-muted mb-3" />
+                    <p className="text-muted">Không tìm thấy shipper nào</p>
+                    {shipperSearchTerm && (
+                      <small className="text-muted">Thử từ khóa khác</small>
+                    )}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer bg-light border-0">
+                <button
+                  type="button"
+                  className="btn btn-secondary"
+                  onClick={() => {
+                    setShowShipperModal(false);
+                    setSelectedShipperId(null);
+                    setOrderToConfirm(null);
+                  }}
+                >
+                  <FiX className="me-1" />
+                  Hủy
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-success"
+                  onClick={handleConfirmOrder}
+                  disabled={!selectedShipperId || confirming === orderToConfirm}
+                >
+                  {confirming === orderToConfirm ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-1" role="status"></span>
+                      Đang xác nhận...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheck className="me-1" />
+                      Xác nhận và chọn shipper
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>

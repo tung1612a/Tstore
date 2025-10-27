@@ -11,19 +11,19 @@ export const getShipperDashboard = async (req, res) => {
     // Đếm tổng đơn hàng được giao
     const totalDelivered = await Order.countDocuments({ 
       shipperId, 
-      status: "completed" 
+      status: { $in: ["delivered", "completed"] }
     });
     
     // Đếm đơn hàng đang giao
     const totalShipping = await Order.countDocuments({ 
       shipperId, 
-      status: "shipped" 
+      status: "shipping" 
     });
     
     // Đếm đơn hàng chờ giao (đã được assign cho shipper này)
     const totalPending = await Order.countDocuments({ 
       shipperId, 
-      status: "paid" 
+      status: "awaiting_delivery" 
     });
     
     // Tính tổng doanh thu từ phí giao hàng (ví dụ: 10k per order)
@@ -31,9 +31,9 @@ export const getShipperDashboard = async (req, res) => {
     const totalEarnings = totalDelivered * deliveryFee;
     
     // Đơn hàng gần đây
-    const recentOrders = await Order.find({ 
+    const recentOrdersData = await Order.find({ 
       shipperId,
-      status: { $in: ["shipped", "completed"] }
+      status: { $in: ["shipping", "delivered", "completed"] }
     })
     .populate('buyerId', 'fullName email phone')
     .populate('addressId')
@@ -41,14 +41,32 @@ export const getShipperDashboard = async (req, res) => {
     .limit(5);
     
     // Đơn hàng chờ giao
-    const pendingOrders = await Order.find({ 
+    const pendingOrdersData = await Order.find({ 
       shipperId,
-      status: "paid"
+      status: "awaiting_delivery"
     })
     .populate('buyerId', 'fullName email phone')
     .populate('addressId')
     .sort({ createdAt: -1 })
     .limit(10);
+
+    // Get order items for recent orders
+    const recentOrders = await Promise.all(
+      recentOrdersData.map(async (order) => {
+        const items = await OrderItem.find({ orderId: order._id })
+          .populate('productId', 'title price image imageURL');
+        return { ...order.toObject(), items };
+      })
+    );
+
+    // Get order items for pending orders
+    const pendingOrders = await Promise.all(
+      pendingOrdersData.map(async (order) => {
+        const items = await OrderItem.find({ orderId: order._id })
+          .populate('productId', 'title price image imageURL');
+        return { ...order.toObject(), items };
+      })
+    );
 
     res.json({
       stats: {
@@ -70,20 +88,48 @@ export const getShipperDashboard = async (req, res) => {
 export const getShipperOrders = async (req, res) => {
   try {
     const shipperId = req.user._id;
-    const { status } = req.query;
+    const { status, page = 1, limit = 10 } = req.query;
     
     let query = { shipperId };
     if (status) {
       query.status = status;
     }
     
+    // Calculate pagination
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Get total count
+    const total = await Order.countDocuments(query);
+    
     const orders = await Order.find(query)
       .populate('buyerId', 'fullName email phone')
       .populate('addressId')
-      .populate('orderItems')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit));
     
-    res.json(orders);
+    // Get order items for each order
+    const ordersWithItems = await Promise.all(
+      orders.map(async (order) => {
+        const items = await OrderItem.find({ orderId: order._id })
+          .populate('productId', 'title price image imageURL');
+        
+        const orderObj = order.toObject();
+        return {
+          ...orderObj,
+          items
+        };
+      })
+    );
+    
+    // Calculate pagination info
+    const totalPages = Math.ceil(total / parseInt(limit));
+    
+    res.json({
+      orders: ordersWithItems,
+      totalPages,
+      total
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -100,8 +146,7 @@ export const getShipperOrderDetails = async (req, res) => {
       shipperId 
     })
     .populate('buyerId', 'fullName email phone')
-    .populate('addressId')
-    .populate('orderItems');
+    .populate('addressId');
     
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
@@ -109,11 +154,13 @@ export const getShipperOrderDetails = async (req, res) => {
     
     // Lấy chi tiết sản phẩm trong đơn hàng
     const orderItems = await OrderItem.find({ orderId })
-      .populate('productId', 'title price images');
+      .populate('productId', 'title price image imageURL');
+    
+    const orderObj = order.toObject();
     
     res.json({
-      order,
-      orderItems
+      order: orderObj,
+      orderItems: orderItems
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -125,25 +172,23 @@ export const updateOrderToShipped = async (req, res) => {
   try {
     const shipperId = req.user._id;
     const orderId = req.params.id;
-    const { trackingNumber } = req.body;
     
     const order = await Order.findOne({ 
       _id: orderId, 
       shipperId,
-      status: "paid"
+      status: "awaiting_delivery"
     });
     
     if (!order) {
       return res.status(404).json({ message: "Order not found or not ready for shipping" });
     }
     
-    order.status = "shipped";
+    order.status = "shipping";
     order.shippedAt = new Date();
-    order.trackingNumber = trackingNumber;
     await order.save();
     
     res.json({ 
-      message: "Order marked as shipped successfully",
+      message: "Order marked as shipping successfully",
       order 
     });
   } catch (error) {
@@ -156,23 +201,35 @@ export const updateOrderToCompleted = async (req, res) => {
   try {
     const shipperId = req.user._id;
     const orderId = req.params.id;
+    const { success = true, failureReason } = req.body;
     
     const order = await Order.findOne({ 
       _id: orderId, 
       shipperId,
-      status: "shipped"
+      status: "shipping"
     });
     
     if (!order) {
       return res.status(404).json({ message: "Order not found or not ready for completion" });
     }
-    
-    order.status = "completed";
-    order.deliveredAt = new Date();
+
+    // If delivery failed, set status to 'cancelled' and add failure reason
+    if (success === false) {
+      order.status = "cancelled";
+      order.deliveryFailureReason = failureReason || "Giao hàng thất bại";
+      order.cancellationReason = failureReason || "Giao hàng thất bại";
+    } else {
+      // If delivery success, set status to 'delivered' (waiting for customer confirmation)
+      order.status = "delivered";
+      order.deliveredAt = new Date();
+    }
+
     await order.save();
     
     res.json({ 
-      message: "Order marked as completed successfully",
+      message: success 
+        ? "Order marked as delivered successfully. Waiting for customer confirmation."
+        : "Order marked as delivery failed",
       order 
     });
   } catch (error) {
@@ -184,7 +241,7 @@ export const updateOrderToCompleted = async (req, res) => {
 export const getUnassignedOrders = async (req, res) => {
   try {
     const orders = await Order.find({ 
-      status: "paid",
+      status: "awaiting_delivery",
       shipperId: { $exists: false }
     })
     .populate('buyerId', 'fullName email phone')
@@ -204,7 +261,7 @@ export const assignOrderToShipper = async (req, res) => {
     
     const order = await Order.findOne({ 
       _id: orderId,
-      status: "paid"
+      status: "awaiting_delivery"
     });
     
     if (!order) {
@@ -239,6 +296,100 @@ export const getAllShippers = async (req, res) => {
       .select('fullName email phone active createdAt');
     
     res.json(shippers);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Lấy danh sách shippers với thống kê (cho seller chọn shipper)
+export const getShippersWithStats = async (req, res) => {
+  try {
+    const { 
+      search = '', 
+      sortBy = 'successRate', 
+      page = 1, 
+      limit = 10 
+    } = req.query;
+
+    // Build query
+    let query = { role: "shipper", active: true };
+    
+    if (search) {
+      query.$or = [
+        { fullName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Get total count
+    const total = await User.countDocuments(query);
+    
+    // Determine sort order
+    let sortOrder = {};
+    switch (sortBy) {
+      case 'name':
+        sortOrder.fullName = 1;
+        break;
+      case 'totalOrders':
+      case 'successRate':
+      default:
+        // These will be sorted after getting stats
+        sortOrder = {};
+        break;
+    }
+
+    // Get shippers with pagination
+    const shippers = await User.find(query)
+      .select('fullName email phone active createdAt')
+      .sort(sortOrder)
+      .limit(Number(limit))
+      .skip((Number(page) - 1) * Number(limit));
+    
+    // Get stats for each shipper and attach
+    const shippersWithStats = await Promise.all(
+      shippers.map(async (shipper) => {
+        const totalOrders = await Order.countDocuments({ shipperId: shipper._id });
+        const completedOrders = await Order.countDocuments({ 
+          shipperId: shipper._id, 
+          status: "completed" 
+        });
+        const cancelledOrders = await Order.countDocuments({ 
+          shipperId: shipper._id, 
+          status: "cancelled" 
+        });
+        const successRate = totalOrders > 0 ? ((completedOrders / totalOrders) * 100).toFixed(1) : 0;
+        
+        return {
+          _id: shipper._id,
+          fullName: shipper.fullName,
+          email: shipper.email,
+          phone: shipper.phone,
+          active: shipper.active,
+          stats: {
+            totalOrders,
+            completedOrders,
+            cancelledOrders,
+            successRate: parseFloat(successRate)
+          }
+        };
+      })
+    );
+
+    // Sort by stats if needed
+    if (sortBy === 'totalOrders') {
+      shippersWithStats.sort((a, b) => b.stats.totalOrders - a.stats.totalOrders);
+    } else if (sortBy === 'successRate') {
+      shippersWithStats.sort((a, b) => b.stats.successRate - a.stats.successRate);
+    }
+    
+    res.json({
+      shippers: shippersWithStats,
+      total,
+      totalPages: Math.ceil(total / limit),
+      currentPage: Number(page),
+      hasMore: Number(page) * Number(limit) < total
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
