@@ -327,7 +327,7 @@ function ProductDetail() {
                                     </Badge>
                                     {typeof product.inventoryQuantity === 'number' && (
                                         <span className="ms-3 text-muted" style={{ fontSize: '14px' }}>
-                                            Còn {product.inventoryQuantity} sản phẩm
+                                            Còn {product.stock} sản phẩm
                                         </span>
                                     )}
                                 </div>

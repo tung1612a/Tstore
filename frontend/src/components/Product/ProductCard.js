@@ -18,7 +18,7 @@ function ProductCard({ product, hideStoreButton = false }) {
 
   // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
   const isOwnProduct = user && user.role === 'seller' && (
-    product.sellerId?._id === user._id || 
+    product.sellerId?._id === user._id ||
     product.sellerId === user._id ||
     product.seller?._id === user._id ||
     product.seller === user._id
@@ -27,24 +27,24 @@ function ProductCard({ product, hideStoreButton = false }) {
   // Helper function for adding to cart
   const handleAddToCart = async (e) => {
     e.stopPropagation()
-    
+
     if (isAddingToCart) return
-    
+
     // Kiểm tra nếu chưa đăng nhập
     if (!isAuthenticated) {
       alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
       navigate('/login')
       return
     }
-    
+
     // Kiểm tra nếu seller cố mua sản phẩm của chính mình
     if (isOwnProduct) {
       alert('Bạn không thể mua sản phẩm của chính mình!')
       return
     }
-    
+
     setIsAddingToCart(true)
-    
+
     try {
       // Tạo payload với đầy đủ thông tin sản phẩm
       const cartPayload = {
@@ -58,7 +58,7 @@ function ProductCard({ product, hideStoreButton = false }) {
           imageURL: product.imageURL || product.image
         }
       }
-      
+
       try {
         await dispatch(addToCart(cartPayload)).unwrap()
       } catch (apiError) {
@@ -147,7 +147,7 @@ function ProductCard({ product, hideStoreButton = false }) {
           <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
             Cửa hàng: {product.storeInfo.storeName}
           </div>
-        ) : ( (product.sellerId?.fullName || product.seller?.fullName) && (
+        ) : ((product.sellerId?.fullName || product.seller?.fullName) && (
           <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
             Người bán: {product.sellerId?.fullName || product.seller?.fullName}
           </div>
@@ -175,7 +175,7 @@ function ProductCard({ product, hideStoreButton = false }) {
           </div>
           {typeof product.inventoryQuantity === 'number' && (
             <div className="text-muted" style={{ fontSize: "12px" }}>
-              Còn {product.inventoryQuantity} sản phẩm
+              Còn {product.stock} sản phẩm
             </div>
           )}
         </div>
@@ -186,12 +186,12 @@ function ProductCard({ product, hideStoreButton = false }) {
           className="w-100 d-flex align-items-center justify-content-center"
           disabled={isAddingToCart || isOwnProduct}
           style={{
-            background: !isAuthenticated 
+            background: !isAuthenticated
               ? "transparent"
-              : isOwnProduct 
-                ? "#6c757d" 
-                : isAddingToCart 
-                  ? "#6c757d" 
+              : isOwnProduct
+                ? "#6c757d"
+                : isAddingToCart
+                  ? "#6c757d"
                   : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
             border: !isAuthenticated ? "2px solid #007bff" : "none",
             borderRadius: "8px",
@@ -200,12 +200,12 @@ function ProductCard({ product, hideStoreButton = false }) {
           onClick={handleAddToCart}
         >
           <FiShoppingCart className="me-2" size={16} />
-          {!isAuthenticated 
-            ? 'Đăng nhập để mua' 
-            : isOwnProduct 
-              ? 'Sản phẩm của bạn' 
-              : isAddingToCart 
-                ? 'Đang thêm...' 
+          {!isAuthenticated
+            ? 'Đăng nhập để mua'
+            : isOwnProduct
+              ? 'Sản phẩm của bạn'
+              : isAddingToCart
+                ? 'Đang thêm...'
                 : 'Thêm vào giỏ'
           }
         </Button>
