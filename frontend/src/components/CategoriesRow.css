@@ -1,0 +1,18 @@
+.category-item {
+  background-color: #f8f9fa;
+  color: #333;
+  font-weight: 500;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: all 0.2s ease;
+}
+
+.category-item:hover {
+  background-color: #007bff;
+  color: white;
+}
+
+.category-item.active {
+  background-color: #007bff !important;
+  color: white !important;
+}

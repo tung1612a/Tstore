@@ -21,7 +21,6 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
 
   React.useEffect(() => {
     let isMounted = true;
-    setLoading(true);
     fetch('/api/categories')
       .then(async (res) => {
         if (!res.ok) throw new Error('Failed to load categories');
@@ -30,6 +29,7 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
       })
       .catch((err) => isMounted && setError(err.message))
       .finally(() => isMounted && setLoading(false));
+
     return () => { isMounted = false; };
   }, []);
 
@@ -41,7 +41,7 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
       </Card.Body>
     </Card>
   );
-  
+
   if (error) return (
     <Card className="category-sidebar">
       <Card.Body>
@@ -53,29 +53,32 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
   return (
     <Card className="category-sidebar">
       <Card.Body>
-        <Card.Title className="h5 d-flex align-items-center">
+        <Card.Title className="h5 d-flex align-items-center mb-3">
           <FiGrid className="me-2" />
           Danh mục sản phẩm
         </Card.Title>
         <ListGroup variant="flush">
+          {/* Nút Tất cả */}
           <ListGroup.Item
             key="all"
             action
-            href="#"
-            className={`category-item d-flex align-items-center ${!selectedCategoryId ? 'active' : ''}`}
-            onClick={(e) => { e.preventDefault(); onSelectCategory?.(''); }}
+            className={`category-item d-flex align-items-center ${selectedCategoryId === '' ? 'active' : ''}`}
+            onClick={() => onSelectCategory('')}
           >
+            <FiGrid className="me-2" size={18} />
             Tất cả
           </ListGroup.Item>
+
+          {/* Danh sách động */}
           {categories.map((c) => {
             const IconComponent = categoryIcons[c.name] || categoryIcons.default;
+            const isActive = selectedCategoryId === c._id; // chỉ xanh nút được chọn
             return (
-              <ListGroup.Item 
-                key={c._id} 
-                action 
-                href="#" 
-                className={`category-item d-flex align-items-center ${selectedCategoryId === c._id ? 'active' : ''}`}
-                onClick={(e) => { e.preventDefault(); onSelectCategory?.(c._id); }}
+              <ListGroup.Item
+                key={c._id}
+                action
+                className={`category-item d-flex align-items-center ${isActive ? 'active' : ''}`}
+                onClick={() => onSelectCategory(c._id)}
               >
                 <IconComponent className="me-2" size={18} />
                 {c.name}
@@ -89,5 +92,3 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
 }
 
 export default CategoriesRow;
-
-
