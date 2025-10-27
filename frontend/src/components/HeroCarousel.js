@@ -1,6 +1,6 @@
 import React from 'react';
 import { Carousel, Button } from 'react-bootstrap';
-
+import './HeroCarousel.css';
 function HeroCarousel() {
   return (
     <Carousel className="mb-5 hero-carousel" fade>
@@ -30,9 +30,9 @@ function HeroCarousel() {
             zIndex: 1,
             opacity: 0.3
           }}>
-            <img 
-              src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop&crop=center" 
-              alt="Smartphone" 
+            <img
+              src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop&crop=center"
+              alt="Smartphone"
               style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
             />
           </div>
@@ -64,9 +64,9 @@ function HeroCarousel() {
             zIndex: 1,
             opacity: 0.3
           }}>
-            <img 
-              src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&crop=center" 
-              alt="Headphones" 
+            <img
+              src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&crop=center"
+              alt="Headphones"
               style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
             />
           </div>
@@ -98,9 +98,9 @@ function HeroCarousel() {
             zIndex: 1,
             opacity: 0.3
           }}>
-            <img 
-              src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&h=300&fit=crop&crop=center" 
-              alt="Laptop" 
+            <img
+              src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&h=300&fit=crop&crop=center"
+              alt="Laptop"
               style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
             />
           </div>
@@ -132,9 +132,9 @@ function HeroCarousel() {
             zIndex: 1,
             opacity: 0.3
           }}>
-            <img 
-              src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&h=300&fit=crop&crop=center" 
-              alt="Tablet" 
+            <img
+              src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&h=300&fit=crop&crop=center"
+              alt="Tablet"
               style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
             />
           </div>
