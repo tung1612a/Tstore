@@ -109,6 +109,10 @@ function SiteNavbar() {
                         <FiSettings className="me-2" />
                         Seller Homepage
                       </Dropdown.Item>
+                      <Dropdown.Item href="/seller/settings">
+                        <FiSettings className="me-2" />
+                        Store Settings
+                      </Dropdown.Item>
                     </>
                   )}
 

@@ -33,6 +33,7 @@ import AddressPage from "./components/Address/AddressPage";
 import AdminUser from "./components/Admin/AdminUser";
 import ListProduct from "./components/DevAdmin/ListProduct";
 import SellerReports from "./components/Seller/SellerReport";
+import SellerSettings from "./components/Seller/SellerSettings";
 import SellerApplications from "./components/Admin/SellerApplications";
 
 function App() {
@@ -83,6 +84,7 @@ function App() {
             <Route path="/seller/products" element={<ProtectedRoute requiredRole="seller"><SellerProducts /></ProtectedRoute>}/>
             <Route path="/seller/orders" element={<ProtectedRoute requiredRole="seller"><OrderManagement /></ProtectedRoute>}/>
             <Route path="/seller/reports" element={<ProtectedRoute requiredRole="seller"><SellerReports /></ProtectedRoute>}/>
+            <Route path="/seller/settings" element={<ProtectedRoute requiredRole="seller"><SellerSettings /></ProtectedRoute>}/>
 
             {/* Shipper routes */}
             <Route path="/shipper" element={<ProtectedRoute requiredRole="shipper"><ShipperHomepage /></ProtectedRoute>}/>
