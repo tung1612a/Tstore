@@ -123,9 +123,9 @@ function ProductCard({ product, hideStoreButton = false }) {
         >
           <FiHeart size={16} color={isLiked ? "#ee4d2d" : "#6c757d"} fill={isLiked ? "#ee4d2d" : "none"} />
         </Button>
-        <Badge bg="danger" className="position-absolute top-0 start-0 m-2" style={{ fontSize: "10px" }}>
+        {/* <Badge bg="danger" className="position-absolute top-0 start-0 m-2" style={{ fontSize: "10px" }}>
           -20%
-        </Badge>
+        </Badge> */}
       </div>
 
       <Card.Body className="d-flex flex-column">
@@ -169,9 +169,9 @@ function ProductCard({ product, hideStoreButton = false }) {
         <div className="d-flex align-items-center justify-content-between mb-3">
           <div>
             <div className="text-danger fw-bold fs-5">{price}</div>
-            <div className="text-muted text-decoration-line-through" style={{ fontSize: "12px" }}>
+            {/* <div className="text-muted text-decoration-line-through" style={{ fontSize: "12px" }}>
               {product.price && (product.price * 1.25).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
-            </div>
+            </div> */}
           </div>
           {typeof product.inventoryQuantity === 'number' && (
             <div className="text-muted" style={{ fontSize: "12px" }}>
