@@ -315,3 +315,28 @@ export const changePassword = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Update avatar URL for current user
+export const updateAvatar = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    // Support both JSON url or multipart file upload
+    const { avatarUrl } = req.body;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (req.file && req.file.path) {
+      // If using multer local storage
+      user.avatarUrl = `/uploads/${req.file.filename}`;
+    } else if (avatarUrl && typeof avatarUrl === 'string') {
+      user.avatarUrl = avatarUrl;
+    } else {
+      return res.status(400).json({ message: 'No avatar provided' });
+    }
+    await user.save();
+    const sanitized = await User.findById(userId).select('-password');
+    res.json({ message: 'Avatar updated', user: sanitized });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};

@@ -102,19 +102,28 @@ function StorePage() {
           <Card.Body className="p-4">
             <div className="store-meta d-flex align-items-start">
               <div className="store-avatar me-4">
-                <div 
-                  className="rounded-circle d-flex align-items-center justify-content-center"
-                  style={{ 
-                    width: '80px', 
-                    height: '80px', 
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    fontSize: '24px',
-                    fontWeight: 'bold'
-                  }}
-                >
-                  {(header.storeName || 'Store').slice(0,1).toUpperCase()}
-                </div>
+                {header.avatarUrl ? (
+                  <img 
+                    src={header.avatarUrl} 
+                    alt="avatar"
+                    className="rounded-circle"
+                    style={{ width: '80px', height: '80px', objectFit: 'cover', border: '3px solid #fff' }}
+                  />
+                ) : (
+                  <div 
+                    className="rounded-circle d-flex align-items-center justify-content-center"
+                    style={{ 
+                      width: '80px', 
+                      height: '80px', 
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      fontSize: '24px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {(header.storeName || 'Store').slice(0,1).toUpperCase()}
+                  </div>
+                )}
               </div>
               <div className="flex-grow-1">
                 <div className="d-flex align-items-center mb-2">
