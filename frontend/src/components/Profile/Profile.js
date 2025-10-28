@@ -14,7 +14,7 @@ function Profile() {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate('/', { state: { logoutSuccess: true } });
   };
 
   // Fetch shipper stats if user is a shipper
@@ -277,10 +277,10 @@ function Profile() {
                         Dashboard Shipper
                       </Button>
                     )}
-                    <Button variant="outline-danger" onClick={handleLogout}>
+                    {/* <Button variant="outline-danger" onClick={handleLogout}>
                       <FiLogOut className="me-1" />
                       Đăng xuất
-                    </Button>
+                    </Button> */}
                   </div>
                 </Col>
               </Row>
