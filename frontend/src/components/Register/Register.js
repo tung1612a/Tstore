@@ -47,7 +47,7 @@ function Register() {
       .then(res => {
         setLoading(false);
         setSuccess(true);
-        setTimeout(() => navigate('/login'), 1500);
+        setTimeout(() => navigate('/login', { state: { registerSuccess: true } }), 1500);
       })
       .catch(err => {
         setLoading(false);

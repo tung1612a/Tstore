@@ -32,8 +32,8 @@ function ProductCard({ product, hideStoreButton = false }) {
 
     // Kiểm tra nếu chưa đăng nhập
     if (!isAuthenticated) {
-      alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
-      navigate('/login')
+      // alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
+      navigate('/login', { state: { loginRequired: true } })
       return
     }
 

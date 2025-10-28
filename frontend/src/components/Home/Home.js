@@ -58,13 +58,19 @@ function App() {
   // 🔔 Nhận thông báo từ trang đăng nhập
   const location = useLocation();
   const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastBg, setToastBg] = useState("success");
 
   useEffect(() => {
-    // Nếu từ Login chuyển đến có state.loginSuccess => hiển thị thông báo
     if (location.state?.loginSuccess) {
+      setToastMessage("Đăng nhập thành công");
+      setToastBg("success");
       setShowToast(true);
-
-      // Xóa state để khi reload lại không hiển thị lại thông báo
+      window.history.replaceState({}, document.title); // xóa state để không lặp lại
+    } else if (location.state?.logoutSuccess) {
+      setToastMessage("Đăng xuất thành công");
+      setToastBg("info");
+      setShowToast(true);
       window.history.replaceState({}, document.title);
     }
   }, [location]);
@@ -132,19 +138,19 @@ function App() {
       </Container>
       <Footer />
 
-      {/* ✅ Toast thông báo đăng nhập thành công */}
+      {/* ✅ Toast thông báo đăng nhập/đăng xuất thành công */}
       <ToastContainer position="top-end" className="p-3">
         <Toast
-          bg="success"
+          bg={toastBg}
           onClose={() => setShowToast(false)}
           show={showToast}
-          delay={1500}
+          delay={2000}
           autohide
         >
           <Toast.Header>
             <strong className="me-auto">Thông báo</strong>
           </Toast.Header>
-          <Toast.Body className="text-white">Đăng nhập thành công</Toast.Body>
+          <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>
       </ToastContainer>
     </>
