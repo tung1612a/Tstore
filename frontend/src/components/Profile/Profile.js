@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Alert, Spinner, Badge } from 'react-bootstrap';
-import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin, FiTruck, FiPackage, FiCheckCircle, FiClock, FiDollarSign } from 'react-icons/fi';
+import { Container, Row, Col, Card, Button, Alert, Spinner, Badge, Form } from 'react-bootstrap';
+import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin, FiTruck, FiPackage, FiCheckCircle, FiClock, FiDollarSign, FiSave } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -9,6 +9,8 @@ function Profile() {
   const navigate = useNavigate();
   const [shipperStats, setShipperStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarMsg, setAvatarMsg] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -50,6 +52,12 @@ function Profile() {
     }).format(amount);
   };
 
+  useEffect(() => {
+    if (user?.avatarUrl || user?.avatarURL) {
+      setAvatarUrl(user.avatarUrl || user.avatarURL);
+    }
+  }, [user]);
+
   if (loading) {
     return (
       <Container className="py-5 text-center">
@@ -89,9 +97,9 @@ function Profile() {
                       className="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto"
                       style={{ width: '120px', height: '120px' }}
                     >
-                      {user.avatarURL ? (
+                      { (user.avatarUrl || user.avatarURL) ? (
                         <img
-                          src={user.avatarURL}
+                          src={user.avatarUrl || user.avatarURL}
                           alt="Avatar"
                           className="rounded-circle"
                           style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -101,10 +109,54 @@ function Profile() {
                       )}
                     </div>
                   </div>
-                  <Button variant="outline-primary" size="sm">
-                    <FiEdit className="me-1" />
-                    Cập nhật ảnh
-                  </Button>
+                  <Form.Group className="mb-2">
+                    <Form.Control
+                      type="file"
+                      accept="image/*"
+                      onChange={(e)=>{
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setAvatarUrl(URL.createObjectURL(file));
+                          // Store file object for upload
+                          window.__avatarFile = file;
+                        }
+                      }}
+                    />
+                  </Form.Group>
+                  <div className="d-grid">
+                    <Button variant="outline-primary" size="sm" onClick={async ()=>{
+                      setAvatarMsg('');
+                      try {
+                        const token = localStorage.getItem('token');
+                        const fd = new FormData();
+                        if (window.__avatarFile) {
+                          fd.append('avatar', window.__avatarFile);
+                        } else if (avatarUrl) {
+                          // fallback: remote URL
+                          fd.append('avatarUrl', avatarUrl);
+                        }
+                        const res = await fetch('/api/auth/avatar', {
+                          method: 'PUT',
+                          headers: {
+                            Authorization: token ? `Bearer ${token}` : ''
+                          },
+                          body: fd
+                        });
+                        const data = await res.json();
+                        if (!res.ok) throw new Error(data?.message || 'Cập nhật ảnh thất bại');
+                        setAvatarMsg('Cập nhật ảnh thành công');
+                      } catch (e) {
+                        setAvatarMsg(e.message || 'Lỗi cập nhật ảnh');
+                      }
+                    }}>
+                      <FiSave className="me-1" /> Upload & Lưu ảnh
+                    </Button>
+                  </div>
+                  {avatarMsg && (
+                    <div className="small mt-2 {avatarMsg.includes('thành công') ? 'text-success' : 'text-danger'}">
+                      {avatarMsg}
+                    </div>
+                  )}
                 </Col>
 
                 <Col md={8}>
