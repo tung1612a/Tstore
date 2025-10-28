@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
+import OrderItem from "../models/OrderItem.js";
 
 // Dashboard stats cho admin
 export const getDashboardStats = async (req, res) => {
@@ -83,6 +84,49 @@ export const deleteUser = async (req, res) => {
     await User.findByIdAndDelete(req.params.id);
     res.json({ message: "User deleted successfully" });
   } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// 📊 Lấy báo cáo doanh thu của tất cả seller
+export const getAllSellerReports = async (req, res) => {
+  try {
+    // Chỉ cho admin hoặc devadmin
+    if (!["admin", "devadmin"].includes(req.user.role)) {
+      return res.status(403).json({ message: "Bạn không có quyền truy cập." });
+    }
+
+    // Lấy danh sách tất cả seller
+    const sellers = await User.find({ role: "seller" }).select("_id fullName email businessName");
+
+    const reports = [];
+
+    for (const seller of sellers) {
+      const products = await Product.find({ sellerId: seller._id });
+      const productIds = products.map((p) => p._id);
+
+      const orderItems = await OrderItem.find({ productId: { $in: productIds } }).populate("orderId");
+
+      const orderIds = [...new Set(orderItems.map((i) => i.orderId?._id).filter(Boolean))];
+      const orders = await Order.find({ _id: { $in: orderIds } });
+
+      const totalRevenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+      const totalOrders = orders.length;
+      const avgOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
+
+      reports.push({
+        sellerId: seller._id,
+        sellerName: seller.businessName || seller.fullName,
+        email: seller.email,
+        totalRevenue,
+        totalOrders,
+        avgOrderValue,
+      });
+    }
+
+    res.json(reports);
+  } catch (error) {
+    console.error("getAllSellerReports error:", error);
     res.status(500).json({ message: error.message });
   }
 };

@@ -35,6 +35,7 @@ import ListProduct from "./components/DevAdmin/ListProduct";
 import SellerReports from "./components/Seller/SellerReport";
 import SellerSettings from "./components/Seller/SellerSettings";
 import SellerApplications from "./components/Admin/SellerApplications";
+import ReportAdmin from "./components/DevAdmin/ReportAdmin";
 
 function App() {
   return (
@@ -74,6 +75,8 @@ function App() {
             <Route path="/admin/users" element={<AdminUser />} />
 
             <Route path="/admin/products" element={<ListProduct />} />
+
+            <Route path="/admin/reports" element={<ReportAdmin />} />
 
             <Route path="/admin/seller-applications" element={<ProtectedRoute requiredRole="admin"><SellerApplications /></ProtectedRoute>} />
 
