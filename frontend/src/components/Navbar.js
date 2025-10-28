@@ -21,7 +21,7 @@ function SiteNavbar() {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/", { state: { logoutSuccess: true } });
   };
 
   return (
