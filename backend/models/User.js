@@ -12,6 +12,9 @@ const userSchema = new mongoose.Schema({
   businessDescription: { type: String },
   taxCode: { type: String },
   cccd: { type: String },
+  // Seller store profile
+  avatarUrl: { type: String },
+
 }, { timestamps: true });
 
 userSchema.pre("save", async function (next) {
