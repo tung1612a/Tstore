@@ -102,15 +102,38 @@ export const getAllSellerReports = async (req, res) => {
     const reports = [];
 
     for (const seller of sellers) {
-      const products = await Product.find({ sellerId: seller._id });
+      // Lấy tất cả sản phẩm của seller
+      const products = await Product.find({ sellerId: seller._id }).select("_id");
       const productIds = products.map((p) => p._id);
 
-      const orderItems = await OrderItem.find({ productId: { $in: productIds } }).populate("orderId");
+      // Nếu không có sản phẩm nào, bỏ qua
+      if (productIds.length === 0) {
+        reports.push({
+          sellerId: seller._id,
+          sellerName: seller.businessName || seller.fullName,
+          email: seller.email,
+          totalRevenue: 0,
+          totalOrders: 0,
+          avgOrderValue: 0,
+          totalProducts: 0,
+        });
+        continue;
+      }
 
-      const orderIds = [...new Set(orderItems.map((i) => i.orderId?._id).filter(Boolean))];
+      // Lấy tất cả OrderItem của seller (qua productId)
+      const orderItems = await OrderItem.find({ productId: { $in: productIds } });
+
+      // Tính tổng doanh thu từ các OrderItem
+      const totalRevenue = orderItems.reduce((sum, item) => {
+        return sum + (item.unitPrice * item.quantity);
+      }, 0);
+
+      // Lấy danh sách orderId unique
+      const orderIds = [...new Set(orderItems.map(item => item.orderId?.toString()).filter(Boolean))];
+      
+      // Lấy các order liên quan
       const orders = await Order.find({ _id: { $in: orderIds } });
 
-      const totalRevenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
       const totalOrders = orders.length;
       const avgOrderValue = totalOrders ? totalRevenue / totalOrders : 0;
 
@@ -121,8 +144,12 @@ export const getAllSellerReports = async (req, res) => {
         totalRevenue,
         totalOrders,
         avgOrderValue,
+        totalProducts: productIds.length,
       });
     }
+
+    // Sắp xếp theo doanh thu giảm dần
+    reports.sort((a, b) => b.totalRevenue - a.totalRevenue);
 
     res.json(reports);
   } catch (error) {
