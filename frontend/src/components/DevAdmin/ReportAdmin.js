@@ -2,10 +2,12 @@ import React, { useEffect, useState } from "react";
 import { Container, Row, Col, Card, Table, Spinner, Alert, Badge, Button } from "react-bootstrap";
 import { FiBarChart, FiDollarSign, FiShoppingCart, FiUsers, FiPackage, FiTrendingUp } from "react-icons/fi";
 import { useAuth } from "../../contexts/AuthContext";
+import { useTranslation } from "react-i18next";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Legend, CartesianGrid } from "recharts";
 
 const ReportAdmin = () => {
     const { token } = useAuth();
+    const { t } = useTranslation();
     const [reports, setReports] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -49,7 +51,7 @@ const ReportAdmin = () => {
         return (
             <Container className="py-5 text-center">
                 <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Đang tải báo cáo...</p>
+                <p className="mt-3 text-muted">{t('common.loading')}</p>
             </Container>
         );
     }
@@ -59,7 +61,7 @@ const ReportAdmin = () => {
             <Container className="py-5">
                 <Alert variant="danger">
                     <FiUsers className="me-2" />
-                    Có lỗi xảy ra: {error}
+                    {t('common.error')}: {error}
                 </Alert>
             </Container>
         );
@@ -71,16 +73,16 @@ const ReportAdmin = () => {
             <Row className="mb-4">
                 <Col>
                     <h2 className="fw-bold d-flex align-items-center text-primary">
-                        <FiBarChart className="me-2" /> Báo cáo & Thống kê doanh số người bán
+                        <FiBarChart className="me-2" /> {t('reports.sellerReports')}
                     </h2>
-                    <p className="text-muted">Tổng quan về hiệu suất kinh doanh của các cửa hàng</p>
+                    <p className="text-muted">{t('reports.overview')}</p>
                 </Col>
             </Row>
 
             <Row>
                 <Col>
                     <Button variant="secondary" href="/admin/dashboard">
-                        Quay lại dashboard
+                        {t('common.back')}
                     </Button>
                 </Col>
             </Row>
@@ -91,7 +93,7 @@ const ReportAdmin = () => {
                     <Card className="text-center shadow-sm border-0 h-100">
                         <Card.Body>
                             <FiDollarSign className="display-4 text-success mb-2" />
-                            <h5 className="text-muted">Tổng doanh thu</h5>
+                            <h5 className="text-muted">{t('reports.totalRevenue')}</h5>
                             <h3 className="fw-bold text-success">{formatCurrency(totalStats.totalRevenue)}</h3>
                         </Card.Body>
                     </Card>
@@ -100,7 +102,7 @@ const ReportAdmin = () => {
                     <Card className="text-center shadow-sm border-0 h-100">
                         <Card.Body>
                             <FiShoppingCart className="display-4 text-primary mb-2" />
-                            <h5 className="text-muted">Tổng đơn hàng</h5>
+                            <h5 className="text-muted">{t('reports.totalOrders')}</h5>
                             <h3 className="fw-bold text-primary">{totalStats.totalOrders}</h3>
                         </Card.Body>
                     </Card>
@@ -109,7 +111,7 @@ const ReportAdmin = () => {
                     <Card className="text-center shadow-sm border-0 h-100">
                         <Card.Body>
                             <FiUsers className="display-4 text-info mb-2" />
-                            <h5 className="text-muted">Số người bán</h5>
+                            <h5 className="text-muted">{t('reports.sellerCount')}</h5>
                             <h3 className="fw-bold text-info">{totalStats.totalSellers}</h3>
                         </Card.Body>
                     </Card>
@@ -118,7 +120,7 @@ const ReportAdmin = () => {
                     <Card className="text-center shadow-sm border-0 h-100">
                         <Card.Body>
                             <FiPackage className="display-4 text-warning mb-2" />
-                            <h5 className="text-muted">Tổng sản phẩm</h5>
+                            <h5 className="text-muted">{t('reports.totalProducts')}</h5>
                             <h3 className="fw-bold text-warning">{totalStats.totalProducts}</h3>
                         </Card.Body>
                     </Card>
@@ -130,7 +132,7 @@ const ReportAdmin = () => {
                     <Col md={12}>
                         <Alert variant="info">
                             <FiUsers className="me-2" />
-                            Chưa có dữ liệu doanh số nào.
+                            {t('reports.noData')}
                         </Alert>
                     </Col>
                 </Row>
@@ -141,20 +143,20 @@ const ReportAdmin = () => {
                         <Col md={12}>
                             <Card className="shadow-sm border-0">
                                 <Card.Header className="bg-primary text-white fw-semibold d-flex align-items-center">
-                                    <FiBarChart className="me-2" /> Bảng doanh thu từng người bán
+                                    <FiBarChart className="me-2" /> {t('reports.sellerRevenue')}
                                 </Card.Header>
                                 <Card.Body className="p-0">
                                     <Table striped bordered hover responsive className="mb-0">
                                         <thead className="table-light">
                                             <tr className="text-center align-middle">
                                                 <th style={{ width: "60px" }}>#</th>
-                                                <th>Tên cửa hàng</th>
-                                                <th>Email</th>
-                                                <th>Số SP</th>
-                                                <th>Tổng đơn hàng</th>
-                                                <th>Doanh thu</th>
-                                                <th>Giá trị TB/đơn</th>
-                                                <th>Xếp hạng</th>
+                                                <th>{t('reports.sellerName')}</th>
+                                                <th>{t('reports.email')}</th>
+                                                <th>{t('reports.productCount')}</th>
+                                                <th>{t('reports.orders')}</th>
+                                                <th>{t('reports.revenue')}</th>
+                                                <th>{t('reports.avgOrder')}</th>
+                                                <th>{t('reports.rank')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -202,7 +204,7 @@ const ReportAdmin = () => {
                         <Col md={12}>
                             <Card className="shadow-sm border-0">
                                 <Card.Header className="bg-success text-white fw-semibold d-flex align-items-center">
-                                    <FiTrendingUp className="me-2" /> Biểu đồ doanh thu theo người bán
+                                    <FiTrendingUp className="me-2" /> {t('reports.revenueChart')}
                                 </Card.Header>
                                 <Card.Body style={{ height: 450 }}>
                                     <ResponsiveContainer width="100%" height="100%">
@@ -224,7 +226,7 @@ const ReportAdmin = () => {
                                                 contentStyle={{ backgroundColor: 'rgba(255, 255, 255, 0.95)' }}
                                             />
                                             <Legend />
-                                            <Bar dataKey="totalRevenue" name="Doanh thu" fill="#0d6efd" radius={[8, 8, 0, 0]} />
+                                            <Bar dataKey="totalRevenue" name={t('reports.revenue')} fill="#0d6efd" radius={[8, 8, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </Card.Body>

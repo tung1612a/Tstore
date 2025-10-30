@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Form, Button, Spinner, Alert, Toast, ToastContainer } from 'react-bootstrap';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 function Login() {
   const [loading, setLoading] = useState(false);
@@ -10,6 +11,7 @@ function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastVariant, setToastVariant] = useState("success");
@@ -80,16 +82,16 @@ function Login() {
           <Col md={{ span: 4, offset: 4 }}>
             <Card className="shadow-lg border-0 rounded-4">
               <Card.Body className="p-4">
-                <h3 className="text-center mb-4 fw-bold">Đăng nhập</h3>
+                <h3 className="text-center mb-4 fw-bold">{t('login.title')}</h3>
 
                 {error && <Alert variant="danger">{error}</Alert>}
 
                 <Form onSubmit={handleSubmit}>
                   <Form.Group className="mb-3" controlId="formUsername">
-                    <Form.Label>Tên đăng nhập</Form.Label>
+                    <Form.Label>{t('login.email')}</Form.Label>
                     <Form.Control
                       type="text"
-                      placeholder="Nhập tên đăng nhập"
+                      placeholder={t('login.email')}
                       name="username"
                       value={form.username}
                       onChange={handleChange}
@@ -98,10 +100,10 @@ function Login() {
                   </Form.Group>
 
                   <Form.Group className="mb-3" controlId="formPassword">
-                    <Form.Label>Mật khẩu</Form.Label>
+                    <Form.Label>{t('login.password')}</Form.Label>
                     <Form.Control
                       type="password"
-                      placeholder="Nhập mật khẩu"
+                      placeholder={t('login.password')}
                       name="password"
                       value={form.password}
                       onChange={handleChange}
@@ -119,10 +121,10 @@ function Login() {
                       >
                         {loading ? (
                           <>
-                            <Spinner animation="border" size="sm" className="me-2" /> Đang đăng nhập...
+                            <Spinner animation="border" size="sm" className="me-2" /> {t('common.loading')}
                           </>
                         ) : (
-                          "Đăng nhập"
+                          t('login.title')
                         )}
                       </Button>
                     </Col>
@@ -134,14 +136,14 @@ function Login() {
                         className="w-100"
                         onClick={handleRegister}
                       >
-                        Đăng ký
+                        {t('register.title')}
                       </Button>
                     </Col>
                   </Row>
                 </Form>
 
                 <div className="text-center mt-3 text-muted" style={{ fontSize: "0.9rem" }}>
-                  Quên mật khẩu? <a href="/forgetPass">Khôi phục tại đây</a>
+                  {t('login.forgotPassword')} <a href="/forgetPass">{t('login.recoverHere')}</a>
                 </div>
               </Card.Body>
             </Card>
