@@ -11,3 +11,44 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* Fix for Bootstrap bg-* background colors - ensure proper background and text colors */
+.bg-primary {
+  background-color: #0d6efd !important;
+  color: white !important;
+}
+
+.bg-secondary {
+  background-color: #6c757d !important;
+  color: white !important;
+}
+
+.bg-success {
+  background-color: #198754 !important;
+  color: white !important;
+}
+
+.bg-danger {
+  background-color: #dc3545 !important;
+  color: white !important;
+}
+
+.bg-warning {
+  background-color: #ffc107 !important;
+  color: #000 !important;
+}
+
+.bg-info {
+  background-color: #0dcaf0 !important;
+  color: #000 !important;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+  color: #000 !important;
+}
+
+.bg-dark {
+  background-color: #212529 !important;
+  color: white !important;
+}

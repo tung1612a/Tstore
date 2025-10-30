@@ -340,3 +340,26 @@ export const updateAvatar = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
+// Update profile information for current user
+export const updateProfile = async (req, res) => {
+  try {
+    const { fullName, phone } = req.body;
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Update only provided fields
+    if (fullName) user.fullName = fullName;
+    if (phone) user.phone = phone;
+
+    await user.save();
+    
+    const sanitized = await User.findById(userId).select('-password');
+    res.json({ message: 'Profile updated successfully', user: sanitized });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
