@@ -3,7 +3,6 @@ import { Provider } from "react-redux";
 import { store } from "./store/store";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 
 // Components
 import Home from "./components/Home/Home";

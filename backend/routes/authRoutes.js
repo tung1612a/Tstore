@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, getMe, checkEmail, changePassword, becomeSeller, getSellerApplications, reviewSellerApplication, getMySellerApplication, updateAvatar } from "../controllers/authController.js";
+import { register, login, getMe, checkEmail, changePassword, becomeSeller, getSellerApplications, reviewSellerApplication, getMySellerApplication, updateAvatar, updateProfile } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import multer from 'multer';
 import path from 'path';
@@ -35,6 +35,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.put("/avatar", protect, upload.single('avatar'), updateAvatar);
+router.put("/profile", protect, updateProfile);
 router.post("/become-seller", protect, becomeSeller);
 router.get("/my-seller-application", protect, getMySellerApplication);
 

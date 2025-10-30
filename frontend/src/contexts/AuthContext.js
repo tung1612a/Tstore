@@ -115,6 +115,33 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'LOGOUT' });
   };
 
+
+// Update profile information for current user
+  const updateProfile = async (profileData) => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('http://localhost:5000/api/auth/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(profileData)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        dispatch({ type: 'SET_USER', payload: data.user });
+        return { success: true, user: data.user };
+      } else {
+        return { success: false, message: data.message };
+      }
+    } catch (error) {
+      return { success: false, message: 'Network error' };
+    }
+  };
+
   const isAdmin = () => {
     return state.user && state.user.role === 'admin';
   };
@@ -194,6 +221,7 @@ export const AuthProvider = ({ children }) => {
     ...state,
     login,
     logout,
+    updateProfile,
     isAdmin,
     isDevAdmin,
     isSeller,

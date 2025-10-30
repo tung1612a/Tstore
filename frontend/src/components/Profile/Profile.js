@@ -5,12 +5,19 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 
 function Profile() {
-  const { user, loading, logout, isShipper } = useAuth();
+  const { user, loading, logout, isShipper, updateProfile } = useAuth();
   const navigate = useNavigate();
   const [shipperStats, setShipperStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
   const [avatarMsg, setAvatarMsg] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    fullName: '',
+    phone: ''
+  });
+  const [profileMsg, setProfileMsg] = useState('');
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -56,7 +63,47 @@ function Profile() {
     if (user?.avatarUrl || user?.avatarURL) {
       setAvatarUrl(user.avatarUrl || user.avatarURL);
     }
+    if (user) {
+      setEditForm({
+        fullName: user.fullName || '',
+        phone: user.phone || ''
+      });
+    }
   }, [user]);
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setProfileMsg('');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+    setEditForm({
+      fullName: user.fullName || '',
+      phone: user.phone || ''
+    });
+    setProfileMsg('');
+  };
+
+  const handleSaveProfile = async () => {
+    setLoadingProfile(true);
+    setProfileMsg('');
+    
+    try {
+      const result = await updateProfile(editForm);
+      
+      if (result.success) {
+        setProfileMsg('Cập nhật thông tin thành công!');
+        setIsEditing(false);
+      } else {
+        setProfileMsg(result.message || 'Cập nhật thất bại');
+      }
+    } catch (error) {
+      setProfileMsg('Có lỗi xảy ra khi cập nhật');
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -161,57 +208,150 @@ function Profile() {
 
                 <Col md={8}>
                   <div className="mb-4">
-                    <h5 className="text-primary mb-3">Thông tin cơ bản</h5>
-                    <div className="row g-3">
-                      <div className="col-sm-6">
-                        <div className="d-flex align-items-center">
-                          <FiUser className="me-2 text-muted" />
-                          <div>
-                            <small className="text-muted">Họ và tên</small>
-                            <div className="fw-medium">{user.fullName || 'Chưa cập nhật'}</div>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h5 className="text-primary mb-0">Thông tin cơ bản</h5>
+                      {!isEditing && (
+                        <Button variant="outline-primary" size="sm" onClick={handleEditClick}>
+                          <FiEdit className="me-1" />
+                          Cập nhật thông tin
+                        </Button>
+                      )}
+                    </div>
+                    
+                    {isEditing ? (
+                      <div className="border rounded p-3 bg-light">
+                        <Form>
+                          <Form.Group className="mb-3">
+                            <Form.Label>
+                              <FiUser className="me-2" />
+                              Họ và tên
+                            </Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={editForm.fullName}
+                              onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
+                              placeholder="Nhập họ và tên"
+                            />
+                          </Form.Group>
+                          
+                          <Form.Group className="mb-3">
+                            <Form.Label>
+                              <FiMail className="me-2" />
+                              Email
+                            </Form.Label>
+                            <Form.Control
+                              type="email"
+                              value={user.email}
+                              disabled
+                              className="bg-secondary"
+                            />
+                            <Form.Text className="text-muted">
+                              Email không thể thay đổi
+                            </Form.Text>
+                          </Form.Group>
+                          
+                          <Form.Group className="mb-3">
+                            <Form.Label>
+                              <FiPhone className="me-2" />
+                              Số điện thoại
+                            </Form.Label>
+                            <Form.Control
+                              type="text"
+                              value={editForm.phone}
+                              onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                              placeholder="Nhập số điện thoại"
+                            />
+                          </Form.Group>
+                          
+                          <div className="d-flex gap-2">
+                            <Button 
+                              variant="success" 
+                              onClick={handleSaveProfile}
+                              disabled={loadingProfile}
+                            >
+                              {loadingProfile ? (
+                                <>
+                                  <Spinner size="sm" className="me-1" />
+                                  Đang lưu...
+                                </>
+                              ) : (
+                                <>
+                                  <FiSave className="me-1" />
+                                  Lưu thay đổi
+                                </>
+                              )}
+                            </Button>
+                            <Button 
+                              variant="secondary" 
+                              onClick={handleCancelEdit}
+                              disabled={loadingProfile}
+                            >
+                              Hủy
+                            </Button>
+                          </div>
+                          
+                          {profileMsg && (
+                            <Alert 
+                              variant={profileMsg.includes('thành công') ? 'success' : 'danger'} 
+                              className="mt-3 mb-0 py-2"
+                            >
+                              {profileMsg}
+                            </Alert>
+                          )}
+                        </Form>
+                      </div>
+                    ) : (
+                      <div className="row g-3">
+                        <div className="col-sm-6">
+                          <div className="d-flex align-items-center">
+                            <FiUser className="me-2 text-muted" />
+                            <div>
+                              <small className="text-muted">Họ và tên</small>
+                              <div className="fw-medium">{user.fullName || 'Chưa cập nhật'}</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="d-flex align-items-center">
-                          <FiMail className="me-2 text-muted" />
-                          <div>
-                            <small className="text-muted">Email</small>
-                            <div className="fw-medium">{user.email || 'Chưa cập nhật'}</div>
+                        <div className="col-sm-6">
+                          <div className="d-flex align-items-center">
+                            <FiMail className="me-2 text-muted" />
+                            <div>
+                              <small className="text-muted">Email</small>
+                              <div className="fw-medium">{user.email || 'Chưa cập nhật'}</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="d-flex align-items-center">
-                          <FiPhone className="me-2 text-muted" />
-                          <div>
-                            <small className="text-muted">Số điện thoại</small>
-                            <div className="fw-medium">{user.phone || 'Chưa cập nhật'}</div>
+                        <div className="col-sm-6">
+                          <div className="d-flex align-items-center">
+                            <FiPhone className="me-2 text-muted" />
+                            <div>
+                              <small className="text-muted">Số điện thoại</small>
+                              <div className="fw-medium">{user.phone || 'Chưa cập nhật'}</div>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                      <div className="col-sm-6">
-                        <div className="d-flex align-items-center">
-                          <FiUser className="me-2 text-muted" />
-                          <div>
-                            <small className="text-muted">Vai trò</small>
-                            <div className="fw-medium">
-                              <span className={`badge ${
-                                user.role === 'devadmin' ? 'bg-danger' :
-                                user.role === 'admin' ? 'bg-warning' :
-                                user.role === 'seller' ? 'bg-primary' :
-                                user.role === 'shipper' ? 'bg-success' : 'bg-info'
-                              }`}>
-                                {user.role === 'devadmin' ? 'Dev Admin' :
-                                 user.role === 'admin' ? 'Admin' :
-                                 user.role === 'seller' ? 'Người bán' :
-                                 user.role === 'shipper' ? 'Người giao hàng' : 'Khách hàng'}
-                              </span>
+                        <div className="col-sm-6">
+                          <div className="d-flex align-items-center">
+                            <FiUser className="me-2 text-muted" />
+                            <div>
+                              <small className="text-muted">Vai trò</small>
+                              <div className="fw-medium">
+                                <span className={`badge ${
+                                  user.role === 'devadmin' ? 'bg-danger' :
+                                  user.role === 'admin' ? 'bg-warning' :
+                                  user.role === 'seller' ? 'bg-primary' :
+                                  user.role === 'shipper' ? 'bg-success' : 'bg-info'
+                                }`}>
+                                  {user.role === 'devadmin' ? 'Dev Admin' :
+                                   user.role === 'admin' ? 'Admin' :
+                                   user.role === 'seller' ? 'Người bán' :
+                                   user.role === 'shipper' ? 'Người giao hàng' : 'Khách hàng'}
+                                </span>
+                              </div>
                             </div>
                           </div>
                         </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Shipper Stats Section */}
