@@ -3,10 +3,12 @@ import { Container, Row, Col, Card, Button } from 'react-bootstrap';
 import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus, FiUserCheck, FiArrowLeft, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const AdminHomepage = () => {
   const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,8 +57,8 @@ const AdminHomepage = () => {
         <Container>
           <Row className="align-items-center">
             <Col>
-              <h1 className="display-4 fw-bold">Business Admin Dashboard</h1>
-              <p className="lead">Quản lý hệ thống và giám sát hoạt động bán hàng</p>
+              <h1 className="display-4 fw-bold">{t('admin.businessAdmin')}</h1>
+              <p className="lead">{t('admin.manageSystem')}</p>
             </Col>
             <Col xs="auto">
               <div className="d-flex gap-2">
@@ -71,7 +73,7 @@ const AdminHomepage = () => {
                   }}
                 >
                   <FiArrowLeft className="me-2" />
-                  Quay lại Trang chủ
+                  {t('admin.backHome')}
                 </Button>
                 <Button 
                   variant="outline-light" 
@@ -84,7 +86,7 @@ const AdminHomepage = () => {
                   }}
                 >
                   <FiLogOut className="me-2" />
-                  Đăng xuất
+                  {t('navbar.logout')}
                 </Button>
               </div>
             </Col>
@@ -100,7 +102,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiUsers className="text-primary mb-3" size={48} />
                 <h3 className="text-primary">{stats?.totalUsers || 0}</h3>
-                <p className="text-muted mb-0">Tổng người dùng</p>
+                <p className="text-muted mb-0">{t('admin.totalUsers')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -109,7 +111,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiPackage className="text-success mb-3" size={48} />
                 <h3 className="text-success">{stats?.totalProducts || 0}</h3>
-                <p className="text-muted mb-0">Sản phẩm</p>
+                <p className="text-muted mb-0">{t('admin.totalProducts')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -118,7 +120,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiShoppingCart className="text-info mb-3" size={48} />
                 <h3 className="text-info">{stats?.totalOrders || 0}</h3>
-                <p className="text-muted mb-0">Đơn hàng</p>
+                <p className="text-muted mb-0">{t('admin.totalOrders')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -127,7 +129,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiUsers className="text-warning mb-3" size={48} />
                 <h3 className="text-warning">{stats?.totalSellers || 0}</h3>
-                <p className="text-muted mb-0">Người bán</p>
+                <p className="text-muted mb-0">{t('admin.totalSellers')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -138,13 +140,13 @@ const AdminHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-primary text-white">
-                <h5 className="mb-0">Quản lý người dùng</h5>
+                <h5 className="mb-0">{t('admin.manageUsers')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Xem và quản lý tất cả người dùng trong hệ thống</p>
+                <p className="text-muted">{t('admin.viewUsers')}</p>
                 <Button variant="primary" onClick={() => navigate('/admin/users')}>
                   <FiUsers className="me-2" />
-                  Quản lý Users
+                  {t('admin.manageUserBtn')}
                 </Button>
               </Card.Body>
             </Card>
@@ -152,13 +154,13 @@ const AdminHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-success text-white">
-                <h5 className="mb-0">Báo cáo & Thống kê</h5>
+                <h5 className="mb-0">{t('admin.reports')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Xem báo cáo chi tiết và thống kê hệ thống</p>
+                <p className="text-muted">{t('admin.viewReports')}</p>
                 <Button variant="success" onClick={() => navigate('/admin/reports')}>
                   <FiBarChart className="me-2" />
-                  Xem Báo cáo
+                  {t('admin.viewReportsBtn')}
                 </Button>
               </Card.Body>
             </Card>
@@ -180,13 +182,13 @@ const AdminHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-warning text-white">
-                <h5 className="mb-0">Duyệt đơn đăng ký Seller</h5>
+                <h5 className="mb-0">{t('admin.reviewSellerApplications')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Xem và duyệt các đơn đăng ký trở thành seller</p>
+                <p className="text-muted">{t('admin.reviewSellerDesc')}</p>
                 <Button variant="warning" onClick={() => navigate('/admin/seller-applications')}>
                   <FiUserCheck className="me-2" />
-                  Duyệt đơn Seller
+                  {t('admin.reviewBtn')}
                 </Button>
               </Card.Body>
             </Card>

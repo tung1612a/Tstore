@@ -3,10 +3,12 @@ import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
 import { FiPackage, FiShoppingCart, FiDollarSign, FiAlertTriangle, FiPlus, FiEdit, FiTrendingUp } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const SellerHomepage = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [lowStockProducts, setLowStockProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,10 +54,10 @@ const SellerHomepage = () => {
         <Container>
           <Row>
             <Col>
-              <h1 className="display-4 fw-bold">Seller Dashboard</h1>
-              <p className="lead">Quản lý cửa hàng và bán hàng hiệu quả</p>
+              <h1 className="display-4 fw-bold">{t('seller.heroTitle')}</h1>
+              <p className="lead">{t('seller.heroSubtitle')}</p>
               <Button variant="light" onClick={() => navigate('/')}>
-                Quay lại cửa hàng
+                {t('common.back')}
               </Button>
             </Col>
           </Row>
@@ -67,9 +69,9 @@ const SellerHomepage = () => {
         {lowStockProducts.length > 0 && (
           <Alert variant="warning" className="mb-4">
             <FiAlertTriangle className="me-2" />
-            <strong>Cảnh báo:</strong> Bạn có {lowStockProducts.length} sản phẩm sắp hết hàng!
+            <strong>{t('seller.warning')}:</strong> {t('seller.lowStockAlert')} {lowStockProducts.length}!
             <Button variant="outline-warning" size="sm" className="ms-3" onClick={() => navigate('/seller/products')}>
-              Xem chi tiết
+              {t('seller.viewDetails')}
             </Button>
           </Alert>
         )}
@@ -81,7 +83,7 @@ const SellerHomepage = () => {
               <Card.Body className="text-center">
                 <FiPackage className="text-primary mb-3" size={48} />
                 <h3 className="text-primary">{stats?.totalProducts || 0}</h3>
-                <p className="text-muted mb-0">Sản phẩm</p>
+                <p className="text-muted mb-0">{t('seller.totalProducts')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -90,7 +92,7 @@ const SellerHomepage = () => {
               <Card.Body className="text-center">
                 <FiShoppingCart className="text-success mb-3" size={48} />
                 <h3 className="text-success">{stats?.totalOrders || 0}</h3>
-                <p className="text-muted mb-0">Đơn hàng</p>
+                <p className="text-muted mb-0">{t('seller.totalOrders')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -99,7 +101,7 @@ const SellerHomepage = () => {
               <Card.Body className="text-center">
                 <FiDollarSign className="text-info mb-3" size={48} />
                 <h3 className="text-info">${stats?.totalRevenue?.toFixed(2) || '0.00'}</h3>
-                <p className="text-muted mb-0">Doanh thu</p>
+                <p className="text-muted mb-0">{t('seller.revenue')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -108,7 +110,7 @@ const SellerHomepage = () => {
               <Card.Body className="text-center">
                 <FiAlertTriangle className="text-warning mb-3" size={48} />
                 <h3 className="text-warning">{stats?.lowStockCount || 0}</h3>
-                <p className="text-muted mb-0">Sắp hết hàng</p>
+                <p className="text-muted mb-0">{t('seller.lowStockCount')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -119,14 +121,14 @@ const SellerHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-primary text-white">
-                <h5 className="mb-0">Quản lý sản phẩm</h5>
+                <h5 className="mb-0">{t('seller.manageProducts')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Thêm mới, chỉnh sửa và quản lý sản phẩm của bạn</p>
+                <p className="text-muted">{t('seller.manageProductsDesc')}</p>
                 <div className="d-grid gap-2">
                   <Button variant="primary" onClick={() => navigate('/seller/products')}>
                     <FiPackage className="me-2" />
-                    Xem tất cả sản phẩm
+                    {t('seller.viewProducts')}
                   </Button>
                   {/* <Button variant="outline-primary" onClick={() => navigate('/seller/products/new')}>
                     <FiPlus className="me-2" />
@@ -139,13 +141,13 @@ const SellerHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-success text-white">
-                <h5 className="mb-0">Quản lý đơn hàng</h5>
+                <h5 className="mb-0">{t('seller.manageOrders')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Theo dõi và xử lý đơn hàng từ khách hàng</p>
+                <p className="text-muted">{t('seller.manageOrdersDesc')}</p>
                 <Button variant="success" onClick={() => navigate('/seller/orders')}>
                   <FiShoppingCart className="me-2" />
-                  Xem đơn hàng
+                  {t('seller.viewOrders')}
                 </Button>
               </Card.Body>
             </Card>
@@ -153,13 +155,13 @@ const SellerHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-info text-white">
-                <h5 className="mb-0">Báo cáo bán hàng</h5>
+                <h5 className="mb-0">{t('seller.reports')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Xem thống kê và báo cáo doanh thu</p>
+                <p className="text-muted">{t('seller.reportsDesc')}</p>
                 <Button variant="info" onClick={() => navigate('/seller/reports')}>
                   <FiTrendingUp className="me-2" />
-                  Xem báo cáo
+                  {t('seller.viewReports')}
                 </Button>
               </Card.Body>
             </Card>
@@ -167,13 +169,13 @@ const SellerHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-warning text-white">
-                <h5 className="mb-0">Cài đặt cửa hàng</h5>
+                <h5 className="mb-0">{t('seller.settings')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Cấu hình thông tin và cài đặt cửa hàng</p>
+                <p className="text-muted">{t('seller.settingsDesc')}</p>
                 <Button variant="warning" onClick={() => navigate('/seller/settings')}>
                   <FiEdit className="me-2" />
-                  Cài đặt cửa hàng
+                  {t('seller.settings')}
                 </Button>
               </Card.Body>
             </Card>
@@ -186,17 +188,17 @@ const SellerHomepage = () => {
             <Col>
               <Card className="border-0 shadow-sm">
                 <Card.Header className="bg-warning text-white">
-                  <h5 className="mb-0">Sản phẩm sắp hết hàng</h5>
+                  <h5 className="mb-0">{t('seller.lowStock')}</h5>
                 </Card.Header>
                 <Card.Body>
                   <div className="table-responsive">
                     <table className="table table-sm">
                       <thead>
                         <tr>
-                          <th>Tên sản phẩm</th>
-                          <th>Số lượng còn lại</th>
-                          <th>Giá</th>
-                          <th>Hành động</th>
+                          <th>{t('product.description')}</th>
+                          <th>{t('product.quantity')}</th>
+                          <th>{t('product.price')}</th>
+                          <th>{t('common.edit')}</th>
                         </tr>
                       </thead>
                       <tbody>

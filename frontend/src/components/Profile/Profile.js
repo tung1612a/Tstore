@@ -3,10 +3,12 @@ import { Container, Row, Col, Card, Button, Alert, Spinner, Badge, Form } from '
 import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin, FiTruck, FiPackage, FiCheckCircle, FiClock, FiDollarSign, FiSave } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 function Profile() {
   const { user, loading, logout, isShipper, updateProfile } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [shipperStats, setShipperStats] = useState(null);
   const [loadingStats, setLoadingStats] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState('');
@@ -133,7 +135,7 @@ function Profile() {
             <Card.Header className="bg-primary text-white">
               <h4 className="mb-0 d-flex align-items-center">
                 <FiUser className="me-2" />
-                Thông tin cá nhân
+                {t('profile.title')}
               </h4>
             </Card.Header>
             <Card.Body className="p-4">
@@ -209,11 +211,11 @@ function Profile() {
                 <Col md={8}>
                   <div className="mb-4">
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                      <h5 className="text-primary mb-0">Thông tin cơ bản</h5>
+                      <h5 className="text-primary mb-0">{t('profile.basicInfo')}</h5>
                       {!isEditing && (
                         <Button variant="outline-primary" size="sm" onClick={handleEditClick}>
                           <FiEdit className="me-1" />
-                          Cập nhật thông tin
+                          {t('profile.updateInfo')}
                         </Button>
                       )}
                     </div>
@@ -224,20 +226,20 @@ function Profile() {
                           <Form.Group className="mb-3">
                             <Form.Label>
                               <FiUser className="me-2" />
-                              Họ và tên
+                              {t('profile.fullName')}
                             </Form.Label>
                             <Form.Control
                               type="text"
                               value={editForm.fullName}
                               onChange={(e) => setEditForm({ ...editForm, fullName: e.target.value })}
-                              placeholder="Nhập họ và tên"
+                              placeholder={t('profile.fullName')}
                             />
                           </Form.Group>
                           
                           <Form.Group className="mb-3">
                             <Form.Label>
                               <FiMail className="me-2" />
-                              Email
+                              {t('profile.email')}
                             </Form.Label>
                             <Form.Control
                               type="email"
@@ -246,20 +248,20 @@ function Profile() {
                               className="bg-secondary"
                             />
                             <Form.Text className="text-muted">
-                              Email không thể thay đổi
+                              {t('profile.email')} cannot be changed
                             </Form.Text>
                           </Form.Group>
                           
                           <Form.Group className="mb-3">
                             <Form.Label>
                               <FiPhone className="me-2" />
-                              Số điện thoại
+                              {t('profile.phone')}
                             </Form.Label>
                             <Form.Control
                               type="text"
                               value={editForm.phone}
                               onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
-                              placeholder="Nhập số điện thoại"
+                              placeholder={t('profile.phone')}
                             />
                           </Form.Group>
                           
@@ -272,12 +274,12 @@ function Profile() {
                               {loadingProfile ? (
                                 <>
                                   <Spinner size="sm" className="me-1" />
-                                  Đang lưu...
+                                  {t('common.loading')}
                                 </>
                               ) : (
                                 <>
                                   <FiSave className="me-1" />
-                                  Lưu thay đổi
+                                  {t('common.save')}
                                 </>
                               )}
                             </Button>
@@ -286,7 +288,7 @@ function Profile() {
                               onClick={handleCancelEdit}
                               disabled={loadingProfile}
                             >
-                              Hủy
+                              {t('common.cancel')}
                             </Button>
                           </div>
                           
@@ -306,7 +308,7 @@ function Profile() {
                           <div className="d-flex align-items-center">
                             <FiUser className="me-2 text-muted" />
                             <div>
-                              <small className="text-muted">Họ và tên</small>
+                              <small className="text-muted">{t('profile.fullName')}</small>
                               <div className="fw-medium">{user.fullName || 'Chưa cập nhật'}</div>
                             </div>
                           </div>
@@ -315,7 +317,7 @@ function Profile() {
                           <div className="d-flex align-items-center">
                             <FiMail className="me-2 text-muted" />
                             <div>
-                              <small className="text-muted">Email</small>
+                              <small className="text-muted">{t('profile.email')}</small>
                               <div className="fw-medium">{user.email || 'Chưa cập nhật'}</div>
                             </div>
                           </div>
@@ -324,7 +326,7 @@ function Profile() {
                           <div className="d-flex align-items-center">
                             <FiPhone className="me-2 text-muted" />
                             <div>
-                              <small className="text-muted">Số điện thoại</small>
+                              <small className="text-muted">{t('profile.phone')}</small>
                               <div className="fw-medium">{user.phone || 'Chưa cập nhật'}</div>
                             </div>
                           </div>
@@ -333,7 +335,7 @@ function Profile() {
                           <div className="d-flex align-items-center">
                             <FiUser className="me-2 text-muted" />
                             <div>
-                              <small className="text-muted">Vai trò</small>
+                              <small className="text-muted">{t('profile.role')}</small>
                               <div className="fw-medium">
                                 <span className={`badge ${
                                   user.role === 'devadmin' ? 'bg-danger' :
@@ -341,10 +343,10 @@ function Profile() {
                                   user.role === 'seller' ? 'bg-primary' :
                                   user.role === 'shipper' ? 'bg-success' : 'bg-info'
                                 }`}>
-                                  {user.role === 'devadmin' ? 'Dev Admin' :
-                                   user.role === 'admin' ? 'Admin' :
-                                   user.role === 'seller' ? 'Người bán' :
-                                   user.role === 'shipper' ? 'Người giao hàng' : 'Khách hàng'}
+                                  {user.role === 'devadmin' ? t('profile.devAdmin') :
+                                   user.role === 'admin' ? t('profile.admin') :
+                                   user.role === 'seller' ? t('profile.seller') :
+                                   user.role === 'shipper' ? t('profile.shipper') : t('profile.customer')}
                                 </span>
                               </div>
                             </div>
