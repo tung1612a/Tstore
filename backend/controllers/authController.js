@@ -76,16 +76,26 @@ export const getMe = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+function generateRandomPassword(length = 6) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let password = '';
+  for (let i = 0; i < length; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
 
 // Forgot password: Reset về 123456789 & gửi email
 export const checkEmail = async (req, res) => {
   try {
+    
     const { email } = req.body;
     if (!email) return res.status(400).json({ message: "Email is required" });
 
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "Email không tồn tại trong hệ thống" });
-    const newPassword = "123456789";
+    const newPassword = generateRandomPassword(); 
+;
 
     // Set plain password and rely on User model pre-save hook to hash it
     user.password = newPassword;
