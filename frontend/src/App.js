@@ -3,7 +3,6 @@ import { Provider } from "react-redux";
 import { store } from "./store/store";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
-import "../node_modules/bootstrap/dist/css/bootstrap.min.css";
 
 // Components
 import Home from "./components/Home/Home";
@@ -33,7 +32,9 @@ import AddressPage from "./components/Address/AddressPage";
 import AdminUser from "./components/Admin/AdminUser";
 import ListProduct from "./components/DevAdmin/ListProduct";
 import SellerReports from "./components/Seller/SellerReport";
+import SellerSettings from "./components/Seller/SellerSettings";
 import SellerApplications from "./components/Admin/SellerApplications";
+import ReportAdmin from "./components/DevAdmin/ReportAdmin";
 
 function App() {
   return (
@@ -74,6 +75,8 @@ function App() {
 
             <Route path="/admin/products" element={<ListProduct />} />
 
+            <Route path="/admin/reports" element={<ReportAdmin />} />
+
             <Route path="/admin/seller-applications" element={<ProtectedRoute requiredRole="admin"><SellerApplications /></ProtectedRoute>} />
 
             {/* Seller routes */}
@@ -83,6 +86,7 @@ function App() {
             <Route path="/seller/products" element={<ProtectedRoute requiredRole="seller"><SellerProducts /></ProtectedRoute>}/>
             <Route path="/seller/orders" element={<ProtectedRoute requiredRole="seller"><OrderManagement /></ProtectedRoute>}/>
             <Route path="/seller/reports" element={<ProtectedRoute requiredRole="seller"><SellerReports /></ProtectedRoute>}/>
+            <Route path="/seller/settings" element={<ProtectedRoute requiredRole="seller"><SellerSettings /></ProtectedRoute>}/>
 
             {/* Shipper routes */}
             <Route path="/shipper" element={<ProtectedRoute requiredRole="shipper"><ShipperHomepage /></ProtectedRoute>}/>

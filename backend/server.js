@@ -20,6 +20,12 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+// serve uploaded files
+import path from 'path';
+import fs from 'fs';
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+app.use('/uploads', express.static(uploadsDir));
 
 connectDB();
 

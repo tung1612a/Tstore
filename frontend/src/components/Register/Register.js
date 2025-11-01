@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 function Register() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     fullname: '',
     email: '',
@@ -28,7 +30,7 @@ function Register() {
 
     // Validate password
     if (form.password !== form.confirmPassword) {
-      setError('Mật khẩu nhập lại không khớp!');
+      setError(t('register.passwordMismatch'));
       return;
     }
 
@@ -47,11 +49,11 @@ function Register() {
       .then(res => {
         setLoading(false);
         setSuccess(true);
-        setTimeout(() => navigate('/login'), 1500);
+        setTimeout(() => navigate('/login', { state: { registerSuccess: true } }), 1500);
       })
       .catch(err => {
         setLoading(false);
-        const msg = err?.response?.data?.message || 'Đăng ký thất bại';
+        const msg = err?.response?.data?.message || t('register.failed');
         setError(msg);
       });
   };
@@ -62,17 +64,17 @@ function Register() {
         <Col md={{ span: 6, offset: 3 }}>
           <Card className="shadow-lg border-0 rounded-4">
             <Card.Body className="p-4">
-              <h3 className="text-center mb-4 fw-bold">Đăng ký tài khoản</h3>
+              <h3 className="text-center mb-4 fw-bold">{t('register.titleFull')}</h3>
 
               {error && <Alert variant="danger">{error}</Alert>}
-              {success && <Alert variant="success">Đăng ký thành công! Đang chuyển hướng...</Alert>}
+              {success && <Alert variant="success">{t('register.successMsg')}</Alert>}
 
               <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formFullname">
-                  <Form.Label>Họ và tên</Form.Label>
+                  <Form.Label>{t('register.fullName')}</Form.Label>
                   <Form.Control
                     type="text"
-                    placeholder="Nhập họ tên"
+                    placeholder={t('register.fullName')}
                     name="fullname"
                     value={form.fullname}
                     onChange={handleChange}
@@ -81,10 +83,10 @@ function Register() {
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formEmail">
-                  <Form.Label>Email</Form.Label>
+                  <Form.Label>{t('register.email')}</Form.Label>
                   <Form.Control
                     type="email"
-                    placeholder="Nhập email"
+                    placeholder={t('register.email')}
                     name="email"
                     value={form.email}
                     onChange={handleChange}
@@ -93,10 +95,10 @@ function Register() {
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formPhone">
-                  <Form.Label>Số điện thoại</Form.Label>
+                  <Form.Label>{t('register.phone')}</Form.Label>
                   <Form.Control
                     type="text"
-                    placeholder="Nhập số điện thoại"
+                    placeholder={t('register.phone')}
                     name="phone"
                     value={form.phone}
                     onChange={handleChange}
@@ -105,10 +107,10 @@ function Register() {
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formPassword">
-                  <Form.Label>Mật khẩu</Form.Label>
+                  <Form.Label>{t('register.password')}</Form.Label>
                   <Form.Control
                     type="password"
-                    placeholder="Nhập mật khẩu"
+                    placeholder={t('register.password')}
                     name="password"
                     value={form.password}
                     onChange={handleChange}
@@ -117,10 +119,10 @@ function Register() {
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formConfirmPassword">
-                  <Form.Label>Nhập lại mật khẩu</Form.Label>
+                  <Form.Label>{t('register.confirmPassword')}</Form.Label>
                   <Form.Control
                     type="password"
-                    placeholder="Nhập lại mật khẩu"
+                    placeholder={t('register.confirmPassword')}
                     name="confirmPassword"
                     value={form.confirmPassword}
                     onChange={handleChange}
@@ -132,19 +134,19 @@ function Register() {
                   <Button variant="success" type="submit" disabled={loading}>
                     {loading ? (
                       <>
-                        <Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...
+                        <Spinner animation="border" size="sm" className="me-2" /> {t('register.processing')}
                       </>
                     ) : (
-                      "Đăng ký"
+                      t('register.title')
                     )}
                   </Button>
                 </div>
               </Form>
 
               <div className="text-center mt-3 text-muted" style={{ fontSize: "0.9rem" }}>
-                Đã có tài khoản?{' '}
+                {t('register.hasAccount')}{' '}
                 <Button variant="link" className="p-0" onClick={() => navigate('/login')}>
-                  Đăng nhập ngay
+                  {t('register.login')}
                 </Button>
               </div>
             </Card.Body>

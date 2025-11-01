@@ -1,6 +1,8 @@
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import OrderItem from "../models/OrderItem.js";
+import User from "../models/User.js";
+import Store from "../models/Store.js";
 import Inventory from "../models/Inventory.js";
 
 // Dashboard stats cho seller
@@ -386,6 +388,79 @@ export const getSellerReports = async (req, res) => {
     });
   } catch (error) {
     console.error("getSellerReports error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update seller profile settings (avatar, banner, description)
+export const updateSellerSettings = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { avatarUrl } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    if (user.role !== 'seller') return res.status(403).json({ message: "Only seller can update store settings" });
+
+    if (typeof avatarUrl === 'string') user.avatarUrl = avatarUrl;
+
+    await user.save();
+    const sanitized = await User.findById(userId).select('-password');
+    res.json({ message: 'Settings updated', user: sanitized });
+  } catch (error) {
+    console.error('updateSellerSettings error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Get or create seller store
+export const getMyStore = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select('fullName businessName role');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'seller') return res.status(403).json({ message: 'Only seller can access store settings' });
+
+    let store = await Store.findOne({ sellerId: userId });
+    if (!store) {
+      store = await Store.create({
+        sellerId: userId,
+        storeName: user.businessName || user.fullName || 'Store',
+        description: '',
+        bannerImageURL: '',
+        status: 'approved'
+      });
+    }
+    res.json(store);
+  } catch (error) {
+    console.error('getMyStore error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Update seller store fields: description, bannerImageURL
+export const updateMyStore = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select('role');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'seller') return res.status(403).json({ message: 'Only seller can update store' });
+
+    const { description, bannerImageURL, storeName } = req.body;
+
+    let store = await Store.findOne({ sellerId: userId });
+    if (!store) {
+      store = new Store({ sellerId: userId, storeName: storeName || 'Store' });
+    }
+
+    if (typeof description === 'string') store.description = description;
+    if (typeof bannerImageURL === 'string') store.bannerImageURL = bannerImageURL;
+    if (typeof storeName === 'string' && storeName.trim()) store.storeName = storeName.trim();
+
+    await store.save();
+    res.json({ message: 'Store updated', store });
+  } catch (error) {
+    console.error('updateMyStore error:', error);
     res.status(500).json({ message: error.message });
   }
 };

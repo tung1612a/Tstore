@@ -6,12 +6,14 @@ import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart, clearCart } from '../../store/cartSlice';
 import { useEffect } from 'react';
 import { formatPrice } from '../../utils/formatters';
+import { useTranslation } from 'react-i18next';
 import CartItem from './CartItem';
 import './Cart.css';
 
 function Cart() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { t } = useTranslation();
   const items = useSelector(state => state.cart.items);
   const loading = useSelector(state => state.cart.loading);
   const totalQuantity = items.reduce((t,i)=>t+i.quantity,0);
@@ -29,11 +31,11 @@ function Cart() {
   };
   
   const handleClearCart = async () => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa tất cả sản phẩm trong giỏ hàng?')) {
+    if (window.confirm(t('common.confirm'))) {
       try {
         await dispatch(clearCart()).unwrap();
       } catch (error) {
-        alert('Có lỗi xảy ra khi xóa giỏ hàng');
+        alert(t('common.error'));
       }
     }
   };
@@ -52,8 +54,8 @@ function Cart() {
                 <div className="spinner-border text-primary mb-3" role="status">
                   <span className="visually-hidden">Loading...</span>
                 </div>
-                <h4 className="mb-3">Đang tải giỏ hàng...</h4>
-                <p className="text-muted mb-0">Vui lòng chờ trong giây lát</p>
+                <h4 className="mb-3">{t('cart.loading')}</h4>
+                <p className="text-muted mb-0">{t('cart.waitMsg')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -70,9 +72,9 @@ function Cart() {
             <Card className="text-center empty-cart">
               <Card.Body className="py-5 d-flex flex-column align-items-center justify-content-center">
                 <FiShoppingCart size={80} className="text-muted mb-4" />
-                <h4 className="mb-3">Giỏ hàng trống</h4>
+                <h4 className="mb-3">{t('cart.empty')}</h4>
                 <p className="text-muted mb-4">
-                  Bạn chưa có sản phẩm nào trong giỏ hàng. Hãy thêm một số sản phẩm để bắt đầu mua sắm!
+                  {t('cart.emptyMsg')}
                 </p>
                 <Button 
                   variant="primary" 
@@ -81,7 +83,7 @@ function Cart() {
                   className="px-4"
                 >
                   <FiArrowLeft className="me-2" />
-                  Tiếp tục mua sắm
+                  {t('cart.continueShopping')}
                 </Button>
               </Card.Body>
             </Card>
@@ -98,10 +100,10 @@ function Cart() {
           <div className="cart-header mb-4">
             <h2 className="mb-0">
               <FiShoppingCart className="me-2" />
-              Giỏ hàng của bạn
+              {t('cart.yourCart')}
             </h2>
             <p className="text-muted mb-0">
-              {totalQuantity} sản phẩm trong giỏ hàng
+              {totalQuantity} {t('cart.itemsInCart')}
             </p>
           </div>
           
@@ -118,13 +120,13 @@ function Cart() {
               className="me-2"
             >
               <FiArrowLeft className="me-2" />
-              Tiếp tục mua sắm
+              {t('cart.continueShopping')}
             </Button>
             <Button 
               variant="outline-danger" 
               onClick={handleClearCart}
             >
-              Xóa tất cả
+              {t('cart.deleteAll')}
             </Button>
           </div>
         </Col>
@@ -132,26 +134,26 @@ function Cart() {
         <Col lg={4}>
           <Card className="cart-summary sticky-top">
             <Card.Header>
-              <h5 className="mb-0">Tóm tắt đơn hàng</h5>
+              <h5 className="mb-0">{t('cart.summary')}</h5>
             </Card.Header>
             <Card.Body>
               <div className="summary-row">
-                <span>Tạm tính ({totalQuantity} sản phẩm):</span>
+                <span>{t('cart.subtotal')} ({totalQuantity} {t('cart.items')}):</span>
                 <span className="fw-bold">{formatPrice(totalAmount)}</span>
               </div>
               <div className="summary-row">
-                <span>Phí vận chuyển:</span>
-                <span className="text-success">Miễn phí</span>
+                <span>{t('cart.shipping')}:</span>
+                <span className="text-success">{t('cart.freeShipping')}</span>
               </div>
               <hr />
               <div className="summary-row total-row">
-                <span className="fs-5 fw-bold">Tổng cộng:</span>
+                <span className="fs-5 fw-bold">{t('cart.totalPrice')}:</span>
                 <span className="fs-5 fw-bold text-danger">{formatPrice(totalAmount)}</span>
               </div>
               
               <Alert variant="info" className="mt-3">
                 <small>
-                  <strong>Ưu đãi:</strong> Miễn phí vận chuyển cho đơn hàng từ 500.000đ
+                  <strong>{t('cart.offers')}:</strong> {t('cart.shippingOffer')}
                 </small>
               </Alert>
               
@@ -162,12 +164,12 @@ function Cart() {
                 onClick={handleCheckout}
               >
                 <FiCreditCard className="me-2" />
-                Thanh toán ngay
+                {t('cart.payment')}
               </Button>
               
               <div className="text-center mt-3">
                 <small className="text-muted">
-                  Bạn có thể thanh toán bằng thẻ tín dụng, ví điện tử hoặc COD
+                  {t('cart.paymentMethods')}
                 </small>
               </div>
             </Card.Body>

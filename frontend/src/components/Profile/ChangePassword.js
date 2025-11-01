@@ -113,6 +113,15 @@ function ChangePassword() {
 											'Đổi mật khẩu'
 										)}
 									</Button>
+									<Button
+										variant="secondary"
+										type="button"
+										className="mt-3"
+										onClick={() => navigate('/profile')}
+										disabled={loading}
+									>
+										Hủy
+									</Button>
 								</div>
 							</Form>
 

@@ -6,13 +6,16 @@ import { fetchCart } from '../store/cartSlice';
 import { useCart } from '../hooks/useCart';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import BecomeSellerButton from './BecomeSellerButton';
+import LanguageSelector from './LanguageSelector';
 
 function SiteNavbar() {
   const dispatch = useDispatch();
   const items = useSelector((state) => state.cart.items);
   const { user, logout, isAdmin, isDevAdmin, isSeller, isShipper, hasPermission } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Load cart khi component mount
   useEffect(() => {
@@ -21,7 +24,7 @@ function SiteNavbar() {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/", { state: { logoutSuccess: true } });
   };
 
   return (
@@ -32,6 +35,11 @@ function SiteNavbar() {
         <Navbar.Collapse id="basic-navbar-nav">
           <div className="me-auto" />
           <Nav>
+            {/* Language Selector */}
+            <div className="me-2 d-flex align-items-center">
+              <LanguageSelector />
+            </div>
+
             {/* Become Seller Button - chỉ hiển thị khi user đã đăng nhập và role là 'customer' */}
             {user && user.role === 'customer' && (
               <div className="me-3 d-flex align-items-center">
@@ -43,20 +51,20 @@ function SiteNavbar() {
               <Dropdown align="end">
                 <Dropdown.Toggle as={Nav.Link} className="d-flex align-items-center">
                   <FiUser className="me-1" />
-                  Xin chào, {user.fullName || 'Tài khoản'}
+                  {t('navbar.greeting')}, {user.fullName || 'Tài khoản'}
                 </Dropdown.Toggle>
                 <Dropdown.Menu>
                   <Dropdown.Item href="/profile">
                     <FiUser className="me-2" />
-                    Thông tin cá nhân
+                    {t('profile.title')}
                   </Dropdown.Item>
                   <Dropdown.Item href={user?.role === 'seller' ? '/seller/orders' : user?.role === 'shipper' ? '/shipper/orders' : '/orders'}>
                     <FiUser className="me-2" />
-                    {user?.role === 'seller' ? 'Quản lý đơn hàng' : user?.role === 'shipper' ? 'Đơn hàng giao' : 'Lịch sử đơn hàng'}
+                    {user?.role === 'seller' ? t('seller.manageOrders') : user?.role === 'shipper' ? t('shipper.deliveryOrders') : 'Lịch sử đơn hàng'}
                   </Dropdown.Item>
                   <Dropdown.Item href="/addresses">
                     <FiMapPin className="me-2" />
-                    Địa chỉ của tôi
+                    {t('navbar.addresses')}
                   </Dropdown.Item>
                   {isAdmin() && (
                     <>
@@ -109,6 +117,10 @@ function SiteNavbar() {
                         <FiSettings className="me-2" />
                         Seller Homepage
                       </Dropdown.Item>
+                      <Dropdown.Item href="/seller/settings">
+                        <FiSettings className="me-2" />
+                        Store Settings
+                      </Dropdown.Item>
                     </>
                   )}
 
@@ -125,14 +137,14 @@ function SiteNavbar() {
                   <Dropdown.Divider />
                   <Dropdown.Item onClick={handleLogout}>
                     <FiLogOut className="me-2" />
-                    Đăng xuất
+                    {t('navbar.logout')}
                   </Dropdown.Item>
                 </Dropdown.Menu>
               </Dropdown>
             ) : (
               <Nav.Link href="/login">
                 <FiUser className="me-1" />
-                Đăng nhập
+                {t('navbar.login')}
               </Nav.Link>
             )}
             {/* <Nav.Link href="/orders">
@@ -141,7 +153,7 @@ function SiteNavbar() {
             </Nav.Link> */}
             <Nav.Link href="/cart" className="position-relative">
               <FiShoppingCart className="me-1" />
-              Giỏ hàng
+              {t('navbar.cart')}
               {!!items.length && (
                 <span
                   className="badge bg-danger rounded-pill position-absolute top-0 start-100 translate-middle"

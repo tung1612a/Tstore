@@ -1,6 +1,8 @@
 import express from "express";
-import { register, login, getMe, checkEmail, changePassword, becomeSeller, getSellerApplications, reviewSellerApplication, getMySellerApplication } from "../controllers/authController.js";
+import { register, login, getMe, checkEmail, changePassword, becomeSeller, getSellerApplications, reviewSellerApplication, getMySellerApplication, updateAvatar, updateProfile } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
+import multer from 'multer';
+import path from 'path';
 
 const router = express.Router();
 
@@ -19,6 +21,21 @@ router.post("/forgot-password", async (req, res) => {
 	}
 });
 router.post("/change-password", protect, changePassword);
+// multer setup (local disk)
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(process.cwd(), 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname || '') || '.png';
+    cb(null, `avatar-${unique}${ext}`);
+  }
+});
+const upload = multer({ storage });
+
+router.put("/avatar", protect, upload.single('avatar'), updateAvatar);
+router.put("/profile", protect, updateProfile);
 router.post("/become-seller", protect, becomeSeller);
 router.get("/my-seller-application", protect, getMySellerApplication);
 

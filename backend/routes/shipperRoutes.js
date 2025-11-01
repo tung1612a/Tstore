@@ -1,5 +1,5 @@
 import express from "express";
-import { protect, shipperOnly, adminOnly } from "../middleware/authMiddleware.js";
+import { protect, shipperOnly, adminOnly, sellerOnly } from "../middleware/authMiddleware.js";
 import { 
   getShipperDashboard, 
   getShipperOrders, 
@@ -8,7 +8,8 @@ import {
   updateOrderToCompleted,
   getUnassignedOrders,
   assignOrderToShipper,
-  getAllShippers
+  getAllShippers,
+  getShippersWithStats
 } from "../controllers/shipperController.js";
 
 const router = express.Router();
@@ -27,5 +28,7 @@ router.put("/orders/:id/complete", shipperOnly, updateOrderToCompleted);
 router.get("/unassigned-orders", adminOnly, getUnassignedOrders);
 router.post("/assign-order", adminOnly, assignOrderToShipper);
 router.get("/all-shippers", adminOnly, getAllShippers);
+
+router.get("/shippers-with-stats", sellerOnly, getShippersWithStats);
 
 export default router;

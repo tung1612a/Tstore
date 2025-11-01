@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus, FiUserCheck } from 'react-icons/fi';
+import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus, FiUserCheck, FiArrowLeft, FiLogOut } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const AdminHomepage = () => {
-  const { token } = useAuth();
+  const { token, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +35,11 @@ const AdminHomepage = () => {
     }
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
@@ -48,10 +55,40 @@ const AdminHomepage = () => {
       {/* Hero Section */}
       <div className="bg-primary text-white py-5">
         <Container>
-          <Row>
+          <Row className="align-items-center">
             <Col>
-              <h1 className="display-4 fw-bold">Dev Admin Dashboard</h1>
-              <p className="lead">Quản lý hệ thống và giám sát hoạt động</p>
+              <h1 className="display-4 fw-bold">{t('admin.businessAdmin')}</h1>
+              <p className="lead">{t('admin.manageSystem')}</p>
+            </Col>
+            <Col xs="auto">
+              <div className="d-flex gap-2">
+                <Button 
+                  variant="outline-light" 
+                  onClick={() => navigate('/')}
+                  className="d-flex align-items-center"
+                  style={{
+                    borderRadius: '25px',
+                    padding: '10px 20px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <FiArrowLeft className="me-2" />
+                  {t('admin.backHome')}
+                </Button>
+                <Button 
+                  variant="outline-light" 
+                  onClick={handleLogout}
+                  className="d-flex align-items-center"
+                  style={{
+                    borderRadius: '25px',
+                    padding: '10px 20px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <FiLogOut className="me-2" />
+                  {t('navbar.logout')}
+                </Button>
+              </div>
             </Col>
           </Row>
         </Container>
@@ -65,7 +102,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiUsers className="text-primary mb-3" size={48} />
                 <h3 className="text-primary">{stats?.totalUsers || 0}</h3>
-                <p className="text-muted mb-0">Tổng người dùng</p>
+                <p className="text-muted mb-0">{t('admin.totalUsers')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -74,7 +111,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiPackage className="text-success mb-3" size={48} />
                 <h3 className="text-success">{stats?.totalProducts || 0}</h3>
-                <p className="text-muted mb-0">Sản phẩm</p>
+                <p className="text-muted mb-0">{t('admin.totalProducts')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -83,7 +120,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiShoppingCart className="text-info mb-3" size={48} />
                 <h3 className="text-info">{stats?.totalOrders || 0}</h3>
-                <p className="text-muted mb-0">Đơn hàng</p>
+                <p className="text-muted mb-0">{t('admin.totalOrders')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -92,7 +129,7 @@ const AdminHomepage = () => {
               <Card.Body className="text-center">
                 <FiUsers className="text-warning mb-3" size={48} />
                 <h3 className="text-warning">{stats?.totalSellers || 0}</h3>
-                <p className="text-muted mb-0">Người bán</p>
+                <p className="text-muted mb-0">{t('admin.totalSellers')}</p>
               </Card.Body>
             </Card>
           </Col>
@@ -103,13 +140,13 @@ const AdminHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-primary text-white">
-                <h5 className="mb-0">Quản lý người dùng</h5>
+                <h5 className="mb-0">{t('admin.manageUsers')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Xem và quản lý tất cả người dùng trong hệ thống</p>
+                <p className="text-muted">{t('admin.viewUsers')}</p>
                 <Button variant="primary" onClick={() => navigate('/admin/users')}>
                   <FiUsers className="me-2" />
-                  Quản lý Users
+                  {t('admin.manageUserBtn')}
                 </Button>
               </Card.Body>
             </Card>
@@ -117,18 +154,18 @@ const AdminHomepage = () => {
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-success text-white">
-                <h5 className="mb-0">Báo cáo & Thống kê</h5>
+                <h5 className="mb-0">{t('admin.reports')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Xem báo cáo chi tiết và thống kê hệ thống</p>
+                <p className="text-muted">{t('admin.viewReports')}</p>
                 <Button variant="success" onClick={() => navigate('/admin/reports')}>
                   <FiBarChart className="me-2" />
-                  Xem Báo cáo
+                  {t('admin.viewReportsBtn')}
                 </Button>
               </Card.Body>
             </Card>
           </Col>
-          <Col md={6} className="mb-4">
+          {/* <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-info text-white">
                 <h5 className="mb-0">Quản lý sản phẩm</h5>
@@ -141,22 +178,22 @@ const AdminHomepage = () => {
                 </Button>
               </Card.Body>
             </Card>
-          </Col>
+          </Col> */}
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-warning text-white">
-                <h5 className="mb-0">Duyệt đơn đăng ký Seller</h5>
+                <h5 className="mb-0">{t('admin.reviewSellerApplications')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Xem và duyệt các đơn đăng ký trở thành seller</p>
+                <p className="text-muted">{t('admin.reviewSellerDesc')}</p>
                 <Button variant="warning" onClick={() => navigate('/admin/seller-applications')}>
                   <FiUserCheck className="me-2" />
-                  Duyệt đơn Seller
+                  {t('admin.reviewBtn')}
                 </Button>
               </Card.Body>
             </Card>
           </Col>
-          <Col md={6} className="mb-4">
+          {/* <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-secondary text-white">
                 <h5 className="mb-0">Cài đặt hệ thống</h5>
@@ -169,6 +206,44 @@ const AdminHomepage = () => {
                 </Button>
               </Card.Body>
             </Card>
+          </Col> */}
+        </Row>
+
+        {/* Navigation Buttons */}
+        <Row className="mt-5">
+          <Col>
+            <div className="text-center">
+              <div className="d-flex justify-content-center gap-3">
+                <Button 
+                  variant="outline-primary" 
+                  onClick={() => navigate('/')}
+                  size="lg"
+                  className="d-flex align-items-center"
+                  style={{
+                    borderRadius: '25px',
+                    padding: '12px 30px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <FiArrowLeft className="me-2" />
+                  Quay lại Trang chủ
+                </Button>
+                <Button 
+                  variant="outline-secondary" 
+                  onClick={handleLogout}
+                  size="lg"
+                  className="d-flex align-items-center"
+                  style={{
+                    borderRadius: '25px',
+                    padding: '12px 30px',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  <FiLogOut className="me-2" />
+                  Đăng xuất
+                </Button>
+              </div>
+            </div>
           </Col>
         </Row>
       </Container>

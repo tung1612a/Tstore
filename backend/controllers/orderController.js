@@ -3,6 +3,7 @@ import OrderItem from '../models/OrderItem.js';
 import Product from '../models/Product.js';
 import Address from '../models/Address.js';
 import Payment from '../models/Payment.js';
+import User from '../models/User.js';
 
 export const createOrder = async (req, res) => {
   try {
@@ -70,7 +71,7 @@ export const createOrder = async (req, res) => {
     }
 
     const populatedOrder = await Order.findById(savedOrder._id)
-      .populate('buyerId', 'name email')
+      .populate('buyerId', 'fullName email')
       .populate('addressId', 'fullName phone street city state country');
 
     res.status(201).json(populatedOrder);
@@ -147,7 +148,7 @@ export const getSellerOrders = async (req, res) => {
 
     const total = await Order.countDocuments(query);
     let orders = await Order.find(query)
-      .populate('buyerId', 'name email')
+      .populate('buyerId', 'fullName email')
       .populate('addressId', 'fullName phone street city state country')
       .sort({ createdAt: -1 })
       .limit(Number(limit))
@@ -251,7 +252,7 @@ export const getOrderDetails = async (req, res) => {
     const { role } = req.user;
 
     const order = await Order.findById(id)
-      .populate('buyerId', 'name email phone')
+      .populate('buyerId', 'fullName email phone')
       .populate('addressId', 'fullName phone street city state country');
 
     if (!order) {
@@ -344,6 +345,7 @@ export const updateOrderStatus = async (req, res) => {
 export const confirmOrder = async (req, res) => {
   try {
     const { id } = req.params;
+    const { shipperId } = req.body; // Lấy shipperId từ request body
     const sellerId = req.user.id;
 
     const order = await Order.findById(id);
@@ -365,16 +367,26 @@ export const confirmOrder = async (req, res) => {
       return res.status(400).json({ message: 'Chỉ có thể xác nhận đơn hàng ở trạng thái pending' });
     }
 
-    order.status = 'confirmed';
+    // Nếu có shipperId, kiểm tra shipper có tồn tại và active không
+    if (shipperId) {
+      const shipper = await User.findById(shipperId);
+      if (!shipper || shipper.role !== 'shipper' || !shipper.active) {
+        return res.status(400).json({ message: 'Shipper không hợp lệ' });
+      }
+      order.shipperId = shipperId;
+    }
+
+    // Change status to awaiting_delivery instead of confirmed
+    order.status = 'awaiting_delivery';
     order.confirmedAt = new Date();
     order.confirmedBy = sellerId;
 
     await order.save();
 
     const populatedOrder = await Order.findById(id)
-      .populate('buyerId', 'name email')
+      .populate('buyerId', 'fullName email')
       .populate('addressId', 'fullName phone street city state country')
-      .populate('confirmedBy', 'name email');
+      .populate('confirmedBy', 'fullName email');
 
     res.json(populatedOrder);
   } catch (error) {
@@ -418,5 +430,33 @@ export const cancelOrder = async (req, res) => {
     res.json(order);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi hủy đơn hàng', error: error.message });
+  }
+};
+
+// Customer xác nhận đã nhận được hàng
+export const confirmReceived = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
+
+    const order = await Order.findById(id);
+    if (!order) {
+      return res.status(404).json({ message: 'Không tìm thấy đơn hàng' });
+    }
+
+    if (order.buyerId.toString() !== userId) {
+      return res.status(401).json({ message: 'Chỉ khách hàng mới được xác nhận nhận hàng' });
+    }
+
+    if (order.status !== 'delivered') {
+      return res.status(400).json({ message: 'Chỉ có thể xác nhận đơn hàng ở trạng thái delivered' });
+    }
+
+    order.status = 'completed';
+    await order.save();
+
+    res.json({ message: 'Xác nhận nhận hàng thành công', order });
+  } catch (error) {
+    res.status(500).json({ message: 'Lỗi server khi xác nhận nhận hàng', error: error.message });
   }
 };

@@ -1,6 +1,6 @@
 import express from "express";
 import { protect, sellerOnly } from "../middleware/authMiddleware.js";
-import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders, getSellerDebugData, getSellerInventories, updateInventory, getSellerReports } from "../controllers/sellerController.js";
+import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders, getSellerDebugData, getSellerInventories, updateInventory, getSellerReports, updateSellerSettings, getMyStore, updateMyStore } from "../controllers/sellerController.js";
 
 const router = express.Router();
 
@@ -27,5 +27,10 @@ router.put("/inventories/:id", updateInventory);
 
 //Reports
 router.get("/reports", getSellerReports);
+
+// Settings
+router.put("/settings", updateSellerSettings);
+router.get("/store", getMyStore);
+router.put("/store", updateMyStore);
 
 export default router;

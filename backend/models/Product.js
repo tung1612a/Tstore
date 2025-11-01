@@ -8,7 +8,7 @@ const productSchema = new mongoose.Schema({
   image: String,
   // Keep backward compatibility if some docs still use imageURL
   imageURL: String,
-  stock: { type: Number, default: 50 },
+  stock: { type: Number },
   // Follow existing DB: sellerId ref User
   sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   // Optional: categoryId from DB
