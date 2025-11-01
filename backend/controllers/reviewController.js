@@ -1,5 +1,6 @@
 import Review from '../models/Review.js';
 import Order from '../models/Order.js';
+import OrderItem from '../models/OrderItem.js';
 
 // Tạo review mới
 export const createReview = async (req, res) => {
@@ -17,15 +18,26 @@ export const createReview = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy đơn hàng" });
         }
 
-        if (order.userId.toString() !== req.user.id) {
+        // Kiểm tra user có phải là buyer của order này không (Order model dùng buyerId)
+        const userId = req.user._id || req.user.id;
+        if (order.buyerId.toString() !== userId.toString()) {
             return res.status(401).json({ message: "Bạn không có quyền review sản phẩm này" });
+        }
+
+        // Kiểm tra sản phẩm có trong order này không
+        const orderItem = await OrderItem.findOne({ 
+            orderId, 
+            productId 
+        });
+        if (!orderItem) {
+            return res.status(400).json({ message: "Sản phẩm này không có trong đơn hàng" });
         }
 
         // Kiểm tra xem user đã review sản phẩm này trong đơn hàng này chưa
         const existingReview = await Review.findOne({
             productId,
             orderId,
-            reviewerId: req.user.id,
+            reviewerId: userId,
         });
 
         if (existingReview) {
@@ -35,7 +47,7 @@ export const createReview = async (req, res) => {
         const review = await Review.create({
             productId,
             orderId,
-            reviewerId: req.user.id,
+            reviewerId: userId,
             rating,
             comment,
         });
@@ -63,10 +75,22 @@ export const getProductReviews = async (req, res) => {
 // Lấy review của user cho một sản phẩm
 export const getUserProductReview = async (req, res) => {
     try {
-        const review = await Review.findOne({
-            productId: req.params.productId,
-            reviewerId: req.user.id,
-        });
+        const userId = req.user._id || req.user.id;
+        const { productId } = req.params;
+        const { orderId } = req.query; // Lấy orderId từ query params
+
+        // Nếu có orderId, kiểm tra review cho cả productId và orderId
+        // Nếu không có orderId, chỉ kiểm tra theo productId (backward compatibility)
+        const query = {
+            productId,
+            reviewerId: userId,
+        };
+        
+        if (orderId) {
+            query.orderId = orderId;
+        }
+
+        const review = await Review.findOne(query);
 
         if (!review) {
             return res.status(404).json({ message: "Bạn chưa review sản phẩm này" });
@@ -87,7 +111,8 @@ export const updateReview = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy review" });
         }
 
-        if (review.reviewerId.toString() !== req.user.id) {
+        const userId = req.user._id || req.user.id;
+        if (review.reviewerId.toString() !== userId.toString()) {
             return res.status(401).json({ message: "Bạn không có quyền sửa review này" });
         }
 
@@ -124,7 +149,8 @@ export const deleteReview = async (req, res) => {
             return res.status(404).json({ message: "Không tìm thấy review" });
         }
 
-        if (review.reviewerId.toString() !== req.user.id) {
+        const userId = req.user._id || req.user.id;
+        if (review.reviewerId.toString() !== userId.toString()) {
             return res.status(401).json({ message: "Bạn không có quyền xóa review này" });
         }
 

@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useUser } from '../../hooks/useUser';
-import { 
-  FiArrowLeft, 
-  FiPackage, 
-  FiTruck, 
-  FiCheckCircle, 
-  FiXCircle, 
-  FiUser, 
-  FiMapPin, 
+import {
+  FiArrowLeft,
+  FiPackage,
+  FiTruck,
+  FiCheckCircle,
+  FiXCircle,
+  FiUser,
+  FiMapPin,
   FiCreditCard,
   FiEdit3,
   FiSave,
   FiX
 } from 'react-icons/fi';
 import './OrderDetails.css';
+import ReviewSection from "./ReviewSection";
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -42,6 +43,10 @@ const OrderDetails = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Order data:', data.order);
+        console.log('Order status:', data.order.status);
+        console.log('Payment status:', data.order.paymentStatus);
+        console.log('Items:', data.items);
         setOrder(data.order);
         setItems(data.items);
         setTrackingNumber(data.order.trackingNumber || '');
@@ -62,7 +67,7 @@ const OrderDetails = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           status: newStatus,
           trackingNumber: trackingNumber || undefined
         })
@@ -113,7 +118,7 @@ const OrderDetails = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           status: order.status,
           trackingNumber: tempTrackingNumber
         })
@@ -136,53 +141,53 @@ const OrderDetails = () => {
 
   const getStatusConfig = (status) => {
     const configs = {
-      pending: { 
-        text: 'Chờ xác nhận', 
-        color: '#ffc107', 
-        bgColor: '#fff3cd', 
-        icon: <FiPackage /> 
+      pending: {
+        text: 'Chờ xác nhận',
+        color: '#ffc107',
+        bgColor: '#fff3cd',
+        icon: <FiPackage />
       },
-      confirmed: { 
-        text: 'Đã xác nhận', 
-        color: '#17a2b8', 
-        bgColor: '#d1ecf1', 
-        icon: <FiCheckCircle /> 
+      confirmed: {
+        text: 'Đã xác nhận',
+        color: '#17a2b8',
+        bgColor: '#d1ecf1',
+        icon: <FiCheckCircle />
       },
-      awaiting_delivery: { 
-        text: 'Chờ giao hàng', 
-        color: '#17a2b8', 
-        bgColor: '#d1ecf1', 
-        icon: <FiPackage /> 
+      awaiting_delivery: {
+        text: 'Chờ giao hàng',
+        color: '#17a2b8',
+        bgColor: '#d1ecf1',
+        icon: <FiPackage />
       },
-      shipping: { 
-        text: 'Đang giao hàng', 
-        color: '#ffc107', 
-        bgColor: '#fff3cd', 
-        icon: <FiTruck /> 
+      shipping: {
+        text: 'Đang giao hàng',
+        color: '#ffc107',
+        bgColor: '#fff3cd',
+        icon: <FiTruck />
       },
-      delivered: { 
-        text: 'Đã giao hàng', 
-        color: '#28a745', 
-        bgColor: '#d4edda', 
-        icon: <FiTruck /> 
+      delivered: {
+        text: 'Đã giao hàng',
+        color: '#28a745',
+        bgColor: '#d4edda',
+        icon: <FiTruck />
       },
-      completed: { 
-        text: 'Hoàn thành', 
-        color: '#28a745', 
-        bgColor: '#d4edda', 
-        icon: <FiCheckCircle /> 
+      completed: {
+        text: 'Hoàn thành',
+        color: '#28a745',
+        bgColor: '#d4edda',
+        icon: <FiCheckCircle />
       },
-      cancelled: { 
-        text: 'Đã hủy', 
-        color: '#dc3545', 
-        bgColor: '#f8d7da', 
-        icon: <FiXCircle /> 
+      cancelled: {
+        text: 'Đã hủy',
+        color: '#dc3545',
+        bgColor: '#f8d7da',
+        icon: <FiXCircle />
       },
-      refunded: { 
-        text: 'Đã hoàn tiền', 
-        color: '#6c757d', 
-        bgColor: '#e2e3e5', 
-        icon: <FiXCircle /> 
+      refunded: {
+        text: 'Đã hoàn tiền',
+        color: '#6c757d',
+        bgColor: '#e2e3e5',
+        icon: <FiXCircle />
       }
     };
     return configs[status] || configs.pending;
@@ -235,9 +240,9 @@ const OrderDetails = () => {
           </button>
           <div className="header-content">
             <h1>Chi tiết đơn hàng #{order._id.slice(-8)}</h1>
-            <div 
+            <div
               className="order-status"
-              style={{ 
+              style={{
                 color: statusConfig.color,
                 backgroundColor: statusConfig.bgColor
               }}
@@ -275,7 +280,7 @@ const OrderDetails = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="info-card">
                 <div className="info-item">
                   <span className="label">Mã vận đơn:</span>
@@ -374,6 +379,25 @@ const OrderDetails = () => {
                     <div className="item-total">
                       Tổng: {(item.unitPrice * item.quantity)?.toLocaleString()}đ
                     </div>
+                    {(() => {
+                      const shouldShowReview = role === 'buyer' &&
+                        (['delivered', 'completed'].includes(order.status) || order.paymentStatus === 'paid');
+                      const productIdValue = item.productId?._id || item.productId;
+
+                      if (shouldShowReview) {
+                        console.log('Should show review - Role:', role, 'Status:', order.status, 'PaymentStatus:', order.paymentStatus);
+                        console.log('ProductId:', productIdValue);
+                      }
+
+                      return shouldShowReview && productIdValue ? (
+                        <div className="review-section-wrapper" style={{ marginTop: '15px' }}>
+                          <ReviewSection
+                            productId={productIdValue}
+                            orderId={order._id}
+                          />
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               ))}
@@ -386,21 +410,21 @@ const OrderDetails = () => {
                 <FiCreditCard className="section-icon" />
                 Quản lý đơn hàng
               </h2>
-              
+
               <div className="action-cards">
                 {order.status === 'pending' && (
                   <div className="action-card">
                     <h3>Xác nhận đơn hàng</h3>
                     <p>Xác nhận đơn hàng để bắt đầu xử lý</p>
                     <div className="action-buttons">
-                      <button 
+                      <button
                         className="btn-confirm"
                         onClick={() => updateOrderStatus('confirmed')}
                       >
                         <FiCheckCircle size={16} />
                         Xác nhận đơn hàng
                       </button>
-                      <button 
+                      <button
                         className="btn-cancel"
                         onClick={() => updateOrderStatus('cancelled')}
                       >
@@ -416,7 +440,7 @@ const OrderDetails = () => {
                     <h3>Giao hàng</h3>
                     <p>Đánh dấu đơn hàng đã được giao cho đơn vị vận chuyển</p>
                     <div className="action-buttons">
-                      <button 
+                      <button
                         className="btn-ship"
                         onClick={() => {
                           const trackingNumber = prompt('Nhập mã vận đơn:');
@@ -438,7 +462,7 @@ const OrderDetails = () => {
                     <h3>Hoàn thành giao hàng</h3>
                     <p>Xác nhận khách hàng đã nhận được hàng</p>
                     <div className="action-buttons">
-                      <button 
+                      <button
                         className="btn-deliver"
                         onClick={() => updateOrderStatus('delivered')}
                       >
@@ -463,7 +487,7 @@ const OrderDetails = () => {
                   <h3>Hủy đơn hàng</h3>
                   <p>Hủy đơn hàng nếu bạn không muốn tiếp tục</p>
                   <div className="action-buttons">
-                    <button 
+                    <button
                       className="btn-cancel"
                       onClick={cancelOrder}
                     >

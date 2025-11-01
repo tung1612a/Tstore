@@ -2,7 +2,7 @@
 
 import React from "react"
 import { Card, Badge, Button } from "react-bootstrap"
-import { FiHeart, FiShoppingCart, FiStar } from "react-icons/fi"
+import { FiHeart, FiShoppingCart, FiStar, FiEdit } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { addToCart, addToCartLocal } from "../../store/cartSlice"
@@ -17,12 +17,17 @@ function ProductCard({ product, hideStoreButton = false }) {
   const { user, isAuthenticated } = useAuth()
 
   // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
-  const isOwnProduct = user && user.role === 'seller' && (
-    product.sellerId?._id === user._id ||
-    product.sellerId === user._id ||
-    product.seller?._id === user._id ||
-    product.seller === user._id
-  )
+  const isOwnProduct = React.useMemo(() => {
+    if (!user || !isAuthenticated || user.role !== 'seller') {
+      return false
+    }
+    
+    const userId = user._id || user.id
+    const sellerId = product.sellerId?._id || product.sellerId || product.seller?._id || product.seller
+    
+    // So sánh dạng string để đảm bảo chính xác
+    return userId && sellerId && String(userId) === String(sellerId)
+  }, [user, isAuthenticated, product.sellerId, product.seller])
 
   // Helper function for adding to cart
   const handleAddToCart = async (e) => {
@@ -180,35 +185,52 @@ function ProductCard({ product, hideStoreButton = false }) {
           )}
         </div>
 
-        <Button
-          variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
-          size="sm"
-          className="w-100 d-flex align-items-center justify-content-center"
-          disabled={isAddingToCart || isOwnProduct}
-          style={{
-            background: !isAuthenticated
-              ? "transparent"
-              : isOwnProduct
-                ? "#6c757d"
+        {isOwnProduct ? (
+          <Button
+            variant="primary"
+            size="sm"
+            className="w-100 d-flex align-items-center justify-content-center"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(`/product/${product._id}`, { state: { openEditModal: true } })
+            }}
+            style={{
+              background: "linear-gradient(135deg, #007bff 0%, #0056b3 100%)",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: "600",
+            }}
+          >
+            <FiEdit className="me-2" size={16} />
+            Chỉnh sửa
+          </Button>
+        ) : (
+          <Button
+            variant={!isAuthenticated ? "outline-primary" : "primary"}
+            size="sm"
+            className="w-100 d-flex align-items-center justify-content-center"
+            disabled={isAddingToCart}
+            style={{
+              background: !isAuthenticated
+                ? "transparent"
                 : isAddingToCart
                   ? "#6c757d"
                   : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
-            border: !isAuthenticated ? "2px solid #007bff" : "none",
-            borderRadius: "8px",
-            fontWeight: "600",
-          }}
-          onClick={handleAddToCart}
-        >
-          <FiShoppingCart className="me-2" size={16} />
-          {!isAuthenticated
-            ? 'Đăng nhập để mua'
-            : isOwnProduct
-              ? 'Sản phẩm của bạn'
+              border: !isAuthenticated ? "2px solid #007bff" : "none",
+              borderRadius: "8px",
+              fontWeight: "600",
+            }}
+            onClick={handleAddToCart}
+          >
+            <FiShoppingCart className="me-2" size={16} />
+            {!isAuthenticated
+              ? 'Đăng nhập để mua'
               : isAddingToCart
                 ? 'Đang thêm...'
                 : 'Thêm vào giỏ'
-          }
-        </Button>
+            }
+          </Button>
+        )}
         {(product.sellerId?._id || product.sellerId) && !hideStoreButton && (
           <Button
             variant="outline-secondary"

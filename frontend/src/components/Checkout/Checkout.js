@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart, clearCart } from '../../store/cartSlice';
 import { FiMapPin, FiCreditCard, FiTruck, FiCheck, FiPlus, FiEdit3, FiTrash2 } from 'react-icons/fi';
@@ -7,8 +7,13 @@ import './Checkout.css';
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const dispatch = useDispatch();
-  const items = useSelector((state) => state.cart.items);
+  const allItems = useSelector((state) => state.cart.items);
+  
+  // Get selected items from navigation state, or use all items if not provided
+  const selectedItemIds = location.state?.selectedItems || allItems.map(item => item._id);
+  const items = allItems.filter(item => selectedItemIds.includes(item._id));
   const totalAmount = items.reduce((t, i) => t + i.quantity * i.price, 0);
 
   useEffect(() => {

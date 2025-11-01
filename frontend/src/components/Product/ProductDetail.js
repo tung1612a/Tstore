@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams, useNavigate } from "react-router-dom"
-import { Container, Row, Col, Button, Badge, Spinner, Alert, Breadcrumb } from "react-bootstrap"
+import React, { useState, useEffect } from "react"
+import { useParams, useNavigate, useLocation } from "react-router-dom"
+import { Container, Row, Col, Button, Badge, Spinner, Alert, Breadcrumb, Modal, Form } from "react-bootstrap"
 import { useAuth } from "../../contexts/AuthContext"
 import { useSelector, useDispatch } from "react-redux"
 import { addToCart, addToCartLocal } from "../../store/cartSlice"
@@ -18,13 +18,16 @@ import {
     FiRefreshCw,
     FiHome,
     FiChevronLeft,
+    FiEdit,
 } from "react-icons/fi"
 import "./ProductDetail.css"
 import Footer from "../Footer"
+import ProductReviews from "../ProductReviews"
 function ProductDetail() {
     const { id } = useParams()
     const navigate = useNavigate()
-    const { user, isAuthenticated } = useAuth()
+    const location = useLocation()
+    const { user, isAuthenticated, token } = useAuth()
     const [product, setProduct] = useState(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState(null)
@@ -32,10 +35,28 @@ function ProductDetail() {
     const [isLiked, setIsLiked] = useState(false)
     const [selectedImage, setSelectedImage] = useState(0)
     const [isAddingToCart, setIsAddingToCart] = useState(false)
+    const [reviews, setReviews] = useState([])
+    const [soldCount, setSoldCount] = useState(0)
+    const [showEditModal, setShowEditModal] = useState(false)
+    const [categories, setCategories] = useState([])
+    const [editFormData, setEditFormData] = useState({
+        title: '',
+        price: '',
+        description: '',
+        stock: '',
+        image: '',
+        categoryId: ''
+    })
 
     // Redux state
     const cartItems = useSelector(state => state.cart.items)
     const dispatch = useDispatch()
+
+    // Tính rating trung bình từ reviews
+    const averageRating = reviews.length > 0
+        ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
+        : "0"
+    const totalReviews = reviews.length
 
     useEffect(() => {
         const fetchProduct = async () => {
@@ -46,6 +67,8 @@ function ProductDetail() {
                 }
                 const data = await response.json()
                 setProduct(data)
+                // Lấy số lượng đã bán từ API response
+                setSoldCount(data.sold || 0)
             } catch (err) {
                 setError(err.message)
             } finally {
@@ -56,17 +79,131 @@ function ProductDetail() {
         fetchProduct()
     }, [id])
 
+    // Tự động mở modal nếu có state openEditModal
+    useEffect(() => {
+        if (product && location.state?.openEditModal) {
+            const isOwn = user && user.role === 'seller' && (
+                product.sellerId?._id === user._id ||
+                product.sellerId === user._id ||
+                product.seller?._id === user._id ||
+                product.seller === user._id
+            )
+            
+            if (isOwn) {
+                setEditFormData({
+                    title: product.title || '',
+                    price: product.price?.toString() || '',
+                    description: product.description || '',
+                    stock: product.stock?.toString() || product.inventoryQuantity?.toString() || '',
+                    image: product.image || product.imageURL || '',
+                    categoryId: product.categoryId || ''
+                })
+                setShowEditModal(true)
+                // Clear state để không mở lại khi refresh
+                window.history.replaceState({}, document.title)
+            }
+        }
+    }, [product, location.state, user])
+
+    // Lấy reviews của sản phẩm
+    useEffect(() => {
+        if (!id) return
+        
+        const fetchReviews = async () => {
+            try {
+                const response = await fetch(`http://localhost:5000/api/reviews/product/${id}`)
+                if (response.ok) {
+                    const data = await response.json()
+                    setReviews(data || [])
+                }
+            } catch (err) {
+                console.error("Error fetching reviews:", err)
+            }
+        }
+
+        fetchReviews()
+    }, [id])
+
+    // Fetch categories
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await fetch('http://localhost:5000/api/categories')
+                if (response.ok) {
+                    const data = await response.json()
+                    setCategories(data || [])
+                }
+            } catch (err) {
+                console.error("Error fetching categories:", err)
+            }
+        }
+        fetchCategories()
+    }, [])
+
+    // Hàm mở modal chỉnh sửa
+    const handleOpenEditModal = () => {
+        if (product) {
+            setEditFormData({
+                title: product.title || '',
+                price: product.price?.toString() || '',
+                description: product.description || '',
+                stock: product.stock?.toString() || product.inventoryQuantity?.toString() || '',
+                image: product.image || product.imageURL || '',
+                categoryId: product.categoryId || ''
+            })
+            setShowEditModal(true)
+        }
+    }
+
+    // Hàm submit chỉnh sửa
+    const handleEditSubmit = async (e) => {
+        e.preventDefault()
+        
+        try {
+            const response = await fetch(`http://localhost:5000/api/seller/products/${product._id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(editFormData)
+            })
+
+            if (response.ok) {
+                const updatedProduct = await response.json()
+                setProduct(updatedProduct)
+                setShowEditModal(false)
+                alert('Cập nhật sản phẩm thành công!')
+                // Reload page để cập nhật thông tin
+                window.location.reload()
+            } else {
+                const error = await response.json()
+                alert(error.message || 'Có lỗi xảy ra khi cập nhật sản phẩm')
+            }
+        } catch (error) {
+            console.error('Error updating product:', error)
+            alert('Có lỗi xảy ra khi cập nhật sản phẩm')
+        }
+    }
+
     const handleQuantityChange = (delta) => {
         setQuantity(Math.max(1, quantity + delta))
     }
 
     // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
-    const isOwnProduct = user && user.role === 'seller' && (
-        product?.sellerId?._id === user._id ||
-        product?.sellerId === user._id ||
-        product?.seller?._id === user._id ||
-        product?.seller === user._id
-    )
+    const isOwnProduct = React.useMemo(() => {
+        if (!user || !isAuthenticated || user.role !== 'seller') {
+            return false
+        }
+        
+        if (!product) return false
+        
+        const userId = user._id || user.id
+        const sellerId = product.sellerId?._id || product.sellerId || product.seller?._id || product.seller
+        
+        // So sánh dạng string để đảm bảo chính xác
+        return userId && sellerId && String(userId) === String(sellerId)
+    }, [user, isAuthenticated, product])
 
     const handleAddToCart = async () => {
         // Kiểm tra nếu chưa đăng nhập
@@ -221,32 +358,43 @@ function ProductDetail() {
                                     </Badge>
                                 )}
                             </Button>
-                            <Button
-                                variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
-                                size="sm"
-                                onClick={handleAddToCart}
-                                disabled={isOwnProduct || isAddingToCart}
-                                style={{
-                                    background: !isAuthenticated
-                                        ? "transparent"
-                                        : isOwnProduct
-                                            ? "#6c757d"
+                            {isOwnProduct ? (
+                                <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleOpenEditModal}
+                                    style={{
+                                        background: "linear-gradient(135deg, #007bff 0%, #0056b3 100%)",
+                                        border: "none",
+                                    }}
+                                >
+                                    <FiEdit className="me-1" size={16} />
+                                    Chỉnh sửa
+                                </Button>
+                            ) : (
+                                <Button
+                                    variant={!isAuthenticated ? "outline-primary" : "primary"}
+                                    size="sm"
+                                    onClick={handleAddToCart}
+                                    disabled={isAddingToCart}
+                                    style={{
+                                        background: !isAuthenticated
+                                            ? "transparent"
                                             : isAddingToCart
                                                 ? "#6c757d"
                                                 : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
-                                    border: !isAuthenticated ? "2px solid #007bff" : "none",
-                                }}
-                            >
-                                <FiShoppingCart className="me-1" size={16} />
-                                {!isAuthenticated
-                                    ? 'Đăng nhập'
-                                    : isOwnProduct
-                                        ? 'Sản phẩm của bạn'
+                                        border: !isAuthenticated ? "2px solid #007bff" : "none",
+                                    }}
+                                >
+                                    <FiShoppingCart className="me-1" size={16} />
+                                    {!isAuthenticated
+                                        ? 'Đăng nhập'
                                         : isAddingToCart
                                             ? 'Đang thêm...'
                                             : 'Thêm vào giỏ'
-                                }
-                            </Button>
+                                    }
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </Container>
@@ -308,12 +456,17 @@ function ProductDetail() {
                                 <div className="d-flex align-items-center">
                                     <div className="stars me-2">
                                         {[...Array(5)].map((_, i) => (
-                                            <FiStar key={i} size={18} color="#ffc107" fill={i < 4 ? "#ffc107" : "none"} />
+                                            <FiStar 
+                                                key={i} 
+                                                size={18} 
+                                                color="#ffc107" 
+                                                fill={i < Math.round(parseFloat(averageRating)) ? "#ffc107" : "none"} 
+                                            />
                                         ))}
                                     </div>
-                                    <span className="rating-text">4.0</span>
-                                    <span className="text-muted ms-2">(128 đánh giá)</span>
-                                    <span className="text-muted ms-3">| Đã bán: 1.2k</span>
+                                    <span className="rating-text">{averageRating}</span>
+                                    <span className="text-muted ms-2">({totalReviews} {totalReviews === 1 ? 'đánh giá' : 'đánh giá'})</span>
+                                    <span className="text-muted ms-3">| Đã bán: {soldCount}</span>
                                 </div>
                             </div>
 
@@ -373,33 +526,45 @@ function ProductDetail() {
                             {/* Action Buttons */}
                             <div className="action-buttons mb-4">
                                 <div className="d-flex gap-2">
-                                    <Button
-                                        variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
-                                        size="lg"
-                                        className="add-to-cart-btn flex-grow-1"
-                                        onClick={handleAddToCart}
-                                        disabled={isOwnProduct || isAddingToCart}
-                                        style={{
-                                            background: !isAuthenticated
-                                                ? "transparent"
-                                                : isOwnProduct
-                                                    ? "#6c757d"
+                                    {isOwnProduct ? (
+                                        <Button
+                                            variant="primary"
+                                            size="lg"
+                                            className="add-to-cart-btn flex-grow-1"
+                                            onClick={handleOpenEditModal}
+                                            style={{
+                                                background: "linear-gradient(135deg, #007bff 0%, #0056b3 100%)",
+                                                border: "none",
+                                            }}
+                                        >
+                                            <FiEdit className="me-2" size={20} />
+                                            Chỉnh sửa
+                                        </Button>
+                                    ) : (
+                                        <Button
+                                            variant={!isAuthenticated ? "outline-primary" : "primary"}
+                                            size="lg"
+                                            className="add-to-cart-btn flex-grow-1"
+                                            onClick={handleAddToCart}
+                                            disabled={isAddingToCart}
+                                            style={{
+                                                background: !isAuthenticated
+                                                    ? "transparent"
                                                     : isAddingToCart
                                                         ? "#6c757d"
                                                         : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
-                                            border: !isAuthenticated ? "2px solid #007bff" : "none",
-                                        }}
-                                    >
-                                        <FiShoppingCart className="me-2" size={20} />
-                                        {!isAuthenticated
-                                            ? 'Đăng nhập để mua'
-                                            : isOwnProduct
-                                                ? 'Sản phẩm của bạn'
+                                                border: !isAuthenticated ? "2px solid #007bff" : "none",
+                                            }}
+                                        >
+                                            <FiShoppingCart className="me-2" size={20} />
+                                            {!isAuthenticated
+                                                ? 'Đăng nhập để mua'
                                                 : isAddingToCart
                                                     ? 'Đang thêm...'
                                                     : 'Thêm vào giỏ hàng'
-                                        }
-                                    </Button>
+                                            }
+                                        </Button>
+                                    )}
                                     {(product.sellerId?._id || product.sellerId) && (
                                         <Button
                                             variant="outline-secondary"
@@ -468,7 +633,123 @@ function ProductDetail() {
                         </div>
                     </Col>
                 </Row>
+
+                {/* Reviews Section */}
+                <Row className="mt-5">
+                    <Col>
+                        <div style={{
+                            background: "#ffffff",
+                            padding: "30px",
+                            borderRadius: "12px",
+                            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                            marginBottom: "30px"
+                        }}>
+                            <ProductReviews productId={id} />
+                        </div>
+                    </Col>
+                </Row>
             </Container>
+            
+            {/* Edit Product Modal */}
+            <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
+                <Modal.Header closeButton>
+                    <Modal.Title>Chỉnh sửa sản phẩm</Modal.Title>
+                </Modal.Header>
+                <Form onSubmit={handleEditSubmit}>
+                    <Modal.Body>
+                        <Row>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Tên sản phẩm *</Form.Label>
+                                    <Form.Control
+                                        type="text"
+                                        value={editFormData.title}
+                                        onChange={(e) => setEditFormData({ ...editFormData, title: e.target.value })}
+                                        required
+                                    />
+                                </Form.Group>
+                            </Col>
+                            <Col md={6}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Giá *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        step="0.01"
+                                        value={editFormData.price}
+                                        onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
+                                        required
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Row>
+                            <Col md={4}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Số lượng tồn kho *</Form.Label>
+                                    <Form.Control
+                                        type="number"
+                                        value={editFormData.stock}
+                                        onChange={(e) => setEditFormData({ ...editFormData, stock: e.target.value })}
+                                        required
+                                    />
+                                </Form.Group>
+                            </Col>
+                            <Col md={4}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>Danh mục</Form.Label>
+                                    <Form.Select
+                                        value={editFormData.categoryId}
+                                        onChange={(e) => setEditFormData({ ...editFormData, categoryId: e.target.value })}
+                                    >
+                                        <option value="">Chọn danh mục</option>
+                                        {categories.map(category => (
+                                            <option key={category._id} value={category._id}>
+                                                {category.name}
+                                            </option>
+                                        ))}
+                                    </Form.Select>
+                                </Form.Group>
+                            </Col>
+                            <Col md={4}>
+                                <Form.Group className="mb-3">
+                                    <Form.Label>URL hình ảnh</Form.Label>
+                                    <Form.Control
+                                        type="url"
+                                        value={editFormData.image}
+                                        onChange={(e) => setEditFormData({ ...editFormData, image: e.target.value })}
+                                        placeholder="https://example.com/image.jpg"
+                                    />
+                                </Form.Group>
+                            </Col>
+                        </Row>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Mô tả sản phẩm</Form.Label>
+                            <Form.Control
+                                as="textarea"
+                                rows={3}
+                                value={editFormData.description}
+                                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                            />
+                        </Form.Group>
+                    </Modal.Body>
+                    <Modal.Footer>
+                        <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+                            Hủy
+                        </Button>
+                        <Button 
+                            variant="primary" 
+                            type="submit"
+                            style={{
+                                background: "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+                                border: "none"
+                            }}
+                        >
+                            CẬP NHẬT
+                        </Button>
+                    </Modal.Footer>
+                </Form>
+            </Modal>
+            
             <Footer />
         </div>
     )
