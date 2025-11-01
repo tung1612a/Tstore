@@ -3,7 +3,7 @@ import { Container, Row, Col, Card, Button, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { FiShoppingCart, FiArrowLeft, FiCreditCard } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
-import { fetchCart, clearCart } from '../../store/cartSlice';
+import { fetchCart, clearCart, removeFromCart } from '../../store/cartSlice';
 import { useEffect } from 'react';
 import { formatPrice } from '../../utils/formatters';
 import { useTranslation } from 'react-i18next';
@@ -16,9 +16,21 @@ function Cart() {
   const { t } = useTranslation();
   const items = useSelector(state => state.cart.items);
   const loading = useSelector(state => state.cart.loading);
-  const totalQuantity = items.reduce((t,i)=>t+i.quantity,0);
-  const totalAmount = items.reduce((t,i)=>t+i.quantity*i.price,0);
+  const [selectedItems, setSelectedItems] = React.useState(new Set());
   const isEmpty = items.length === 0;
+
+  // Initialize selected items: select all by default
+  React.useEffect(() => {
+    if (items.length > 0 && selectedItems.size === 0) {
+      setSelectedItems(new Set(items.map(item => item._id)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length]);
+
+  // Calculate totals only for selected items
+  const selectedItemsArray = items.filter(item => selectedItems.has(item._id));
+  const totalQuantity = selectedItemsArray.reduce((t,i)=>t+i.quantity,0);
+  const totalAmount = selectedItemsArray.reduce((t,i)=>t+i.quantity*i.price,0);
 
   // Load cart khi component mount
   useEffect(() => {
@@ -27,17 +39,63 @@ function Cart() {
   
   
   const handleCheckout = () => {
-    navigate('/checkout');
+    if (selectedItems.size === 0) {
+      alert('Vui lòng chọn ít nhất một sản phẩm để thanh toán');
+      return;
+    }
+    // Pass selected items to checkout via navigation state
+    navigate('/checkout', { state: { selectedItems: Array.from(selectedItems) } });
   };
   
   const handleClearCart = async () => {
-    if (window.confirm(t('common.confirm'))) {
+    if (selectedItems.size === 0) {
+      alert('Không có sản phẩm nào được chọn');
+      return;
+    }
+    
+    if (window.confirm(`Bạn có chắc muốn xóa ${selectedItems.size} sản phẩm đã chọn?`)) {
       try {
-        await dispatch(clearCart()).unwrap();
+        // Remove only selected items
+        const removePromises = Array.from(selectedItems).map(itemId => 
+          dispatch(removeFromCart(itemId)).unwrap()
+        );
+        await Promise.all(removePromises);
+        setSelectedItems(new Set());
       } catch (error) {
         alert(t('common.error'));
       }
     }
+  };
+
+  const handleToggleSelect = (itemId) => {
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedItems.size === items.length) {
+      // Deselect all
+      setSelectedItems(new Set());
+    } else {
+      // Select all
+      setSelectedItems(new Set(items.map(item => item._id)));
+    }
+  };
+
+  const handleRemoveItem = (itemId) => {
+    // Also remove from selected items if it's selected
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(itemId);
+      return newSet;
+    });
   };
 
   const handleContinueShopping = () => {
@@ -98,18 +156,35 @@ function Cart() {
       <Row>
         <Col lg={8}>
           <div className="cart-header mb-4">
-            <h2 className="mb-0">
-              <FiShoppingCart className="me-2" />
-              {t('cart.yourCart')}
-            </h2>
-            <p className="text-muted mb-0">
-              {totalQuantity} {t('cart.itemsInCart')}
-            </p>
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h2 className="mb-0">
+                  <FiShoppingCart className="me-2" />
+                  {t('cart.yourCart')}
+                </h2>
+                <p className="text-muted mb-0">
+                  {items.length} {t('cart.itemsInCart')} ({selectedItems.size} đã chọn)
+                </p>
+              </div>
+              <Button
+                variant="outline-primary"
+                size="sm"
+                onClick={handleSelectAll}
+              >
+                {selectedItems.size === items.length ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+              </Button>
+            </div>
           </div>
           
           <div className="cart-items">
             {items.map(item => (
-              <CartItem key={item._id} item={item} />
+              <CartItem 
+                key={item._id} 
+                item={item}
+                isSelected={selectedItems.has(item._id)}
+                onToggleSelect={() => handleToggleSelect(item._id)}
+                onRemove={() => handleRemoveItem(item._id)}
+              />
             ))}
           </div>
           
@@ -162,9 +237,10 @@ function Cart() {
                 size="lg" 
                 className="w-100 mt-3 checkout-btn"
                 onClick={handleCheckout}
+                disabled={selectedItems.size === 0}
               >
                 <FiCreditCard className="me-2" />
-                {t('cart.payment')}
+                {t('cart.payment')} ({selectedItems.size})
               </Button>
               
               <div className="text-center mt-3">

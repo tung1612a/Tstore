@@ -1,6 +1,8 @@
 import Product from "../models/Product.js";
 import Inventory from "../models/Inventory.js";
 import Store from "../models/Store.js";
+import Order from "../models/Order.js";
+import OrderItem from "../models/OrderItem.js";
 
 export const getProducts = async (req, res) => {
   const { q, categoryId, sellerId } = req.query;
@@ -50,10 +52,35 @@ export const getProductById = async (req, res) => {
   const totalQuantity = inventory ? inventory.quantity : 0;
   const storeInfo = store ? { storeName: store.storeName, status: store.status, bannerImageURL: store.bannerImageURL } : null;
 
+  // Đếm số lượng đơn hàng đã hoàn thành (completed hoặc delivered) có chứa sản phẩm này
+  const orderItemsWithProduct = await OrderItem.find({ productId: product._id });
+  const orderIds = orderItemsWithProduct.map(item => item.orderId);
+  
+  const completedOrdersCount = await Order.countDocuments({
+    _id: { $in: orderIds },
+    status: { $in: ['completed', 'delivered'] }
+  });
+
+  // Tính tổng số lượng sản phẩm đã bán (từ các đơn hàng đã hoàn thành)
+  const completedOrders = await Order.find({
+    _id: { $in: orderIds },
+    status: { $in: ['completed', 'delivered'] }
+  }).select('_id');
+  
+  const completedOrderIds = completedOrders.map(o => o._id);
+  const soldItems = await OrderItem.find({
+    productId: product._id,
+    orderId: { $in: completedOrderIds }
+  });
+  
+  const totalSoldQuantity = soldItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
   const productWithInventory = {
     ...product.toObject(),
     inventoryQuantity: totalQuantity,
-    storeInfo
+    storeInfo,
+    sold: totalSoldQuantity, // Tổng số lượng đã bán
+    completedOrdersCount // Số đơn hàng đã hoàn thành
   };
   
   res.json(productWithInventory);

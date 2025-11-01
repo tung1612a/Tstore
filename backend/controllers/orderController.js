@@ -304,14 +304,22 @@ export const getOrderDetails = async (req, res) => {
       // Nếu là buyer và là chủ đơn hàng, lấy tất cả items
       orderItems = await OrderItem.find({ orderId: id }).populate(
         'productId',
-        'title price image imageURL description'
+        '_id title price image imageURL description'
       );
     } else {
       return res.status(401).json({ message: 'Không được phép truy cập đơn hàng này' });
     }
 
+    // Lấy payment status
+    const payment = await Payment.findOne({ orderId: id });
+    const paymentStatus = payment?.status || (order.paymentMethod === 'cod' ? 'pending' : null);
+    
+    // Thêm paymentStatus vào order object
+    const orderWithPaymentStatus = order.toObject();
+    orderWithPaymentStatus.paymentStatus = paymentStatus;
+
     res.json({
-      order,
+      order: orderWithPaymentStatus,
       items: orderItems,
     });
   } catch (error) {
