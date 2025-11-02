@@ -185,16 +185,37 @@ function ProductCard({ product, hideStoreButton = false }) {
           )}
         </div>
 
-        <Button
-          variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
-          size="sm"
-          className="w-100 d-flex align-items-center justify-content-center"
-          disabled={isAddingToCart || isOwnProduct}
-          style={{
-            background: !isAuthenticated
-              ? "transparent"
-              : isOwnProduct
-                ? "#6c757d"
+        {isOwnProduct ? (
+          <Button
+            variant="warning"
+            size="sm"
+            className="w-100 d-flex align-items-center justify-content-center"
+            style={{
+              borderRadius: "8px",
+              fontWeight: "600",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/seller/products`, {
+                state: {
+                  editProduct: product,
+                  apiEndpoint: `http://localhost:5000/api/seller/products/${product._id}`
+                }
+              });
+            }}
+          >
+            <FiEdit className="me-2" size={16} />
+            Chỉnh sửa sản phẩm
+          </Button>
+        ) : (
+          <Button
+            variant={!isAuthenticated ? "outline-primary" : "primary"}
+            size="sm"
+            className="w-100 d-flex align-items-center justify-content-center"
+            disabled={isAddingToCart}
+            style={{
+              background: !isAuthenticated
+                ? "transparent"
                 : isAddingToCart
                   ? "#6c757d"
                   : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
@@ -210,9 +231,10 @@ function ProductCard({ product, hideStoreButton = false }) {
               : isAddingToCart
                 ? 'Đang thêm...'
                 : 'Thêm vào giỏ'
-          }
-        </Button>
-        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && (
+            }
+          </Button>
+        )}
+        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && !isOwnProduct && (
           <Button
             variant="outline-secondary"
             size="sm"
