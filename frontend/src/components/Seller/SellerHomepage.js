@@ -154,6 +154,20 @@ const SellerHomepage = () => {
           </Col>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
+              <Card.Header className="bg-danger text-white">
+                <h5 className="mb-0">Khiếu nại</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">Quản lý và xử lý khiếu nại từ khách hàng</p>
+                <Button variant="danger" onClick={() => navigate('/seller/complaints')}>
+                  <FiAlertTriangle className="me-2" />
+                  Xem khiếu nại
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={6} className="mb-4">
+            <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-info text-white">
                 <h5 className="mb-0">{t('seller.reports')}</h5>
               </Card.Header>
