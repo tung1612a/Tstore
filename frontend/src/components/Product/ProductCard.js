@@ -17,12 +17,17 @@ function ProductCard({ product, hideStoreButton = false }) {
   const { user, isAuthenticated } = useAuth()
 
   // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
-  const isOwnProduct = user && user.role === 'seller' && (
-    product.sellerId?._id === user._id ||
-    product.sellerId === user._id ||
-    product.seller?._id === user._id ||
-    product.seller === user._id
-  )
+  const isOwnProduct = React.useMemo(() => {
+    if (!user || !isAuthenticated || user.role !== 'seller') {
+      return false
+    }
+    
+    const userId = user._id || user.id
+    const sellerId = product.sellerId?._id || product.sellerId || product.seller?._id || product.seller
+    
+    // So sánh dạng string để đảm bảo chính xác
+    return userId && sellerId && String(userId) === String(sellerId)
+  }, [user, isAuthenticated, product.sellerId, product.seller])
 
   // Helper function for adding to cart
   const handleAddToCart = async (e) => {
@@ -180,38 +185,16 @@ function ProductCard({ product, hideStoreButton = false }) {
           )}
         </div>
 
-        {isOwnProduct ? (
-          <Button
-            variant="warning"
-            size="sm"
-            className="w-100 d-flex align-items-center justify-content-center"
-            style={{
-              borderRadius: "8px",
-              fontWeight: "600",
-            }}
-            onClick={(e) => {
-              e.stopPropagation();
-              // Sử dụng API endpoint từ SellerProducts
-              navigate(`/seller/products`, { 
-                state: { 
-                  editProduct: product,
-                  apiEndpoint: `http://localhost:5000/api/seller/products/${product._id}`
-                }
-              });
-            }}
-          >
-            <FiEdit className="me-2" size={16} />
-            Chỉnh sửa sản phẩm
-          </Button>
-        ) : (
-          <Button
-            variant={!isAuthenticated ? "outline-primary" : "primary"}
-            size="sm"
-            className="w-100 d-flex align-items-center justify-content-center"
-            disabled={isAddingToCart}
-            style={{
-              background: !isAuthenticated
-                ? "transparent"
+        <Button
+          variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
+          size="sm"
+          className="w-100 d-flex align-items-center justify-content-center"
+          disabled={isAddingToCart || isOwnProduct}
+          style={{
+            background: !isAuthenticated
+              ? "transparent"
+              : isOwnProduct
+                ? "#6c757d"
                 : isAddingToCart
                   ? "#6c757d"
                   : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
@@ -227,10 +210,9 @@ function ProductCard({ product, hideStoreButton = false }) {
               : isAddingToCart
                 ? 'Đang thêm...'
                 : 'Thêm vào giỏ'
-            }
-          </Button>
-        )}
-        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && !isOwnProduct && (
+          }
+        </Button>
+        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && (
           <Button
             variant="outline-secondary"
             size="sm"

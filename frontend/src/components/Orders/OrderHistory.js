@@ -16,6 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { selectUserRole, getRole } from '../../store/userSlice';
 import './OrderHistory.css';
 import { Button } from 'react-bootstrap';
+import ReviewSection from './ReviewSection';
 
 const PAGE_SIZE = 10;
 
@@ -39,8 +40,95 @@ function formatDate(dateString) {
   });
 }
 
+// Component con để hiển thị nút đánh giá và form review
+const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
+  const [showReview, setShowReview] = useState(false);
+
+  // Kiểm tra điều kiện hiển thị nút đánh giá
+
+  // Chỉ hiển thị cho buyer hoặc customer (customer = buyer trong hệ thống)
+  if (role !== 'buyer' && role !== 'customer') {
+    return null;
+  }
+
+  // Phải có productId
+  if (!productId) {
+    return null;
+  }
+
+  // Kiểm tra status - chỉ hiển thị khi order đã hoàn thành hoặc đã giao hàng
+  const statusNormalized = String(orderStatus || '').toLowerCase().trim();
+  const isCompleted = statusNormalized === 'completed' || orderStatus === 'completed';
+  const isDelivered = statusNormalized === 'delivered' || orderStatus === 'delivered';
+
+  if (!isCompleted && !isDelivered) {
+    return null;
+  }
+
+  if (showReview) {
+    return (
+      <div style={{
+        marginTop: '20px',
+        padding: '20px',
+        background: '#ffffff',
+        borderRadius: '10px',
+        border: '2px solid #e0e0e0',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+          <h4 style={{ margin: 0, color: '#333' }}>Đánh giá sản phẩm</h4>
+          <button
+            onClick={() => setShowReview(false)}
+            style={{
+              background: '#f0f0f0',
+              border: 'none',
+              borderRadius: '5px',
+              padding: '5px 10px',
+              cursor: 'pointer',
+              fontSize: '14px'
+            }}
+          >
+            ✕ Đóng
+          </button>
+        </div>
+        <ReviewSection
+          productId={String(productId)}
+          orderId={orderId}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ marginTop: '15px', textAlign: 'left' }}>
+      <button
+        onClick={() => setShowReview(true)}
+        style={{
+          padding: '10px 20px',
+          background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '0.95rem',
+          fontWeight: '600',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+        }}
+        onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+        onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+      >
+        ⭐ Đánh giá sản phẩm
+      </button>
+    </div>
+  );
+};
+
 // Memoized OrderCard component to prevent unnecessary re-renders
-const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, toggleDetails, handleOpenCancelModal, handleOpenConfirmReceivedModal }) => {
+const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, toggleDetails, handleOpenCancelModal, handleOpenConfirmReceivedModal, role }) => {
   return (
     <div className={`order-card ${expanded[order._id] ? 'expanded' : ''}`}>
       <div className="card-header">
@@ -83,22 +171,32 @@ const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, 
               <h4 className="section-title">Chi tiết đơn hàng</h4>
               <div className="items-cards">
                 {(details[order._id]?.items || []).map((item, idx) => (
-                  <div key={item._id} className="item-card" style={{ '--index': idx }}>
-                    <div className="item-left">
-                      <div className="prod-thumb">
-                        <img src={item.productId?.imageURL || item.productId?.image} alt={item.productId?.title} />
+                  <div key={item._id || idx}>
+                    <div className="item-card" style={{ '--index': idx }}>
+                      <div className="item-left">
+                        <div className="prod-thumb">
+                          <img src={item.productId?.imageURL || item.productId?.image} alt={item.productId?.title} />
+                        </div>
+                        <div className="prod-info">
+                          <div className="prod-title">{item.productId?.title}</div>
+                          <div className="prod-sub">{item.productId?.description?.slice(0, 80)}</div>
+                        </div>
                       </div>
-                      <div className="prod-info">
-                        <div className="prod-title">{item.productId?.title}</div>
-                        <div className="prod-sub">{item.productId?.description?.slice(0, 80)}</div>
+                      <div className="item-right">
+                        <div className="price">{(item.unitPrice || item.productId?.price)?.toLocaleString()}đ</div>
+                        <div className="quantity">
+                          Số lượng: <strong>{item.quantity}</strong>
+                        </div>
                       </div>
                     </div>
-                    <div className="item-right">
-                      <div className="price">{(item.unitPrice || item.productId?.price)?.toLocaleString()}đ</div>
-                      <div className="quantity">
-                        Số lượng: <strong>{item.quantity}</strong>
-                      </div>
-                    </div>
+                    {/* Nút đánh giá - Hiển thị khi order đã hoàn thành */}
+                    <ReviewButton
+                      productId={item.productId?._id || item.productId ||
+                        (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)}
+                      orderId={order._id}
+                      orderStatus={order.status}
+                      role={role}
+                    />
                   </div>
                 ))}
               </div>
@@ -107,7 +205,7 @@ const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, 
             <div className="order-actions" style={{ padding: '20px', borderTop: '1px solid #eee', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
               {/* Cancel Button - Only show for pending/awaiting_delivery orders */}
               {['pending', 'confirmed', 'awaiting_delivery'].includes(order.status) && (
-                <button 
+                <button
                   className="btn-cancel-order"
                   onClick={() => handleOpenCancelModal(order)}
                   style={{
@@ -129,31 +227,31 @@ const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, 
                   Hủy đơn hàng
                 </button>
               )}
-              
-                             {/* Confirm Received Button - Only show for delivered orders */}
-               {order.status === 'delivered' && (
-                 <button 
-                   className="btn-confirm-received"
-                   onClick={() => handleOpenConfirmReceivedModal(order)}
-                   style={{
-                     padding: '12px 24px',
-                     background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-                     color: 'white',
-                     border: 'none',
-                     borderRadius: '8px',
-                     fontSize: '0.95rem',
-                     fontWeight: '600',
-                     cursor: 'pointer',
-                     transition: 'all 0.3s ease',
-                     display: 'flex',
-                     alignItems: 'center',
-                     gap: '8px'
-                   }}
-                 >
-                   <FiCheckCircle size={18} />
-                   Xác nhận đã nhận hàng
-                 </button>
-               )}
+
+              {/* Confirm Received Button - Only show for delivered orders */}
+              {order.status === 'delivered' && (
+                <button
+                  className="btn-confirm-received"
+                  onClick={() => handleOpenConfirmReceivedModal(order)}
+                  style={{
+                    padding: '12px 24px',
+                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  <FiCheckCircle size={18} />
+                  Xác nhận đã nhận hàng
+                </button>
+              )}
             </div>
           </>
         )}
@@ -347,7 +445,7 @@ const OrderHistory = () => {
       <div className="history-container">
         <div className="history-header">
           <div className="header-top">
-            <button 
+            <button
               className="back-btn"
               onClick={() => navigate(-1)}
               title="Quay lại trang trước"
@@ -356,7 +454,7 @@ const OrderHistory = () => {
               <span>Quay lại</span>
             </button>
             <div className="header-actions">
-              <button 
+              <button
                 className="refresh-btn"
                 onClick={() => window.location.reload()}
                 disabled={loading}
@@ -422,8 +520,9 @@ const OrderHistory = () => {
                 expanded={expanded}
                 details={details}
                 detailsLoading={detailsLoading}
-                                 handleOpenCancelModal={handleOpenCancelModal}
-                 handleOpenConfirmReceivedModal={handleOpenConfirmReceivedModal}
+                handleOpenCancelModal={handleOpenCancelModal}
+                handleOpenConfirmReceivedModal={handleOpenConfirmReceivedModal}
+                role={role}
                 toggleDetails={async (orderId) => {
                   // First, determine if we're opening or closing
                   const isCurrentlyOpen = expanded[orderId];
@@ -456,6 +555,7 @@ const OrderHistory = () => {
                       });
                       if (res.ok) {
                         const data = await res.json();
+                        console.log('Order details fetched:', { orderId, data });
                         setDetails((prev) => ({ ...prev, [orderId]: data }));
                       }
                     } catch (e) {
@@ -479,7 +579,7 @@ const OrderHistory = () => {
       </div>
       {/* Cancel Order Modal */}
       {showCancelModal && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -494,7 +594,7 @@ const OrderHistory = () => {
           }}
           onClick={() => !isCancelling && setShowCancelModal(false)}
         >
-          <div 
+          <div
             style={{
               background: 'white',
               borderRadius: '16px',
@@ -509,7 +609,7 @@ const OrderHistory = () => {
             <p style={{ margin: '0 0 24px 0', color: '#6c757d' }}>
               Bạn có chắc chắn muốn hủy đơn hàng #{selectedOrder?._id.slice(-8)}? Vui lòng nhập lý do hủy đơn hàng.
             </p>
-            
+
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
@@ -582,7 +682,7 @@ const OrderHistory = () => {
 
       {/* Confirm Received Modal */}
       {showConfirmReceivedModal && (
-        <div 
+        <div
           style={{
             position: 'fixed',
             top: 0,
@@ -597,7 +697,7 @@ const OrderHistory = () => {
           }}
           onClick={() => !isConfirmingReceived && setShowConfirmReceivedModal(false)}
         >
-          <div 
+          <div
             style={{
               background: 'white',
               borderRadius: '16px',
@@ -609,10 +709,10 @@ const OrderHistory = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{ 
-                width: '64px', 
-                height: '64px', 
-                borderRadius: '50%', 
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
                 background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
                 display: 'flex',
                 alignItems: 'center',
@@ -626,12 +726,12 @@ const OrderHistory = () => {
                 Đơn hàng #{selectedOrder?._id.slice(-8)}
               </p>
             </div>
-            
-            <div style={{ 
-              background: '#f8f9fa', 
-              borderRadius: '12px', 
-              padding: '20px', 
-              marginBottom: '24px' 
+
+            <div style={{
+              background: '#f8f9fa',
+              borderRadius: '12px',
+              padding: '20px',
+              marginBottom: '24px'
             }}>
               <p style={{ margin: '0', color: '#495057', lineHeight: '1.6' }}>
                 Bạn có chắc chắn đã nhận được hàng? Sau khi xác nhận, đơn hàng sẽ chuyển sang trạng thái hoàn thành.

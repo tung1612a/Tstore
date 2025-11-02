@@ -5,7 +5,7 @@ import { useDispatch } from 'react-redux';
 import { updateQuantity, removeFromCart } from '../../store/cartSlice';
 import { formatPrice } from '../../utils/formatters';
 
-function CartItem({ item }) {
+function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
   const dispatch = useDispatch();
   
   // Helper functions
@@ -20,10 +20,13 @@ function CartItem({ item }) {
   };
   
   const handleRemove = async () => {
-    try {
-      await dispatch(removeFromCart(item._id)).unwrap();
-    } catch (error) {
-      alert('Có lỗi xảy ra khi xóa sản phẩm');
+    if (window.confirm('Bạn có chắc muốn xóa sản phẩm này?')) {
+      try {
+        await dispatch(removeFromCart(item._id)).unwrap();
+        if (onRemove) onRemove();
+      } catch (error) {
+        alert('Có lỗi xảy ra khi xóa sản phẩm');
+      }
     }
   };
 
@@ -36,9 +39,17 @@ function CartItem({ item }) {
   const totalPrice = item.price * item.quantity;
   
   return (
-    <Card className="mb-3 cart-item">
+    <Card className={`mb-3 cart-item ${!isSelected ? 'opacity-50' : ''}`}>
       <Card.Body>
         <Row className="align-items-center">
+          <Col md={1} className="d-flex align-items-center justify-content-center">
+            <Form.Check
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelect}
+              style={{ cursor: 'pointer' }}
+            />
+          </Col>
           <Col md={2}>
             <div className="cart-item-image">
               {item.image || item.imageURL ? (
@@ -59,7 +70,7 @@ function CartItem({ item }) {
             </div>
           </Col>
           
-          <Col md={4}>
+          <Col md={3}>
             <div className="cart-item-details">
               <h6 className="mb-1 cart-item-title">{item.title}</h6>
               {item.sellerId?.fullName || item.seller?.fullName ? (
@@ -73,7 +84,7 @@ function CartItem({ item }) {
             </div>
           </Col>
           
-          <Col md={3}>
+          <Col md={3} className={!isSelected ? 'text-muted' : ''}>
             <div className="quantity-controls d-flex align-items-center">
               <Button
                 variant="outline-secondary"
@@ -106,8 +117,8 @@ function CartItem({ item }) {
           </Col>
           
           <Col md={2}>
-            <div className="cart-item-total text-end">
-              <div className="fw-bold text-danger fs-5">
+            <div className={`cart-item-total text-end ${!isSelected ? 'text-muted' : ''}`}>
+              <div className={`fw-bold fs-5 ${isSelected ? 'text-danger' : 'text-muted'}`}>
                 {formatPrice(totalPrice)}
               </div>
             </div>
