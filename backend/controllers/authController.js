@@ -143,17 +143,12 @@ export const checkEmail = async (req, res) => {
 // Become seller for authenticated user - tạo đơn đăng ký
 export const becomeSeller = async (req, res) => {
   try {
-    const { phone, businessName, businessDescription, taxCode, cccd } = req.body;
+    const { phone, businessName, businessDescription, cccd } = req.body;
     const userId = req.user._id;
     const user = req.user;
 
-    if (!phone || !businessName || !taxCode || !cccd) {
-      return res.status(400).json({ message: "Phone, business name, tax code and CCCD are required" });
-    }
-
-    // Validation cho mã số thuế (10-13 số)
-    if (!/^\d{10,13}$/.test(taxCode)) {
-      return res.status(400).json({ message: "Tax code must be 10-13 digits" });
+    if (!phone || !businessName || !cccd) {
+      return res.status(400).json({ message: "Phone, business name and CCCD are required" });
     }
 
     // Validation cho CCCD (12 số)
@@ -161,19 +156,21 @@ export const becomeSeller = async (req, res) => {
       return res.status(400).json({ message: "CCCD must be exactly 12 digits" });
     }
 
+    // Kiểm tra xem user đã là seller chưa
+    if (user.role === 'seller') {
+      return res.status(400).json({ message: "You are already a seller" });
+    }
+
     // Kiểm tra xem user đã có đơn đăng ký pending chưa
-    const existingApplication = await SellerApplication.findOne({
+    // Nếu có đơn pending thì không cho tạo mới
+    // Nếu có đơn rejected thì cho phép tạo đơn mới (reapply)
+    const existingPendingApplication = await SellerApplication.findOne({
       userId: userId,
       status: 'pending'
     });
 
-    if (existingApplication) {
+    if (existingPendingApplication) {
       return res.status(400).json({ message: "You already have a pending seller application" });
-    }
-
-    // Kiểm tra xem user đã là seller chưa
-    if (user.role === 'seller') {
-      return res.status(400).json({ message: "You are already a seller" });
     }
 
     // Tạo đơn đăng ký seller
@@ -184,7 +181,6 @@ export const becomeSeller = async (req, res) => {
       phone: phone,
       businessName: businessName,
       businessDescription: businessDescription || '',
-      taxCode: taxCode,
       cccd: cccd,
       status: 'pending'
     });
@@ -257,7 +253,6 @@ export const reviewSellerApplication = async (req, res) => {
         phone: application.phone,
         businessName: application.businessName,
         businessDescription: application.businessDescription,
-        taxCode: application.taxCode,
         cccd: application.cccd
       });
     }
