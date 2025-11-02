@@ -2,11 +2,12 @@
 import { Container, Row, Col, Card, Button, Table, Modal, Form, Alert, Badge, Spinner, Tabs, Tab } from 'react-bootstrap';
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch, FiFilter, FiPackage, FiTrendingUp, FiSettings, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const SellerProducts = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [inventories, setInventories] = useState([]);
@@ -41,7 +42,24 @@ const SellerProducts = () => {
     fetchProducts();
     fetchCategories();
     fetchInventories();
-  }, []);
+
+    // Kiểm tra nếu có sản phẩm cần edit từ state
+    const state = location.state;
+    if (state?.editProduct) {
+      setEditingProduct(state.editProduct);
+      setFormData({
+        title: state.editProduct.title,
+        price: state.editProduct.price.toString(),
+        description: state.editProduct.description || '',
+        stock: state.editProduct.stock.toString(),
+        image: state.editProduct.image || state.editProduct.imageURL || '',
+        categoryId: state.editProduct.categoryId || ''
+      });
+      setShowModal(true);
+      // Xóa state để tránh hiển thị lại modal khi refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
 
   const fetchProducts = async () => {
     try {

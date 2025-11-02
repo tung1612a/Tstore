@@ -2,7 +2,7 @@
 
 import React from "react"
 import { Card, Badge, Button } from "react-bootstrap"
-import { FiHeart, FiShoppingCart, FiStar } from "react-icons/fi"
+import { FiHeart, FiShoppingCart, FiStar, FiEdit } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { addToCart, addToCartLocal } from "../../store/cartSlice"
@@ -180,36 +180,57 @@ function ProductCard({ product, hideStoreButton = false }) {
           )}
         </div>
 
-        <Button
-          variant={!isAuthenticated ? "outline-primary" : isOwnProduct ? "secondary" : "primary"}
-          size="sm"
-          className="w-100 d-flex align-items-center justify-content-center"
-          disabled={isAddingToCart || isOwnProduct}
-          style={{
-            background: !isAuthenticated
-              ? "transparent"
-              : isOwnProduct
-                ? "#6c757d"
+        {isOwnProduct ? (
+          <Button
+            variant="warning"
+            size="sm"
+            className="w-100 d-flex align-items-center justify-content-center"
+            style={{
+              borderRadius: "8px",
+              fontWeight: "600",
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              // Sử dụng API endpoint từ SellerProducts
+              navigate(`/seller/products`, { 
+                state: { 
+                  editProduct: product,
+                  apiEndpoint: `http://localhost:5000/api/seller/products/${product._id}`
+                }
+              });
+            }}
+          >
+            <FiEdit className="me-2" size={16} />
+            Chỉnh sửa sản phẩm
+          </Button>
+        ) : (
+          <Button
+            variant={!isAuthenticated ? "outline-primary" : "primary"}
+            size="sm"
+            className="w-100 d-flex align-items-center justify-content-center"
+            disabled={isAddingToCart}
+            style={{
+              background: !isAuthenticated
+                ? "transparent"
                 : isAddingToCart
                   ? "#6c757d"
                   : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
-            border: !isAuthenticated ? "2px solid #007bff" : "none",
-            borderRadius: "8px",
-            fontWeight: "600",
-          }}
-          onClick={handleAddToCart}
-        >
-          <FiShoppingCart className="me-2" size={16} />
-          {!isAuthenticated
-            ? 'Đăng nhập để mua'
-            : isOwnProduct
-              ? 'Sản phẩm của bạn'
+              border: !isAuthenticated ? "2px solid #007bff" : "none",
+              borderRadius: "8px",
+              fontWeight: "600",
+            }}
+            onClick={handleAddToCart}
+          >
+            <FiShoppingCart className="me-2" size={16} />
+            {!isAuthenticated
+              ? 'Đăng nhập để mua'
               : isAddingToCart
                 ? 'Đang thêm...'
                 : 'Thêm vào giỏ'
-          }
-        </Button>
-        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && (
+            }
+          </Button>
+        )}
+        {(product.sellerId?._id || product.sellerId) && !hideStoreButton && !isOwnProduct && (
           <Button
             variant="outline-secondary"
             size="sm"
