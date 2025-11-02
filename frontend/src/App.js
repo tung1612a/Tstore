@@ -33,8 +33,11 @@ import AdminUser from "./components/Admin/AdminUser";
 import ListProduct from "./components/DevAdmin/ListProduct";
 import SellerReports from "./components/Seller/SellerReport";
 import SellerSettings from "./components/Seller/SellerSettings";
+import SellerComplaints from "./components/Seller/SellerComplaints";
 import SellerApplications from "./components/Admin/SellerApplications";
 import ReportAdmin from "./components/DevAdmin/ReportAdmin";
+import BuyerComplaints from "./components/Orders/BuyerComplaints";
+import AdminComplaints from "./components/Admin/AdminComplaints";
 
 function App() {
   return (
@@ -59,6 +62,7 @@ function App() {
             
             <Route path="/orders" element={<OrderHistory />} />
             <Route path="/orders/:id" element={<OrderDetails />} />
+            <Route path="/buyer/complaints" element={<ProtectedRoute><BuyerComplaints /></ProtectedRoute>} />
 
             {/* Protected routes */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}/>
@@ -79,12 +83,15 @@ function App() {
 
             <Route path="/admin/seller-applications" element={<ProtectedRoute requiredRole="admin"><SellerApplications /></ProtectedRoute>} />
 
+            <Route path="/admin/complaints" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminComplaints /></ProtectedRoute>} />
+
             {/* Seller routes */}
             <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>
 
             {/* <Route path="/seller/dashboard" element={<ProtectedRoute requiredRole="seller"><SellerDashboard /></ProtectedRoute>}/> */}
             <Route path="/seller/products" element={<ProtectedRoute requiredRole="seller"><SellerProducts /></ProtectedRoute>}/>
             <Route path="/seller/orders" element={<ProtectedRoute requiredRole="seller"><OrderManagement /></ProtectedRoute>}/>
+            <Route path="/seller/complaints" element={<ProtectedRoute requiredRole="seller"><SellerComplaints /></ProtectedRoute>}/>
             <Route path="/seller/reports" element={<ProtectedRoute requiredRole="seller"><SellerReports /></ProtectedRoute>}/>
             <Route path="/seller/settings" element={<ProtectedRoute requiredRole="seller"><SellerSettings /></ProtectedRoute>}/>
 

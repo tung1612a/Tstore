@@ -10,6 +10,9 @@ import {
   FiChevronUp,
   FiArrowLeft,
   FiRefreshCw,
+  FiAlertTriangle,
+  FiImage,
+  FiTrash2,
 } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -127,8 +130,59 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
   );
 };
 
+// Component để hiển thị nút khiếu nại
+const ComplaintButton = ({ productId, orderId, orderStatus, role, onComplaintClick }) => {
+  // Chỉ hiển thị cho buyer hoặc customer
+  if (role !== 'buyer' && role !== 'customer') {
+    return null;
+  }
+
+  // Phải có productId
+  if (!productId) {
+    return null;
+  }
+
+  // Chỉ hiển thị khi order đã hoàn thành hoặc đã giao hàng
+  const statusNormalized = String(orderStatus || '').toLowerCase().trim();
+  const isCompleted = statusNormalized === 'completed' || orderStatus === 'completed';
+  const isDelivered = statusNormalized === 'delivered' || orderStatus === 'delivered';
+
+  if (!isCompleted && !isDelivered) {
+    return null;
+  }
+
+  return (
+    <div style={{ marginTop: '15px', textAlign: 'left' }}>
+      <button
+        onClick={() => onComplaintClick(orderId, productId)}
+        style={{
+          padding: '10px 20px',
+          background: 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
+          color: 'white',
+          border: 'none',
+          borderRadius: '8px',
+          fontSize: '0.95rem',
+          fontWeight: '600',
+          cursor: 'pointer',
+          transition: 'all 0.3s ease',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '8px',
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+          marginLeft: '10px'
+        }}
+        onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
+        onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+      >
+        <FiAlertTriangle size={18} />
+        Khiếu nại sản phẩm
+      </button>
+    </div>
+  );
+};
+
 // Memoized OrderCard component to prevent unnecessary re-renders
-const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, toggleDetails, handleOpenCancelModal, handleOpenConfirmReceivedModal, role }) => {
+const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, toggleDetails, handleOpenCancelModal, handleOpenConfirmReceivedModal, handleOpenComplaintModal, role }) => {
   return (
     <div className={`order-card ${expanded[order._id] ? 'expanded' : ''}`}>
       <div className="card-header">
@@ -190,13 +244,23 @@ const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, 
                       </div>
                     </div>
                     {/* Nút đánh giá - Hiển thị khi order đã hoàn thành */}
-                    <ReviewButton
-                      productId={item.productId?._id || item.productId ||
-                        (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)}
-                      orderId={order._id}
-                      orderStatus={order.status}
-                      role={role}
-                    />
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-start' }}>
+                      <ReviewButton
+                        productId={item.productId?._id || item.productId ||
+                          (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)}
+                        orderId={order._id}
+                        orderStatus={order.status}
+                        role={role}
+                      />
+                      <ComplaintButton
+                        productId={item.productId?._id || item.productId ||
+                          (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)}
+                        orderId={order._id}
+                        orderStatus={order.status}
+                        role={role}
+                        onComplaintClick={handleOpenComplaintModal}
+                      />
+                    </div>
                   </div>
                 ))}
               </div>
@@ -282,6 +346,12 @@ const OrderHistory = () => {
   const [isCancelling, setIsCancelling] = useState(false);
   const [showConfirmReceivedModal, setShowConfirmReceivedModal] = useState(false);
   const [isConfirmingReceived, setIsConfirmingReceived] = useState(false);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [complaintType, setComplaintType] = useState('');
+  const [complaintDescription, setComplaintDescription] = useState('');
+  const [complaintImages, setComplaintImages] = useState([]);
+  const [isSubmittingComplaint, setIsSubmittingComplaint] = useState(false);
 
   useEffect(() => {
     dispatch(getRole());
@@ -427,6 +497,62 @@ const OrderHistory = () => {
     }
   };
 
+  const handleOpenComplaintModal = (orderId, productId) => {
+    setSelectedOrder({ _id: orderId });
+    setSelectedProductId(productId);
+    setShowComplaintModal(true);
+  };
+
+  const handleSubmitComplaint = async () => {
+    if (!complaintType || !complaintDescription.trim()) {
+      alert('Vui lòng điền đầy đủ thông tin khiếu nại');
+      return;
+    }
+
+    setIsSubmittingComplaint(true);
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('orderId', selectedOrder._id);
+      formData.append('productId', selectedProductId);
+      formData.append('complaintType', complaintType);
+      formData.append('description', complaintDescription);
+      
+      // Append images
+      complaintImages.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      const response = await fetch('http://localhost:5000/api/complaints', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        setShowComplaintModal(false);
+        setSelectedOrder(null);
+        setSelectedProductId(null);
+        setComplaintType('');
+        setComplaintDescription('');
+        setComplaintImages([]);
+        alert('Gửi khiếu nại thành công! Người bán sẽ xem xét và phản hồi.');
+      } else {
+        const error = await response.json();
+        alert(error.message || 'Có lỗi xảy ra khi gửi khiếu nại');
+      }
+    } catch (error) {
+      console.error('Error submitting complaint:', error);
+      alert('Có lỗi xảy ra khi gửi khiếu nại');
+    } finally {
+      setIsSubmittingComplaint(false);
+    }
+  };
+
   if (loading && page === 1) {
     return (
       <div className="order-history">
@@ -465,8 +591,24 @@ const OrderHistory = () => {
             </div>
           </div>
           <div className="title-wrap">
-            <h1>Lịch sử đơn hàng</h1>
-            <p>Theo dõi đơn hàng của bạn</p>
+            <div className="d-flex justify-content-between align-items-center">
+              <div>
+                <h1>Lịch sử đơn hàng</h1>
+                <p>Theo dõi đơn hàng của bạn</p>
+              </div>
+              <Button
+                variant="danger"
+                onClick={() => navigate('/buyer/complaints')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+              >
+                <FiAlertTriangle size={18} />
+                Xem khiếu nại
+              </Button>
+            </div>
           </div>
           <div className="quick-stats">
             <div className="stat">
@@ -522,6 +664,7 @@ const OrderHistory = () => {
                 detailsLoading={detailsLoading}
                 handleOpenCancelModal={handleOpenCancelModal}
                 handleOpenConfirmReceivedModal={handleOpenConfirmReceivedModal}
+                handleOpenComplaintModal={handleOpenComplaintModal}
                 role={role}
                 toggleDetails={async (orderId) => {
                   // First, determine if we're opening or closing
@@ -784,6 +927,254 @@ const OrderHistory = () => {
                   <>
                     <FiCheckCircle size={18} />
                     Xác nhận
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Complaint Modal */}
+      {showComplaintModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={() => !isSubmittingComplaint && setShowComplaintModal(false)}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '600px',
+              width: '90%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px'
+              }}>
+                <FiAlertTriangle size={32} color="white" />
+              </div>
+              <h2 style={{ margin: '0 0 8px 0', color: '#2c3e50', fontSize: '1.5rem' }}>Khiếu nại sản phẩm</h2>
+              <p style={{ margin: '0', color: '#6c757d', fontSize: '0.95rem' }}>
+                Đơn hàng #{selectedOrder?._id.slice(-8)}
+              </p>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#2c3e50' }}>
+                Loại khiếu nại *
+              </label>
+              <select
+                value={complaintType}
+                onChange={(e) => setComplaintType(e.target.value)}
+                disabled={isSubmittingComplaint}
+                style={{
+                  width: '100%',
+                  padding: '12px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  fontFamily: 'inherit',
+                  background: 'white'
+                }}
+              >
+                <option value="">Chọn loại khiếu nại</option>
+                <option value="quality">Chất lượng sản phẩm</option>
+                <option value="wrong_item">Sai sản phẩm</option>
+                <option value="damaged">Sản phẩm bị hỏng</option>
+                <option value="missing">Thiếu sản phẩm</option>
+                <option value="late_delivery">Giao hàng chậm</option>
+                <option value="other">Khác</option>
+              </select>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#2c3e50' }}>
+                Mô tả chi tiết *
+              </label>
+              <textarea
+                value={complaintDescription}
+                onChange={(e) => setComplaintDescription(e.target.value)}
+                placeholder="Vui lòng mô tả chi tiết vấn đề bạn gặp phải..."
+                disabled={isSubmittingComplaint}
+                style={{
+                  width: '100%',
+                  minHeight: '150px',
+                  padding: '12px',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  fontFamily: 'inherit',
+                  resize: 'vertical'
+                }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#2c3e50' }}>
+                Hình ảnh minh chứng (tối đa 5 ảnh)
+              </label>
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files).slice(0, 5);
+                  setComplaintImages(files);
+                }}
+                disabled={isSubmittingComplaint}
+                style={{ display: 'none' }}
+                id="complaint-images-input"
+              />
+              <label
+                htmlFor="complaint-images-input"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '10px 20px',
+                  background: '#f0f0f0',
+                  border: '2px dashed #ccc',
+                  borderRadius: '8px',
+                  cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseOver={(e) => !isSubmittingComplaint && (e.target.style.background = '#e0e0e0')}
+                onMouseOut={(e) => e.target.style.background = '#f0f0f0'}
+              >
+                <FiImage size={18} />
+                Chọn ảnh
+              </label>
+              {complaintImages.length > 0 && (
+                <div style={{ marginTop: '12px', display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {complaintImages.map((file, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        position: 'relative',
+                        width: '100px',
+                        height: '100px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: '2px solid #e0e0e0'
+                      }}
+                    >
+                      <img
+                        src={URL.createObjectURL(file)}
+                        alt={`Preview ${index + 1}`}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const newImages = complaintImages.filter((_, i) => i !== index);
+                          setComplaintImages(newImages);
+                        }}
+                        disabled={isSubmittingComplaint}
+                        style={{
+                          position: 'absolute',
+                          top: '5px',
+                          right: '5px',
+                          background: 'rgba(220, 53, 69, 0.9)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '24px',
+                          height: '24px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer',
+                          fontSize: '12px'
+                        }}
+                      >
+                        <FiTrash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {complaintImages.length > 0 && (
+                <p style={{ marginTop: '8px', fontSize: '0.875rem', color: '#6c757d' }}>
+                  Đã chọn {complaintImages.length} ảnh
+                </p>
+              )}
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={() => {
+                  setShowComplaintModal(false);
+                  setComplaintType('');
+                  setComplaintDescription('');
+                  setComplaintImages([]);
+                  setSelectedOrder(null);
+                  setSelectedProductId(null);
+                }}
+                disabled={isSubmittingComplaint}
+                style={{
+                  flex: 1,
+                  padding: '12px 24px',
+                  background: '#f8f9fa',
+                  color: '#2c3e50',
+                  border: '2px solid #e0e0e0',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease'
+                }}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSubmitComplaint}
+                disabled={isSubmittingComplaint || !complaintType || !complaintDescription.trim()}
+                style={{
+                  flex: 1,
+                  padding: '12px 24px',
+                  background: (isSubmittingComplaint || !complaintType || !complaintDescription.trim()) ? '#ccc' : 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  fontSize: '0.95rem',
+                  fontWeight: '600',
+                  cursor: (isSubmittingComplaint || !complaintType || !complaintDescription.trim()) ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.3s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isSubmittingComplaint ? 'Đang gửi...' : (
+                  <>
+                    <FiAlertTriangle size={18} />
+                    Gửi khiếu nại
                   </>
                 )}
               </button>
