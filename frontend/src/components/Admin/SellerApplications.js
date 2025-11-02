@@ -181,10 +181,6 @@ const SellerApplications = () => {
                 )}
 
                 <div className="mb-2">
-                  <strong>Tax Code:</strong> {app.taxCode}
-                </div>
-                
-                <div className="mb-2">
                   <strong>CCCD:</strong> {app.cccd}
                 </div>
 
@@ -247,7 +243,6 @@ const SellerApplications = () => {
                   <p><strong>Business Name:</strong> {selectedApplication.businessName}</p>
                 </Col>
                 <Col md={6}>
-                  <p><strong>Tax Code:</strong> {selectedApplication.taxCode}</p>
                   <p><strong>CCCD:</strong> {selectedApplication.cccd}</p>
                   <p><strong>Applied:</strong> {formatDate(selectedApplication.createdAt)}</p>
                 </Col>

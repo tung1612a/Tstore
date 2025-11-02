@@ -28,7 +28,7 @@ const sellerApplicationSchema = new mongoose.Schema({
   },
   taxCode: {
     type: String,
-    required: true
+    required: false
   },
   cccd: {
     type: String,
