@@ -4,6 +4,7 @@ import OrderItem from "../models/OrderItem.js";
 import User from "../models/User.js";
 import Store from "../models/Store.js";
 import Inventory from "../models/Inventory.js";
+import path from 'path';
 
 // Dashboard stats cho seller
 export const getSellerDashboard = async (req, res) => {
@@ -461,6 +462,52 @@ export const updateMyStore = async (req, res) => {
     res.json({ message: 'Store updated', store });
   } catch (error) {
     console.error('updateMyStore error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Upload seller avatar (file upload)
+export const uploadSellerAvatar = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'seller') return res.status(403).json({ message: 'Only seller can update avatar' });
+
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    const fileUrl = `/uploads/${req.file.filename}`;
+    user.avatarUrl = fileUrl;
+    await user.save();
+
+    const sanitized = await User.findById(userId).select('-password');
+    res.json({ message: 'Avatar updated', avatarUrl: fileUrl, user: sanitized });
+  } catch (error) {
+    console.error('uploadSellerAvatar error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Upload store banner (file upload)
+export const uploadStoreBanner = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId).select('role');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'seller') return res.status(403).json({ message: 'Only seller can update store' });
+
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
+
+    let store = await Store.findOne({ sellerId: userId });
+    if (!store) {
+      store = new Store({ sellerId: userId, storeName: 'Store' });
+    }
+    const fileUrl = `/uploads/${req.file.filename}`;
+    store.bannerImageURL = fileUrl;
+    await store.save();
+    res.json({ message: 'Banner updated', bannerImageURL: fileUrl, store });
+  } catch (error) {
+    console.error('uploadStoreBanner error:', error);
     res.status(500).json({ message: error.message });
   }
 };
