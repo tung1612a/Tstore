@@ -229,7 +229,7 @@ const ShipperOrders = () => {
           <div className="so-header-top">
             <button 
               className="so-back-btn"
-              onClick={() => navigate('/shipper/dashboard')}
+              onClick={() => navigate('/shipper')}
               title="Quay lại dashboard"
             >
               <FiArrowLeft size={20} />

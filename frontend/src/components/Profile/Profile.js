@@ -198,7 +198,7 @@ function Profile() {
                         setAvatarMsg(e.message || 'Lỗi cập nhật ảnh');
                       }
                     }}>
-                      <FiSave className="me-1" /> Upload & Lưu ảnh
+                      <FiSave className="me-1" /> {t('profile.uploadAvatar')}
                     </Button>
                   </div>
                   {avatarMsg && (
@@ -411,7 +411,7 @@ function Profile() {
                   <div className="d-flex gap-2">
                     <Button variant="primary" onClick={() => navigate('/change-password')}>
                       <FiEdit className="me-1" />
-                      Đổi mật khẩu
+                      {t('profile.changePassword')}
                     </Button>
                     {isShipper() && (
                       <Button variant="success" onClick={() => navigate('/shipper/dashboard')}>
@@ -433,7 +433,7 @@ function Profile() {
       <Row className="justify-content-center mt-3">
         <Col lg={8} className="text-end">
           <Button className="btn-back-to-store" onClick={() => navigate('/')}>
-            Quay lại cửa hàng
+            {t('common.back')}
           </Button>
         </Col>
       </Row>

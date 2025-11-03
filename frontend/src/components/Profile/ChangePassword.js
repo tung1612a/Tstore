@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Container, Row, Col, Card, Form, Button, Spinner, Alert } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 function ChangePassword() {
 	const navigate = useNavigate();
+	const { t } = useTranslation();
 	const [form, setForm] = useState({ oldPassword: '', newPassword: '', confirmPassword: '' });
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState('');
@@ -17,7 +19,7 @@ function ChangePassword() {
 		setSuccess('');
 
 		if (form.newPassword !== form.confirmPassword) {
-			setError('Mật khẩu mới và xác nhận không khớp');
+			setError(t('changepass.1'));
 			return;
 		}
 
@@ -46,10 +48,10 @@ function ChangePassword() {
 				throw new Error(msg);
 			}
 
-			setSuccess('Đổi mật khẩu thành công');
+			setSuccess(t('changepass.2'));
 			setTimeout(() => navigate('/profile'), 1200);
 		} catch (err) {
-			setError(err.message || 'Lỗi khi đổi mật khẩu');
+			setError(err.message || t('changepass.3'));
 		} finally {
 			setLoading(false);
 		}
@@ -61,17 +63,17 @@ function ChangePassword() {
 				<Col md={{ span: 4, offset: 4 }}>
 					<Card className="shadow-lg border-0 rounded-4">
 						<Card.Body className="p-4">
-							<h3 className="text-center mb-4 fw-bold">Đổi mật khẩu</h3>
+							<h3 className="text-center mb-4 fw-bold">{t('changepass.4')}</h3>
 
 							{error && <Alert variant="danger">{error}</Alert>}
 							{success && <Alert variant="success">{success}</Alert>}
 
 							<Form onSubmit={handleSubmit}>
 								<Form.Group className="mb-3" controlId="formOldPassword">
-									<Form.Label>Mật khẩu cũ</Form.Label>
+									<Form.Label>{t('changepass.5')}</Form.Label>
 									<Form.Control
 										type="password"
-										placeholder="Nhập mật khẩu cũ"
+										placeholder={t('changepass.6')}
 										name="oldPassword"
 										value={form.oldPassword}
 										onChange={handleChange}
@@ -80,10 +82,10 @@ function ChangePassword() {
 								</Form.Group>
 
 								<Form.Group className="mb-3" controlId="formNewPassword">
-									<Form.Label>Mật khẩu mới</Form.Label>
+									<Form.Label>{t('changepass.7')}</Form.Label>
 									<Form.Control
 										type="password"
-										placeholder="Nhập mật khẩu mới"
+										placeholder={t('changepass.8')}
 										name="newPassword"
 										value={form.newPassword}
 										onChange={handleChange}
@@ -92,10 +94,10 @@ function ChangePassword() {
 								</Form.Group>
 
 								<Form.Group className="mb-3" controlId="formConfirmPassword">
-									<Form.Label>Xác nhận mật khẩu mới</Form.Label>
+									<Form.Label>{t('changepass.9')}</Form.Label>
 									<Form.Control
 										type="password"
-										placeholder="Xác nhận mật khẩu mới"
+										placeholder={t('changepass.10')}
 										name="confirmPassword"
 										value={form.confirmPassword}
 										onChange={handleChange}
@@ -107,10 +109,10 @@ function ChangePassword() {
 									<Button variant="primary" type="submit" disabled={loading}>
 										{loading ? (
 											<>
-												<Spinner animation="border" size="sm" className="me-2" /> Đang xử lý...
+												<Spinner animation="border" size="sm" className="me-2" /> {t('changepass.11')}
 											</>
 										) : (
-											'Đổi mật khẩu'
+											t('changepass.14')
 										)}
 									</Button>
 									<Button
@@ -120,7 +122,7 @@ function ChangePassword() {
 										onClick={() => navigate('/profile')}
 										disabled={loading}
 									>
-										Hủy
+										{t('changepass.13')}
 									</Button>
 								</div>
 							</Form>
