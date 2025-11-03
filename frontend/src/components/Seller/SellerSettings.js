@@ -22,6 +22,8 @@ const SellerSettings = () => {
 
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [uploadingBanner, setUploadingBanner] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -60,20 +62,8 @@ const SellerSettings = () => {
     setLoading(true);
     setMessage('');
     try {
-      // 1) Save user avatar
-      const res = await fetch('http://localhost:5000/api/seller/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ avatarUrl: formData.avatarUrl })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Cập nhật avatar thất bại');
-
-      // 2) Save store settings
-      const res2 = await fetch('http://localhost:5000/api/seller/store', {
+      // Save store settings (name, description). Avatar & banner are saved via upload endpoints.
+      const res = await fetch('http://localhost:5000/api/seller/store', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -81,18 +71,68 @@ const SellerSettings = () => {
         },
         body: JSON.stringify({
           storeName: storeData.storeName,
-          bannerImageURL: storeData.bannerImageURL,
           description: storeData.description
         })
       });
-      const data2 = await res2.json();
-      if (!res2.ok) throw new Error(data2.message || 'Cập nhật cửa hàng thất bại');
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Cập nhật cửa hàng thất bại');
 
       setMessage('Cập nhật thành công!');
     } catch (err) {
       setMessage(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAvatarFile = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    setMessage('');
+    try {
+      const fd = new FormData();
+      fd.append('avatar', file);
+      const res = await fetch('http://localhost:5000/api/seller/settings/avatar', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Tải ảnh đại diện thất bại');
+      setFormData(prev => ({ ...prev, avatarUrl: data.avatarUrl }));
+      setMessage('Cập nhật ảnh đại diện thành công');
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setUploadingAvatar(false);
+      // reset input value so same file can be reselected
+      e.target.value = '';
+    }
+  };
+
+  const handleBannerFile = async (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    setUploadingBanner(true);
+    setMessage('');
+    try {
+      const fd = new FormData();
+      fd.append('banner', file);
+      const res = await fetch('http://localhost:5000/api/seller/store/banner', {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: fd,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Tải ảnh banner thất bại');
+      setStoreData(prev => ({ ...prev, bannerImageURL: data.bannerImageURL }));
+      setMessage('Cập nhật banner thành công');
+    } catch (err) {
+      setMessage(err.message);
+    } finally {
+      setUploadingBanner(false);
+      e.target.value = '';
     }
   };
 
@@ -125,17 +165,16 @@ const SellerSettings = () => {
             </Card.Header>
             <Card.Body>
               <Form.Group className="mb-3">
-                <Form.Label>URL ảnh đại diện</Form.Label>
-                <Form.Control
-                  type="url"
-                  name="avatarUrl"
-                  value={formData.avatarUrl}
-                  onChange={handleChange}
-                  placeholder="https://.../avatar.jpg"
-                />
+                <Form.Label>Ảnh đại diện</Form.Label>
+                <div className="d-flex align-items-center gap-2 mt-1">
+                  <input type="file" accept="image/*" id="avatar-file-input" style={{ display: 'none' }} onChange={handleAvatarFile} />
+                  <Button variant="secondary" size="sm" onClick={() => document.getElementById('avatar-file-input').click()} disabled={uploadingAvatar}>
+                    {uploadingAvatar ? 'Đang tải...' : 'Tải ảnh lên'}
+                  </Button>
+                </div>
                 {formData.avatarUrl && (
                   <div className="mt-3">
-                    <img src={formData.avatarUrl} alt="avatar preview" style={{ height: 80, width: 80, borderRadius: '50%', objectFit: 'cover' }} />
+                    <img src={formData.avatarUrl.startsWith('http') ? formData.avatarUrl : `http://localhost:5000${formData.avatarUrl}`} alt="avatar preview" style={{ height: 80, width: 80, borderRadius: '50%', objectFit: 'cover' }} />
                   </div>
                 )}
               </Form.Group>
@@ -159,16 +198,16 @@ const SellerSettings = () => {
               </Form.Group>
 
               <Form.Group className="mb-3">
-                <Form.Label>Ảnh banner (URL)</Form.Label>
-                <Form.Control
-                  type="url"
-                  value={storeData.bannerImageURL}
-                  onChange={(e)=>setStoreData(prev=>({...prev, bannerImageURL: e.target.value}))}
-                  placeholder="https://.../banner.jpg"
-                />
+                <Form.Label>Ảnh banner</Form.Label>
+                <div className="d-flex align-items-center gap-2 mt-1">
+                  <input type="file" accept="image/*" id="banner-file-input" style={{ display: 'none' }} onChange={handleBannerFile} />
+                  <Button variant="secondary" size="sm" onClick={() => document.getElementById('banner-file-input').click()} disabled={uploadingBanner}>
+                    {uploadingBanner ? 'Đang tải...' : 'Tải banner lên'}
+                  </Button>
+                </div>
                 {storeData.bannerImageURL && (
                   <div className="mt-3">
-                    <img src={storeData.bannerImageURL} alt="banner preview" style={{ height: 120, width: '100%', objectFit: 'cover', borderRadius: 8 }} />
+                    <img src={storeData.bannerImageURL.startsWith('http') ? storeData.bannerImageURL : `http://localhost:5000${storeData.bannerImageURL}`} alt="banner preview" style={{ height: 120, width: '100%', objectFit: 'cover', borderRadius: 8 }} />
                   </div>
                 )}
               </Form.Group>
@@ -207,7 +246,7 @@ const SellerSettings = () => {
                 <div className="d-flex align-items-center mt-n4 ps-3">
                   <div style={{ height: 72, width: 72, borderRadius: '50%', border: '3px solid white', overflow: 'hidden', background: '#e9ecef' }}>
                     {formData.avatarUrl ? (
-                      <img src={formData.avatarUrl} alt="avatar" style={{ height: '100%', width: '100%', objectFit: 'cover' }} />
+                       <img src={formData.avatarUrl.startsWith('http') ? formData.avatarUrl : `http://localhost:5000${formData.avatarUrl}`} alt="avatar" style={{ height: '100%', width: '100%', objectFit: 'cover' }} />
                     ) : null}
                   </div>
                   <div className="ms-3">

@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import Category from "../models/Category.js";
 import Store from "../models/Store.js";
+import User from "../models/User.js";
 import Inventory from "../models/Inventory.js";
 
 export const getHome = async (req, res) => {
@@ -16,12 +17,18 @@ export const getHome = async (req, res) => {
     // Enrich with inventory and store info
     const latestProducts = await Promise.all(
       latestProductsRaw.map(async (p) => {
-        const [inventory, store] = await Promise.all([
+        const [inventory, store, seller] = await Promise.all([
           Inventory.findOne({ productId: p._id }),
-          Store.findOne({ sellerId: p.sellerId?._id })
+          Store.findOne({ sellerId: p.sellerId?._id }),
+          User.findById(p.sellerId?._id).select('avatarUrl')
         ]);
         const inventoryQuantity = inventory ? inventory.quantity : 0;
-        const storeInfo = store ? { storeName: store.storeName, status: store.status, bannerImageURL: store.bannerImageURL } : null;
+        const storeInfo = store ? { 
+          storeName: store.storeName, 
+          status: store.status, 
+          bannerImageURL: store.bannerImageURL,
+          avatarUrl: seller?.avatarUrl || null
+        } : null;
         return { ...p.toObject(), inventoryQuantity, storeInfo };
       })
     );

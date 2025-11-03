@@ -1,6 +1,7 @@
 import Product from "../models/Product.js";
 import Inventory from "../models/Inventory.js";
 import Store from "../models/Store.js";
+import User from "../models/User.js";
 import Order from "../models/Order.js";
 import OrderItem from "../models/OrderItem.js";
 
@@ -22,12 +23,18 @@ export const getProducts = async (req, res) => {
   // Aggregate inventory quantities for each product
   const productsWithInventory = await Promise.all(
     products.map(async (product) => {
-      const [inventory, store] = await Promise.all([
+      const [inventory, store, seller] = await Promise.all([
         Inventory.findOne({ productId: product._id }),
-        Store.findOne({ sellerId: product.sellerId?._id })
+        Store.findOne({ sellerId: product.sellerId?._id }),
+        User.findById(product.sellerId?._id).select('avatarUrl')
       ]);
       const totalQuantity = inventory ? inventory.quantity : 0;
-      const storeInfo = store ? { storeName: store.storeName, status: store.status, bannerImageURL: store.bannerImageURL } : null;
+      const storeInfo = store ? { 
+        storeName: store.storeName, 
+        status: store.status, 
+        bannerImageURL: store.bannerImageURL,
+        avatarUrl: seller?.avatarUrl || null
+      } : null;
 
       return {
         ...product.toObject(),
@@ -45,12 +52,18 @@ export const getProductById = async (req, res) => {
   if (!product) return res.status(404).json({ message: "Product not found" });
   
   // Get inventory quantity for this product
-  const [inventory, store] = await Promise.all([
+  const [inventory, store, seller] = await Promise.all([
     Inventory.findOne({ productId: product._id }),
-    Store.findOne({ sellerId: product.sellerId?._id })
+    Store.findOne({ sellerId: product.sellerId?._id }),
+    User.findById(product.sellerId?._id).select('avatarUrl')
   ]);
   const totalQuantity = inventory ? inventory.quantity : 0;
-  const storeInfo = store ? { storeName: store.storeName, status: store.status, bannerImageURL: store.bannerImageURL } : null;
+  const storeInfo = store ? { 
+    storeName: store.storeName, 
+    status: store.status, 
+    bannerImageURL: store.bannerImageURL,
+    avatarUrl: seller?.avatarUrl || null
+  } : null;
 
   // Đếm số lượng đơn hàng đã hoàn thành (completed hoặc delivered) có chứa sản phẩm này
   const orderItemsWithProduct = await OrderItem.find({ productId: product._id });

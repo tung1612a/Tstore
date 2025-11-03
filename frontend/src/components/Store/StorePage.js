@@ -82,7 +82,7 @@ function StorePage() {
               <div 
                 className="store-hero-banner" 
                 style={{ 
-                  backgroundImage: `url(${header.bannerImageURL})`,
+                  backgroundImage: `url(${header.bannerImageURL.startsWith('http') ? header.bannerImageURL : `http://localhost:5000${header.bannerImageURL}`})`,
                   height: '200px',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
@@ -104,7 +104,7 @@ function StorePage() {
               <div className="store-avatar me-4">
                 {header.avatarUrl ? (
                   <img 
-                    src={header.avatarUrl} 
+                    src={header.avatarUrl.startsWith('http') ? header.avatarUrl : `http://localhost:5000${header.avatarUrl}`}
                     alt="avatar"
                     className="rounded-circle"
                     style={{ width: '80px', height: '80px', objectFit: 'cover', border: '3px solid #fff' }}

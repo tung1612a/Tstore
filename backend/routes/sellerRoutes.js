@@ -1,6 +1,8 @@
 import express from "express";
 import { protect, sellerOnly } from "../middleware/authMiddleware.js";
-import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders, getSellerDebugData, getSellerInventories, updateInventory, getSellerReports, updateSellerSettings, getMyStore, updateMyStore } from "../controllers/sellerController.js";
+import { getSellerDashboard, getSellerProducts, createProduct, updateProduct, deleteProduct, getSellerOrders, getSellerDebugData, getSellerInventories, updateInventory, getSellerReports, updateSellerSettings, getMyStore, updateMyStore, uploadSellerAvatar, uploadStoreBanner } from "../controllers/sellerController.js";
+import multer from 'multer';
+import path from 'path';
 
 const router = express.Router();
 
@@ -30,7 +32,29 @@ router.get("/reports", getSellerReports);
 
 // Settings
 router.put("/settings", updateSellerSettings);
+// file uploads for settings
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(process.cwd(), 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname || '') || '.png';
+    const base = file.fieldname === 'banner' ? 'store-banner' : 'avatar';
+    cb(null, `${base}-${unique}${ext}`);
+  }
+});
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Only image files are allowed'));
+  }
+});
+router.put('/settings/avatar', upload.single('avatar'), uploadSellerAvatar);
 router.get("/store", getMyStore);
 router.put("/store", updateMyStore);
+router.put('/store/banner', upload.single('banner'), uploadStoreBanner);
 
 export default router;
