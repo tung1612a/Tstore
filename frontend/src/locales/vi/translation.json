@@ -212,5 +212,40 @@
     "setDefault": "Đặt làm mặc định",
     "editAddress": "Sửa địa chỉ",
     "deleteAddress": "Xóa địa chỉ"
+  },
+  "changepass" :{
+    "1" : "Mật khẩu mới và xác nhận không khớp",
+    "2" : "Đổi mật khẩu thành công",
+    "3" : "Lỗi khi đổi mật khẩu",
+    "4" : "Đổi mật khẩu",
+    "5" : "Mật khẩu cũ",
+    "6" : "Nhập mật khẩu cũ",
+    "7" : "Mật khẩu mới",
+    "8" : "Nhập mật khẩu mới",
+    "9" : "Xác nhận mật khẩu mới",
+    "10" : "Nhập lại mật khẩu mới",
+    "11" : "Đang xử lý...",
+    "12" : "Quay lại cửa hàng",
+    "13" : "Hủy",
+    "14" : "Đổi mật khẩu"
+  },
+  "toast": {
+    "1" : "Đăng nhập thành công",
+    "2" : "Đăng xuất thành công",
+    "3" : "Đang tải trang chủ...",
+    "4" : "Danh sách sản phẩm",
+    "5" : "Khám phá các sản phẩm phù hợp với nhu cầu của bạn",
+    "6" : "Sản phẩm nổi bật",
+    "7" : "Khám phá những sản phẩm được yêu thích nhất",
+    "8" : "Thông báo"
+  },
+  "categories": {
+    "1" : "Danh mục sản phẩm",
+    "2" : "Tất cả",
+    "3" : "Điện thoại",
+    "4" : "Tai nghe",
+    "5" : "Đồng hồ",
+    "6" : "Máy ảnh",
+    "7" : "Nhà cửa"
   }
 }

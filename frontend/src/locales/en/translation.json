@@ -29,7 +29,7 @@
     "orders": "Orders",
     "addresses": "Addresses",
     "greeting": "Hello"
-  },
+  }, 
   "profile": {
     "title": "Personal Information",
     "basicInfo": "Basic Information",
@@ -212,5 +212,40 @@
     "setDefault": "Set as default",
     "editAddress": "Edit Address",
     "deleteAddress": "Delete Address"
+  },
+  "changepass" :{
+    "1" : "New password and confirmation do not match",
+    "2" : "Password changed successfully",
+    "3" : "Error changing password",
+    "4" : "Change password",
+    "5" : "Old password",
+    "6" : "Enter old password",
+    "7" : "New password",
+    "8" : "Enter new password",
+    "9" : "Confirm new password",
+    "10" : "Enter new password again",
+    "11" : "Processing...",
+    "12" : "Back to store",
+    "13" : "Cancel",
+    "14" : "Change Password"
+  },
+  "toast": {
+    "1" : "Login successful",
+    "2" : "Logout successful",
+    "3" : "Loading Homepage ...",
+    "4" : "Discover Products",
+    "5" : "Find your favorite products",
+    "6" : "Top Products",
+    "7" : "Best Sellers",
+    "8" : "Notification"
+  },
+  "categories": {
+    "1" : "List of Categories",
+    "2" : "All",
+    "3" : "Phones",
+    "4" : "EarPhones",
+    "5" : "Watches",
+    "6" : "Cameras",
+    "7" : "Home"
   }
 }

@@ -20,6 +20,7 @@ import CategoriesRow from "../CategoriesRow";
 import SearchBar from "../SearchBar";
 import ProductCard from "../Product/ProductCard";
 import ProductList from "../Product/ProductList";
+import { useTranslation } from 'react-i18next';
 
 // Custom hook để load dữ liệu trang chủ
 function useHomeData() {
@@ -51,6 +52,7 @@ function useHomeData() {
 }
 
 function App() {
+  const { t } = useTranslation();
   const { data, loading, error } = useHomeData();
   const [keyword, setKeyword] = useState("");
   const [categoryId, setCategoryId] = useState("");
@@ -63,12 +65,12 @@ function App() {
 
   useEffect(() => {
     if (location.state?.loginSuccess) {
-      setToastMessage("Đăng nhập thành công");
+      setToastMessage(t("toast.1"));
       setToastBg("success");
       setShowToast(true);
       window.history.replaceState({}, document.title); // xóa state để không lặp lại
     } else if (location.state?.logoutSuccess) {
-      setToastMessage("Đăng xuất thành công");
+      setToastMessage(t("toast.2"));
       setToastBg("info");
       setShowToast(true);
       window.history.replaceState({}, document.title);
@@ -78,7 +80,7 @@ function App() {
   if (loading)
     return (
       <Container className="py-4">
-        <Spinner animation="border" /> Đang tải trang chủ...
+        <Spinner animation="border" /> {t("toast.3")}
       </Container>
     );
   if (error)
@@ -114,18 +116,18 @@ function App() {
               <SearchBar onSearch={setKeyword} />
             </div>
             <div className="section-header">
-              <h2 className="section-title">Danh sách sản phẩm</h2>
+              <h2 className="section-title">{t('toast.4')}</h2>
               <p className="section-subtitle">
-                Khám phá các sản phẩm phù hợp với nhu cầu của bạn
+                {t('toast.5')}
               </p>
             </div>
 
             <ProductList keyword={keyword} categoryId={categoryId} />
 
             <div className="section-header mt-5">
-              <h2 className="section-title">Sản phẩm nổi bật</h2>
+              <h2 className="section-title">{t('toast.6')}</h2>
               <p className="section-subtitle">
-                Khám phá những sản phẩm được yêu thích nhất
+                {t('toast.7')}
               </p>
             </div>
             <div className="products-grid mb-5">
@@ -148,7 +150,7 @@ function App() {
           autohide
         >
           <Toast.Header>
-            <strong className="me-auto">Thông báo</strong>
+            <strong className="me-auto">{t('toast.8')}</strong>
           </Toast.Header>
           <Toast.Body className="text-white">{toastMessage}</Toast.Body>
         </Toast>

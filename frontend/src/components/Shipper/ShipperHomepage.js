@@ -21,13 +21,13 @@ const ShipperHomepage = () => {
       link: "/shipper/orders",
       color: "success"
     },
-    {
-      title: "Đơn hàng chờ giao",
-      description: "Xem đơn hàng chờ được giao",
-      icon: <FiClock size={24} />,
-      link: "/shipper/pending",
-      color: "warning"
-    }
+    // {
+    //   title: "Đơn hàng chờ giao",
+    //   description: "Xem đơn hàng chờ được giao",
+    //   icon: <FiClock size={24} />,
+    //   link: "/shipper/pending",
+    //   color: "warning"
+    // }
   ];
 
   return (
@@ -46,7 +46,7 @@ const ShipperHomepage = () => {
 
       <Row className="g-4">
         {quickActions.map((action, index) => (
-          <Col md={4} key={index}>
+          <Col md={6} key={index}>
             <Card className="h-100 shadow-sm border-0">
               <Card.Body className="text-center p-4">
                 <div className={`text-${action.color} mb-3`}>

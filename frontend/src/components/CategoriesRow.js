@@ -2,6 +2,7 @@ import React from 'react';
 import { Card, Spinner, Alert, ListGroup } from 'react-bootstrap';
 import { FiGrid, FiSmartphone, FiMonitor, FiHeadphones, FiWatch, FiCamera, FiHome } from 'react-icons/fi';
 import { FaGamepad } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const categoryIcons = {
   'Điện thoại': FiSmartphone,
@@ -18,6 +19,8 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
   const [categories, setCategories] = React.useState([]);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState(null);
+  const { t } = useTranslation();
+  
 
   React.useEffect(() => {
     let isMounted = true;
@@ -55,7 +58,7 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
       <Card.Body>
         <Card.Title className="h5 d-flex align-items-center mb-3">
           <FiGrid className="me-2" />
-          Danh mục sản phẩm
+          {t('categories.1')}
         </Card.Title>
         <ListGroup variant="flush">
           {/* Nút Tất cả */}
@@ -66,7 +69,7 @@ function CategoriesRow({ selectedCategoryId, onSelectCategory }) {
             onClick={() => onSelectCategory('')}
           >
             <FiGrid className="me-2" size={18} />
-            Tất cả
+            {t('categories.1')}
           </ListGroup.Item>
 
           {/* Danh sách động */}
