@@ -16,8 +16,30 @@ router.get("/debug", getSellerDebugData);
 
 // Quản lý sản phẩm
 router.get("/products", getSellerProducts);
-router.post("/products", createProduct);
-router.put("/products/:id", updateProduct);
+// Multer setup for product images
+const productStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(process.cwd(), 'uploads'));
+  },
+  filename: function (req, file, cb) {
+    const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+    const ext = path.extname(file.originalname || '') || '.png';
+    cb(null, `product-${unique}${ext}`);
+  }
+});
+const productUpload = multer({ 
+  storage: productStorage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Chỉ chấp nhận file ảnh'));
+    }
+  }
+});
+router.post("/products", productUpload.single('image'), createProduct);
+router.put("/products/:id", productUpload.single('image'), updateProduct);
 router.delete("/products/:id", deleteProduct);
 
 // Quản lý đơn hàng
