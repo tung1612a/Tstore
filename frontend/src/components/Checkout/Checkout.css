@@ -39,7 +39,7 @@
   padding: 20px;
   background: white;
   border-radius: 15px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   border: 2px solid #f0f0f0;
   transition: all 0.3s ease;
   min-width: 150px;
@@ -88,7 +88,7 @@
   background: white;
   border-radius: 20px;
   padding: 30px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 }
 
 .checkout-section {
@@ -142,12 +142,36 @@
   border-radius: 8px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-add-address::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-add-address:hover::before {
+  width: 300px;
+  height: 300px;
 }
 
 .btn-add-address:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(238, 77, 45, 0.4);
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 8px 20px rgba(238, 77, 45, 0.4);
+}
+
+.btn-add-address:active {
+  transform: translateY(-1px) scale(1.02);
 }
 
 /* Address Grid */
@@ -163,21 +187,72 @@
   border-radius: 15px;
   padding: 20px;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   background: #fafafa;
+  animation: slideInUp 0.5s ease forwards;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.address-card:nth-child(1) {
+  animation-delay: 0.1s;
+}
+
+.address-card:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.address-card:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.address-card:nth-child(4) {
+  animation-delay: 0.4s;
+}
+
+.address-card:nth-child(n + 5) {
+  animation-delay: 0.5s;
+}
+
+@keyframes slideInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .address-card:hover {
   border-color: #ee4d2d;
-  transform: translateY(-2px);
-  box-shadow: 0 5px 20px rgba(238, 77, 45, 0.1);
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 8px 25px rgba(238, 77, 45, 0.15);
 }
 
 .address-card.selected {
   border-color: #ee4d2d;
   background: linear-gradient(135deg, #fff5f5, #ffe8e8);
   box-shadow: 0 5px 20px rgba(238, 77, 45, 0.2);
+  animation: pulseSelected 0.6s ease, slideInUp 0.5s ease forwards;
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+}
+
+@keyframes pulseSelected {
+  0% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 5px 20px rgba(238, 77, 45, 0.2);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(0) scale(1.03);
+    box-shadow: 0 8px 30px rgba(238, 77, 45, 0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 5px 20px rgba(238, 77, 45, 0.2);
+    opacity: 1;
+  }
 }
 
 .address-header {
@@ -185,12 +260,25 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
+  animation: fadeIn 0.5s ease 0.2s forwards;
+  opacity: 0;
+}
+
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
 }
 
 .address-header h4 {
   margin: 0;
   color: #333;
   font-size: 1.1rem;
+  transition: color 0.3s ease;
+}
+
+.address-card:hover .address-header h4 {
+  color: #ee4d2d;
 }
 
 .default-badge {
@@ -200,12 +288,35 @@
   border-radius: 15px;
   font-size: 0.8rem;
   font-weight: 600;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0);
+  }
+}
+
+.address-details {
+  animation: fadeIn 0.5s ease 0.3s forwards;
+  opacity: 0;
 }
 
 .address-details p {
   margin: 5px 0;
   color: #666;
   font-size: 0.9rem;
+  transition: color 0.3s ease;
+}
+
+.address-card:hover .address-details p {
+  color: #555;
 }
 
 .address-actions {
@@ -215,14 +326,17 @@
   display: flex;
   gap: 5px;
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transform: translateX(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .address-card:hover .address-actions {
   opacity: 1;
+  transform: translateX(0);
 }
 
-.btn-edit, .btn-delete {
+.btn-edit,
+.btn-delete {
   width: 30px;
   height: 30px;
   border: none;
@@ -231,7 +345,9 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
 .btn-edit {
@@ -244,8 +360,52 @@
   color: white;
 }
 
-.btn-edit:hover, .btn-delete:hover {
-  transform: scale(1.1);
+.btn-edit:hover,
+.btn-delete:hover {
+  transform: scale(1.15) rotate(5deg);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.btn-edit:active,
+.btn-delete:active {
+  transform: scale(1.05);
+}
+
+.btn-edit::before,
+.btn-delete::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-edit:active::before,
+.btn-delete:active::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* No Address State */
+.no-address {
+  text-align: center;
+  padding: 60px 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  border: 2px dashed #e0e0e0;
+  animation: fadeInUp 0.6s ease;
+}
+
+.no-address p {
+  margin: 0;
+  color: #666;
+  font-size: 1.1rem;
+  font-weight: 500;
 }
 
 /* Address Form */
@@ -255,6 +415,21 @@
   background: #f8f9fa;
   border-radius: 15px;
   border: 1px solid #e0e0e0;
+  animation: slideDown 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: top;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scaleY(0.95);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
+    max-height: 1000px;
+  }
 }
 
 .address-form h3 {
@@ -270,8 +445,20 @@
   margin-bottom: 15px;
 }
 
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin-bottom: 15px;
+}
+
+.form-row .form-group {
+  margin-bottom: 0;
+}
+
 .address-form input,
-.address-form textarea {
+.address-form textarea,
+.address-form select {
   width: 100%;
   padding: 12px 15px;
   border: 2px solid #e0e0e0;
@@ -279,13 +466,68 @@
   font-size: 14px;
   transition: all 0.3s ease;
   background: white;
+  font-family: inherit;
 }
 
 .address-form input:focus,
-.address-form textarea:focus {
+.address-form textarea:focus,
+.address-form select:focus {
   outline: none;
   border-color: #ee4d2d;
   box-shadow: 0 0 0 3px rgba(238, 77, 45, 0.1);
+  transform: translateY(-1px);
+  animation: inputFocus 0.3s ease;
+}
+
+@keyframes inputFocus {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.01);
+  }
+  100% {
+    transform: translateY(-1px) scale(1);
+  }
+}
+
+.address-form select:disabled,
+.address-form input:disabled {
+  background: #f5f5f5;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.address-form input.checkout-input-error,
+.address-form textarea.checkout-input-error,
+.address-form select.checkout-input-error {
+  border-color: #dc3545;
+}
+
+.address-form input.checkout-input-error:focus,
+.address-form textarea.checkout-input-error:focus,
+.address-form select.checkout-input-error:focus {
+  border-color: #dc3545;
+  box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.1);
+}
+
+.checkout-error-message {
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 4px;
+  display: block;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .checkbox-label {
@@ -298,12 +540,12 @@
   color: #333;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
   width: auto;
   margin: 0;
 }
 
-.form-actions {
+.checkout-form-actions {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
@@ -322,7 +564,7 @@
   position: relative;
 }
 
-.payment-method input[type="radio"] {
+.payment-method input[type='radio'] {
   position: absolute;
   opacity: 0;
   pointer-events: none;
@@ -346,7 +588,7 @@
   box-shadow: 0 5px 20px rgba(238, 77, 45, 0.1);
 }
 
-.payment-method input[type="radio"]:checked + .payment-option {
+.payment-method input[type='radio']:checked + .payment-option {
   border-color: #ee4d2d;
   background: linear-gradient(135deg, #fff5f5, #ffe8e8);
   box-shadow: 0 5px 20px rgba(238, 77, 45, 0.2);
@@ -495,7 +737,7 @@
 }
 
 /* Step Actions */
-.step-actions {
+.checkout-step-actions {
   display: flex;
   gap: 15px;
   justify-content: flex-end;
@@ -505,7 +747,9 @@
 }
 
 /* Buttons */
-.btn-primary, .btn-secondary, .btn-cancel {
+.checkout-btn-primary,
+.checkout-btn-secondary,
+.checkout-btn-cancel {
   padding: 12px 25px;
   border: none;
   border-radius: 8px;
@@ -515,43 +759,43 @@
   font-size: 14px;
 }
 
-.btn-primary {
+.checkout-btn-primary {
   background: linear-gradient(135deg, #ee4d2d, #ff6b35);
   color: white;
 }
 
-.btn-primary:hover:not(:disabled) {
+.checkout-btn-primary:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 5px 15px rgba(238, 77, 45, 0.4);
 }
 
-.btn-primary:disabled {
+.checkout-btn-primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
 }
 
-.btn-secondary {
+.checkout-btn-secondary {
   background: #6c757d;
   color: white;
 }
 
-.btn-secondary:hover {
+.checkout-btn-secondary:hover {
   background: #545b62;
   transform: translateY(-2px);
 }
 
-.btn-cancel {
+.checkout-btn-cancel {
   background: #dc3545;
   color: white;
 }
 
-.btn-cancel:hover {
+.checkout-btn-cancel:hover {
   background: #c82333;
   transform: translateY(-2px);
 }
 
-.btn-checkout {
+.checkout-btn-checkout {
   padding: 15px 35px;
   font-size: 16px;
   font-weight: 700;
@@ -568,7 +812,7 @@
   background: white;
   border-radius: 20px;
   padding: 25px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
 }
 
 .sidebar-card h3 {
@@ -625,7 +869,7 @@
   padding: 100px 20px;
   background: white;
   border-radius: 20px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
   max-width: 500px;
   margin: 50px auto;
 }
@@ -652,61 +896,115 @@
   .checkout-container {
     padding: 0 15px;
   }
-  
+
   .checkout-content {
     grid-template-columns: 1fr;
     gap: 20px;
   }
-  
+
   .checkout-main {
     padding: 20px;
   }
-  
+
   .checkout-steps {
     flex-direction: column;
     align-items: center;
   }
-  
+
   .step {
     min-width: 200px;
   }
-  
+
   .address-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .form-row {
     grid-template-columns: 1fr;
   }
-  
-  .step-actions {
+
+  .checkout-step-actions {
     flex-direction: column;
   }
-  
-  .btn-primary, .btn-secondary {
+
+  .checkout-btn-primary,
+  .checkout-btn-secondary {
     width: 100%;
   }
-  
+
   .checkout-sidebar {
     position: static;
   }
+}
+
+/* Province Search Dropdown */
+.checkout-province-search-container {
+  position: relative;
+  width: 100%;
+}
+
+.checkout-province-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: slideDown 0.3s ease;
+}
+
+.checkout-province-dropdown-item {
+  padding: 12px 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.checkout-province-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.checkout-province-dropdown-item:hover {
+  background: #f8f9fa;
+  color: #ee4d2d;
+  padding-left: 20px;
+}
+
+.checkout-province-loading {
+  padding: 12px 15px;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.checkout-province-no-results {
+  padding: 12px 15px;
+  text-align: center;
+  color: #999;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 480px) {
   .checkout-header h1 {
     font-size: 2rem;
   }
-  
+
   .checkout-main {
     padding: 15px;
   }
-  
+
   .section-header {
     flex-direction: column;
     gap: 15px;
     align-items: stretch;
   }
-  
+
   .btn-add-address {
     justify-content: center;
   }

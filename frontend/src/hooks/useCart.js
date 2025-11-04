@@ -4,20 +4,21 @@ const API_BASE_URL = 'http://localhost:5000/api/cart';
 
 export const useCart = () => {
   const [cart, setCart] = useState({
-    items: []
+    items: [],
   });
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   // Tính toán totalQuantity và totalAmount từ items
   const totalQuantity = cart.items.reduce((total, item) => total + item.quantity, 0);
-  const totalAmount = cart.items.reduce((total, item) => total + (item.price * item.quantity), 0);
+  const totalAmount = cart.items.reduce((total, item) => total + item.price * item.quantity, 0);
 
   // Lấy token từ localStorage
   const getAuthHeaders = () => {
     const token = localStorage.getItem('token');
     return {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
+      Authorization: `Bearer ${token}`,
     };
   };
 
@@ -26,7 +27,7 @@ export const useCart = () => {
     try {
       setLoading(true);
       const response = await fetch(API_BASE_URL, {
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {
@@ -60,21 +61,22 @@ export const useCart = () => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           productId: product._id,
-          quantity
-        })
+          quantity,
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         setCart(data);
+        setError(null);
       } else {
-        const error = await response.json();
-        console.error('Error adding to cart:', error.message);
-        alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+        const errorData = await response.json();
+        console.error('Error adding to cart:', errorData.message);
+        setError('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
       }
     } catch (error) {
       console.error('Error adding to cart:', error);
-      alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
+      setError('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng');
     } finally {
       setLoading(false);
     }
@@ -90,20 +92,21 @@ export const useCart = () => {
       setLoading(true);
       const response = await fetch(`${API_BASE_URL}/remove/${productId}`, {
         method: 'DELETE',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {
         const data = await response.json();
         setCart(data);
+        setError(null);
       } else {
-        const error = await response.json();
-        console.error('Error removing from cart:', error.message);
-        alert('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng');
+        const errorData = await response.json();
+        console.error('Error removing from cart:', errorData.message);
+        setError('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng');
       }
     } catch (error) {
       console.error('Error removing from cart:', error);
-      alert('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng');
+      setError('Có lỗi xảy ra khi xóa sản phẩm khỏi giỏ hàng');
     } finally {
       setLoading(false);
     }
@@ -122,21 +125,22 @@ export const useCart = () => {
         headers: getAuthHeaders(),
         body: JSON.stringify({
           productId,
-          quantity
-        })
+          quantity,
+        }),
       });
 
       if (response.ok) {
         const data = await response.json();
         setCart(data);
+        setError(null);
       } else {
-        const error = await response.json();
-        console.error('Error updating quantity:', error.message);
-        alert('Có lỗi xảy ra khi cập nhật số lượng');
+        const errorData = await response.json();
+        console.error('Error updating quantity:', errorData.message);
+        setError('Có lỗi xảy ra khi cập nhật số lượng');
       }
     } catch (error) {
       console.error('Error updating quantity:', error);
-      alert('Có lỗi xảy ra khi cập nhật số lượng');
+      setError('Có lỗi xảy ra khi cập nhật số lượng');
     } finally {
       setLoading(false);
     }
@@ -147,31 +151,32 @@ export const useCart = () => {
       setLoading(true);
       const response = await fetch(`${API_BASE_URL}/clear`, {
         method: 'DELETE',
-        headers: getAuthHeaders()
+        headers: getAuthHeaders(),
       });
 
       if (response.ok) {
         const data = await response.json();
         setCart(data);
+        setError(null);
       } else {
-        const error = await response.json();
-        console.error('Error clearing cart:', error.message);
-        alert('Có lỗi xảy ra khi xóa giỏ hàng');
+        const errorData = await response.json();
+        console.error('Error clearing cart:', errorData.message);
+        setError('Có lỗi xảy ra khi xóa giỏ hàng');
       }
     } catch (error) {
       console.error('Error clearing cart:', error);
-      alert('Có lỗi xảy ra khi xóa giỏ hàng');
+      setError('Có lỗi xảy ra khi xóa giỏ hàng');
     } finally {
       setLoading(false);
     }
   };
 
   const isInCart = (productId) => {
-    return cart.items.some(item => item._id === productId);
+    return cart.items.some((item) => item._id === productId);
   };
 
   const getItemQuantity = (productId) => {
-    const item = cart.items.find(item => item._id === productId);
+    const item = cart.items.find((item) => item._id === productId);
     return item ? item.quantity : 0;
   };
 
@@ -181,14 +186,16 @@ export const useCart = () => {
     totalAmount,
     isEmpty: cart.items.length === 0,
     loading,
-    
+    error,
+
     addItem,
     removeItem,
     updateItemQuantity,
     clearAllItems,
-    
+
     isInCart,
     getItemQuantity,
-    refreshCart: fetchCart
+    refreshCart: fetchCart,
+    clearError: () => setError(null),
   };
 };
