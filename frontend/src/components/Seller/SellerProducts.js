@@ -1,6 +1,6 @@
     import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Modal, Form, Alert, Badge, Spinner, Tabs, Tab } from 'react-bootstrap';
-import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch, FiFilter, FiPackage, FiTrendingUp, FiSettings, FiArrowLeft } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch, FiFilter, FiPackage, FiTrendingUp, FiSettings, FiArrowLeft, FiImage, FiX } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -30,6 +30,24 @@ const SellerProducts = () => {
     image: '',
     categoryId: ''
   });
+  const [productImage, setProductImage] = useState(null); // File object
+  const [imagePreview, setImagePreview] = useState(null); // Preview URL
+  
+  // Validation errors state
+  const [errors, setErrors] = useState({
+    title: '',
+    price: '',
+    stock: '',
+    description: '',
+    image: ''
+  });
+  const [touched, setTouched] = useState({
+    title: false,
+    price: false,
+    stock: false,
+    description: false,
+    image: false
+  });
 
   // Inventory form state
   const [inventoryFormData, setInventoryFormData] = useState({
@@ -47,14 +65,17 @@ const SellerProducts = () => {
     const state = location.state;
     if (state?.editProduct) {
       setEditingProduct(state.editProduct);
+      const imageUrl = state.editProduct.image || state.editProduct.imageURL || '';
       setFormData({
         title: state.editProduct.title,
         price: state.editProduct.price.toString(),
         description: state.editProduct.description || '',
         stock: state.editProduct.stock.toString(),
-        image: state.editProduct.image || state.editProduct.imageURL || '',
+        image: imageUrl,
         categoryId: state.editProduct.categoryId || ''
       });
+      setProductImage(null);
+      setImagePreview(imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`) : null);
       setShowModal(true);
       // Xóa state để tránh hiển thị lại modal khi refresh
       window.history.replaceState({}, document.title);
@@ -117,8 +138,102 @@ const SellerProducts = () => {
     setTimeout(() => setAlert({ show: false, message: '', variant: 'success' }), 3000);
   };
 
+  // Validation functions
+  const validateTitle = (title) => {
+    const trimmed = title.trim();
+    if (!trimmed) {
+      return 'Tên sản phẩm không được để trống';
+    }
+    if (trimmed.length < 2) {
+      return 'Tên sản phẩm phải có ít nhất 2 ký tự';
+    }
+    if (trimmed.length > 20) {
+      return 'Tên sản phẩm không được vượt quá 20 ký tự';
+    }
+    return '';
+  };
+
+  const validatePrice = (price) => {
+    if (!price || price === '') {
+      return 'Giá không được để trống';
+    }
+    const numPrice = parseFloat(price);
+    if (isNaN(numPrice)) {
+      return 'Giá phải là số hợp lệ';
+    }
+    if (numPrice <= 0) {
+      return 'Giá phải lớn hơn 0';
+    }
+    if (numPrice > 50000000) {
+      return 'Giá không được vượt quá 50 triệu';
+    }
+    return '';
+  };
+
+  const validateStock = (stock) => {
+    if (!stock || stock === '') {
+      return 'Số lượng tồn kho không được để trống';
+    }
+    const numStock = parseInt(stock);
+    if (isNaN(numStock)) {
+      return 'Số lượng tồn kho phải là số nguyên';
+    }
+    if (numStock < 0) {
+      return 'Số lượng tồn kho không được nhỏ hơn 0';
+    }
+    if (numStock > 500) {
+      return 'Số lượng tồn kho không được vượt quá 500';
+    }
+    return '';
+  };
+
+  const validateDescription = (description) => {
+    if (description && description.length > 1000) {
+      return 'Mô tả không được vượt quá 1000 ký tự';
+    }
+    return '';
+  };
+
+  const validateImage = (hasImage, isEditing, hasExistingImage) => {
+    if (!isEditing && !hasImage) {
+      return 'Vui lòng chọn hình ảnh cho sản phẩm';
+    }
+    if (isEditing && !hasImage && !hasExistingImage) {
+      return 'Vui lòng chọn hình ảnh cho sản phẩm';
+    }
+    return '';
+  };
+
+  const validateForm = () => {
+    const newErrors = {
+      title: validateTitle(formData.title),
+      price: validatePrice(formData.price),
+      stock: validateStock(formData.stock),
+      description: validateDescription(formData.description),
+      image: validateImage(!!productImage, !!editingProduct, !!imagePreview && !productImage)
+    };
+    setErrors(newErrors);
+    return !Object.values(newErrors).some(error => error !== '');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Set all fields as touched
+    setTouched({
+      title: true,
+      price: true,
+      stock: true,
+      description: true,
+      image: true
+    });
+
+    // Validate form
+    if (!validateForm()) {
+      showAlert('Vui lòng điền đầy đủ và chính xác thông tin', 'danger');
+      return;
+    }
+
     try {
       const url = editingProduct 
         ? `http://localhost:5000/api/seller/products/${editingProduct._id}`
@@ -126,13 +241,26 @@ const SellerProducts = () => {
       
       const method = editingProduct ? 'PUT' : 'POST';
       
+      // Tạo FormData để gửi file
+      const submitData = new FormData();
+      submitData.append('title', formData.title.trim());
+      submitData.append('price', parseFloat(formData.price));
+      submitData.append('description', formData.description.trim());
+      submitData.append('stock', parseInt(formData.stock));
+      submitData.append('categoryId', formData.categoryId);
+      
+      // Chỉ append file nếu có file mới được chọn
+      if (productImage) {
+        submitData.append('image', productImage);
+      }
+      
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
+          // Không set Content-Type, browser sẽ tự động set với boundary cho FormData
         },
-        body: JSON.stringify(formData)
+        body: submitData
       });
 
       if (response.ok) {
@@ -140,6 +268,10 @@ const SellerProducts = () => {
         setShowModal(false);
         setEditingProduct(null);
         setFormData({ title: '', price: '', description: '', stock: '', image: '', categoryId: '' });
+        setProductImage(null);
+        setImagePreview(null);
+        setErrors({ title: '', price: '', stock: '', description: '', image: '' });
+        setTouched({ title: false, price: false, stock: false, description: false, image: false });
         fetchProducts();
       } else {
         const error = await response.json();
@@ -153,15 +285,45 @@ const SellerProducts = () => {
 
   const handleEdit = (product) => {
     setEditingProduct(product);
+    const imageUrl = product.image || product.imageURL || '';
     setFormData({
       title: product.title,
       price: product.price.toString(),
       description: product.description || '',
       stock: product.stock.toString(),
-      image: product.image || product.imageURL || '',
+      image: imageUrl,
       categoryId: product.categoryId || ''
     });
+    setProductImage(null);
+    setImagePreview(imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`) : null);
+    setErrors({ title: '', price: '', stock: '', description: '', image: '' });
+    setTouched({ title: false, price: false, stock: false, description: false, image: false });
     setShowModal(true);
+  };
+
+  const handleFieldChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setTouched(prev => ({ ...prev, [field]: true }));
+    
+    // Validate field
+    let error = '';
+    switch (field) {
+      case 'title':
+        error = validateTitle(value);
+        break;
+      case 'price':
+        error = validatePrice(value);
+        break;
+      case 'stock':
+        error = validateStock(value);
+        break;
+      case 'description':
+        error = validateDescription(value);
+        break;
+      default:
+        break;
+    }
+    setErrors(prev => ({ ...prev, [field]: error }));
   };
 
   const handleDelete = async (productId) => {
@@ -190,7 +352,41 @@ const SellerProducts = () => {
   const handleAddNew = () => {
     setEditingProduct(null);
     setFormData({ title: '', price: '', description: '', stock: '', image: '', categoryId: '' });
+    setProductImage(null);
+    setImagePreview(null);
+    setErrors({ title: '', price: '', stock: '', description: '', image: '' });
+    setTouched({ title: false, price: false, stock: false, description: false, image: false });
     setShowModal(true);
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    setTouched(prev => ({ ...prev, image: true }));
+    if (file) {
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors(prev => ({ ...prev, image: 'Kích thước file không được vượt quá 5MB' }));
+        return;
+      }
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors(prev => ({ ...prev, image: 'Chỉ chấp nhận file ảnh' }));
+        return;
+      }
+      setProductImage(file);
+      setErrors(prev => ({ ...prev, image: '' }));
+      // Tạo preview URL
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setProductImage(null);
+    setImagePreview(null);
+    // Reset file input
+    const fileInput = document.getElementById('product-image-input');
+    if (fileInput) fileInput.value = '';
   };
 
   const handleInventoryUpdate = async (e) => {
@@ -405,7 +601,13 @@ const SellerProducts = () => {
                             <tr key={product._id}>
                               <td>
                                 <img
-                                  src={product.image || product.imageURL || '/placeholder-image.jpg'}
+                                  src={
+                                    product.image || product.imageURL
+                                      ? (product.image || product.imageURL).startsWith('http')
+                                        ? (product.image || product.imageURL)
+                                        : `http://localhost:5000${product.image || product.imageURL}`
+                                      : '/placeholder-image.jpg'
+                                  }
                                   alt={product.title}
                                   style={{ width: '50px', height: '50px', objectFit: 'cover' }}
                                   className="rounded"
@@ -496,7 +698,13 @@ const SellerProducts = () => {
                             <td>
                               <div className="d-flex align-items-center">
                                 <img
-                                  src={product.image || product.imageURL || '/placeholder-image.jpg'}
+                                  src={
+                                    product.image || product.imageURL
+                                      ? (product.image || product.imageURL).startsWith('http')
+                                        ? (product.image || product.imageURL)
+                                        : `http://localhost:5000${product.image || product.imageURL}`
+                                      : '/placeholder-image.jpg'
+                                  }
                                   alt={product.title}
                                   style={{ width: '40px', height: '40px', objectFit: 'cover' }}
                                   className="rounded me-3"
@@ -555,9 +763,19 @@ const SellerProducts = () => {
                   <Form.Control
                     type="text"
                     value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
+                    onChange={(e) => handleFieldChange('title', e.target.value)}
+                    onBlur={() => setTouched(prev => ({ ...prev, title: true }))}
+                    isInvalid={touched.title && !!errors.title}
+                    maxLength={20}
                   />
+                  {touched.title && errors.title && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.title}
+                    </Form.Control.Feedback>
+                  )}
+                  <Form.Text className="text-muted">
+                    Tên sản phẩm từ 2-20 ký tự
+                  </Form.Text>
                 </Form.Group>
               </Col>
               <Col md={6}>
@@ -566,10 +784,21 @@ const SellerProducts = () => {
                   <Form.Control
                     type="number"
                     step="0.01"
+                    min="0.01"
+                    max="50000000"
                     value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                    required
+                    onChange={(e) => handleFieldChange('price', e.target.value)}
+                    onBlur={() => setTouched(prev => ({ ...prev, price: true }))}
+                    isInvalid={touched.price && !!errors.price}
                   />
+                  {touched.price && errors.price && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.price}
+                    </Form.Control.Feedback>
+                  )}
+                  <Form.Text className="text-muted">
+                    Giá phải lớn hơn 0
+                  </Form.Text>
                 </Form.Group>
               </Col>
             </Row>
@@ -579,10 +808,21 @@ const SellerProducts = () => {
                   <Form.Label>Số lượng tồn kho *</Form.Label>
                   <Form.Control
                     type="number"
+                    min="0"
+                    max="500"
                     value={formData.stock}
-                    onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
-                    required
+                    onChange={(e) => handleFieldChange('stock', e.target.value)}
+                    onBlur={() => setTouched(prev => ({ ...prev, stock: true }))}
+                    isInvalid={touched.stock && !!errors.stock}
                   />
+                  {touched.stock && errors.stock && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.stock}
+                    </Form.Control.Feedback>
+                  )}
+                  <Form.Text className="text-muted">
+                    Số lượng phải là số nguyên không âm
+                  </Form.Text>
                 </Form.Group>
               </Col>
               <Col md={4}>
@@ -603,13 +843,69 @@ const SellerProducts = () => {
               </Col>
               <Col md={4}>
                 <Form.Group className="mb-3">
-                  <Form.Label>URL hình ảnh</Form.Label>
-                  <Form.Control
-                    type="url"
-                    value={formData.image}
-                    onChange={(e) => setFormData({ ...formData, image: e.target.value })}
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <Form.Label>Hình ảnh sản phẩm {!editingProduct && '*'}</Form.Label>
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      id="product-image-input"
+                      onChange={handleImageChange}
+                      style={{ display: 'none' }}
+                    />
+                    <label htmlFor="product-image-input">
+                      <Button
+                        variant="outline-secondary"
+                        size="sm"
+                        as="span"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <FiImage className="me-2" />
+                        Chọn ảnh
+                      </Button>
+                    </label>
+                    {imagePreview && (
+                      <div className="mt-3 position-relative" style={{ display: 'inline-block' }}>
+                        <img
+                          src={imagePreview}
+                          alt="Preview"
+                          style={{
+                            width: '150px',
+                            height: '150px',
+                            objectFit: 'cover',
+                            borderRadius: '8px',
+                            border: '2px solid #e0e0e0'
+                          }}
+                        />
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          onClick={handleRemoveImage}
+                          style={{
+                            position: 'absolute',
+                            top: '5px',
+                            right: '5px',
+                            borderRadius: '50%',
+                            width: '28px',
+                            height: '28px',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }}
+                        >
+                          <FiX size={16} />
+                        </Button>
+                      </div>
+                    )}
+                    {touched.image && errors.image && (
+                      <div className="text-danger small mt-2">
+                        {errors.image}
+                      </div>
+                    )}
+                    <Form.Text className="text-muted d-block mt-2">
+                      {editingProduct ? 'Chọn ảnh mới để thay thế (không bắt buộc)' : 'Kích thước tối đa 5MB'}
+                    </Form.Text>
+                  </div>
                 </Form.Group>
               </Col>
             </Row>
@@ -618,16 +914,37 @@ const SellerProducts = () => {
               <Form.Control
                 as="textarea"
                 rows={3}
+                maxLength={1000}
                 value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                onChange={(e) => handleFieldChange('description', e.target.value)}
+                onBlur={() => setTouched(prev => ({ ...prev, description: true }))}
+                isInvalid={touched.description && !!errors.description}
               />
+              {touched.description && errors.description && (
+                <Form.Control.Feedback type="invalid">
+                  {errors.description}
+                </Form.Control.Feedback>
+              )}
+              <Form.Text className="text-muted">
+                {formData.description.length}/1000 ký tự
+              </Form.Text>
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>
+            <Button variant="secondary" onClick={() => {
+              setShowModal(false);
+              setProductImage(null);
+              setImagePreview(null);
+              setErrors({ title: '', price: '', stock: '', description: '', image: '' });
+              setTouched({ title: false, price: false, stock: false, description: false, image: false });
+            }}>
               Hủy
             </Button>
-            <Button variant="primary" type="submit">
+            <Button 
+              variant="primary" 
+              type="submit"
+              disabled={Object.values(errors).some(error => error !== '')}
+            >
               {editingProduct ? 'Cập nhật' : 'Thêm mới'}
             </Button>
           </Modal.Footer>

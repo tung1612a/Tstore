@@ -170,7 +170,70 @@ export const getSellerProducts = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const sellerId = req.user._id;
-    const productData = { ...req.body, sellerId };
+    const { title, price, stock, description, categoryId } = req.body;
+
+    // Validate title
+    if (!title || typeof title !== 'string' || !title.trim()) {
+      return res.status(400).json({ message: 'Tên sản phẩm không được để trống' });
+    }
+    const trimmedTitle = title.trim();
+    if (trimmedTitle.length < 2) {
+      return res.status(400).json({ message: 'Tên sản phẩm phải có ít nhất 2 ký tự' });
+    }
+    if (trimmedTitle.length > 20) {
+      return res.status(400).json({ message: 'Tên sản phẩm không được vượt quá 20 ký tự' });
+    }
+
+    // Validate price
+    if (!price || price === '') {
+      return res.status(400).json({ message: 'Giá không được để trống' });
+    }
+    const numPrice = parseFloat(price);
+    if (isNaN(numPrice)) {
+      return res.status(400).json({ message: 'Giá phải là số hợp lệ' });
+    }
+    if (numPrice <= 0) {
+      return res.status(400).json({ message: 'Giá phải lớn hơn 0' });
+    }
+    if (numPrice > 50000000) {
+      return res.status(400).json({ message: 'Giá không được vượt quá 50 triệu' });
+    }
+
+    // Validate stock
+    if (!stock || stock === '') {
+      return res.status(400).json({ message: 'Số lượng tồn kho không được để trống' });
+    }
+    const numStock = parseInt(stock);
+    if (isNaN(numStock)) {
+      return res.status(400).json({ message: 'Số lượng tồn kho phải là số nguyên' });
+    }
+    if (numStock < 0) {
+      return res.status(400).json({ message: 'Số lượng tồn kho không được nhỏ hơn 0' });
+    }
+    if (numStock > 500) {
+      return res.status(400).json({ message: 'Số lượng tồn kho không được vượt quá 500' });
+    }
+
+    // Validate description
+    if (description && typeof description === 'string' && description.length > 1000) {
+      return res.status(400).json({ message: 'Mô tả không được vượt quá 1000 ký tự' });
+    }
+
+    // Validate image - bắt buộc khi tạo mới
+    if (!req.file) {
+      return res.status(400).json({ message: 'Vui lòng chọn hình ảnh cho sản phẩm' });
+    }
+
+    const productData = {
+      title: trimmedTitle,
+      price: numPrice,
+      stock: numStock,
+      description: description ? description.trim() : '',
+      categoryId: categoryId || null,
+      sellerId,
+      image: `/uploads/${req.file.filename}`,
+      imageURL: `/uploads/${req.file.filename}`
+    };
 
     const product = await Product.create(productData);
     res.status(201).json(product);
@@ -187,9 +250,79 @@ export const updateProduct = async (req, res) => {
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    Object.assign(product, req.body);
-    await product.save();
+    const { title, price, stock, description, categoryId } = req.body;
 
+    // Validate title nếu có
+    if (title !== undefined) {
+      if (!title || typeof title !== 'string' || !title.trim()) {
+        return res.status(400).json({ message: 'Tên sản phẩm không được để trống' });
+      }
+      const trimmedTitle = title.trim();
+      if (trimmedTitle.length < 2) {
+        return res.status(400).json({ message: 'Tên sản phẩm phải có ít nhất 2 ký tự' });
+      }
+      if (trimmedTitle.length > 20) {
+        return res.status(400).json({ message: 'Tên sản phẩm không được vượt quá 20 ký tự' });
+      }
+      product.title = trimmedTitle;
+    }
+
+    // Validate price nếu có
+    if (price !== undefined) {
+      if (!price || price === '') {
+        return res.status(400).json({ message: 'Giá không được để trống' });
+      }
+      const numPrice = parseFloat(price);
+      if (isNaN(numPrice)) {
+        return res.status(400).json({ message: 'Giá phải là số hợp lệ' });
+      }
+      if (numPrice <= 0) {
+        return res.status(400).json({ message: 'Giá phải lớn hơn 0' });
+      }
+      if (numPrice > 50000000) {
+        return res.status(400).json({ message: 'Giá không được vượt quá 50 triệu' });
+      }
+      product.price = numPrice;
+    }
+
+    // Validate stock nếu có
+    if (stock !== undefined) {
+      if (!stock || stock === '') {
+        return res.status(400).json({ message: 'Số lượng tồn kho không được để trống' });
+      }
+      const numStock = parseInt(stock);
+      if (isNaN(numStock)) {
+        return res.status(400).json({ message: 'Số lượng tồn kho phải là số nguyên' });
+      }
+      if (numStock < 0) {
+        return res.status(400).json({ message: 'Số lượng tồn kho không được nhỏ hơn 0' });
+      }
+      if (numStock > 500) {
+        return res.status(400).json({ message: 'Số lượng tồn kho không được vượt quá 500' });
+      }
+      product.stock = numStock;
+    }
+
+    // Validate description nếu có
+    if (description !== undefined) {
+      if (description && typeof description === 'string' && description.length > 1000) {
+        return res.status(400).json({ message: 'Mô tả không được vượt quá 1000 ký tự' });
+      }
+      product.description = description ? description.trim() : '';
+    }
+
+    // Validate categoryId nếu có
+    if (categoryId !== undefined) {
+      product.categoryId = categoryId || null;
+    }
+
+    // Nếu có file upload mới, cập nhật image path
+    if (req.file) {
+      product.image = `/uploads/${req.file.filename}`;
+      product.imageURL = `/uploads/${req.file.filename}`;
+    }
+
+    await product.save();
     res.json(product);
   } catch (error) {
     res.status(500).json({ message: error.message });
