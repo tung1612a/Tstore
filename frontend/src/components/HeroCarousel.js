@@ -1,7 +1,11 @@
 import React from 'react';
 import { Carousel, Button } from 'react-bootstrap';
 import './HeroCarousel.css';
+import { useTranslation } from 'react-i18next';
+
+
 function HeroCarousel() {
+  const { t } = useTranslation();
   return (
     <Carousel className="mb-5 hero-carousel" fade>
       <Carousel.Item>
@@ -16,10 +20,10 @@ function HeroCarousel() {
           overflow: 'hidden'
         }}>
           <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3">Giảm giá cuối tuần</h1>
-            <p className="lead mb-4">Ưu đãi đến 50% cho hàng ngàn sản phẩm chất lượng</p>
+            <h1 className="display-4 fw-bold mb-3">{t('HeroCarousel.0')}</h1>
+            <p className="lead mb-4">{t('HeroCarousel.1')}</p>
             <Button variant="light" size="lg" className="px-4 py-2">
-              Mua ngay
+              {t('HeroCarousel.2')}
             </Button>
           </div>
           <div className="hero-image" style={{
@@ -50,10 +54,10 @@ function HeroCarousel() {
           overflow: 'hidden'
         }}>
           <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3">Sưu tầm xu nhận quà</h1>
-            <p className="lead mb-4">Mua sắm mỗi ngày nhận thêm quà tặng hấp dẫn</p>
+            <h1 className="display-4 fw-bold mb-3">{t('HeroCarousel.3')}</h1>
+            <p className="lead mb-4">{t('HeroCarousel.4')}</p>
             <Button variant="light" size="lg" className="px-4 py-2">
-              Khám phá
+              {t('HeroCarousel.5')}
             </Button>
           </div>
           <div className="hero-image" style={{
@@ -84,10 +88,10 @@ function HeroCarousel() {
           overflow: 'hidden'
         }}>
           <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3">Hàng mới về</h1>
-            <p className="lead mb-4">Khám phá bộ sưu tập mới nhất hôm nay</p>
+            <h1 className="display-4 fw-bold mb-3">{t('HeroCarousel.6')}</h1>
+            <p className="lead mb-4">{t('HeroCarousel.7')}</p>
             <Button variant="light" size="lg" className="px-4 py-2">
-              Xem ngay
+              {t('HeroCarousel.8')}
             </Button>
           </div>
           <div className="hero-image" style={{
@@ -118,10 +122,10 @@ function HeroCarousel() {
           overflow: 'hidden'
         }}>
           <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3">Thiết bị công nghệ</h1>
-            <p className="lead mb-4">Điện thoại, laptop, tablet và phụ kiện cao cấp</p>
+            <h1 className="display-4 fw-bold mb-3">{t('HeroCarousel.9')}</h1>
+            <p className="lead mb-4">{t('HeroCarousel.10')}</p>
             <Button variant="light" size="lg" className="px-4 py-2">
-              Mua sắm ngay
+              {t('HeroCarousel.11')}
             </Button>
           </div>
           <div className="hero-image" style={{

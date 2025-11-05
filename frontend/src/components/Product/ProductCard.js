@@ -6,7 +6,8 @@ import { FiHeart, FiShoppingCart, FiStar, FiEdit } from "react-icons/fi"
 import { useNavigate } from "react-router-dom"
 import { useDispatch } from "react-redux"
 import { addToCart, addToCartLocal } from "../../store/cartSlice"
-import { useAuth } from "../../contexts/AuthContext"
+import { useAuth } from "../../contexts/AuthContext";
+import { useTranslation } from 'react-i18next';
 
 function ProductCard({ product, hideStoreButton = false }) {
   const price = product.price?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
@@ -15,6 +16,7 @@ function ProductCard({ product, hideStoreButton = false }) {
   const navigate = useNavigate()
   const dispatch = useDispatch()
   const { user, isAuthenticated } = useAuth()
+  const { t } = useTranslation();
 
   // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
   const isOwnProduct = React.useMemo(() => {
@@ -105,7 +107,7 @@ function ProductCard({ product, hideStoreButton = false }) {
               fontSize: "14px",
             }}
           >
-            Không có ảnh
+            {t('productCard.1')}
           </div>
         )}
         <Button
@@ -150,11 +152,11 @@ function ProductCard({ product, hideStoreButton = false }) {
 
         {product.storeInfo?.storeName ? (
           <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
-            Cửa hàng: {product.storeInfo.storeName}
+            {t('productCard.2')} {product.storeInfo.storeName}
           </div>
         ) : ((product.sellerId?.fullName || product.seller?.fullName) && (
           <div className="text-muted mb-2" style={{ fontSize: "12px" }}>
-            Người bán: {product.sellerId?.fullName || product.seller?.fullName}
+            {t('productCard.3')} {product.sellerId?.fullName || product.seller?.fullName}
           </div>
         ))}
 
@@ -180,7 +182,7 @@ function ProductCard({ product, hideStoreButton = false }) {
           </div>
           {typeof product.inventoryQuantity === 'number' && (
             <div className="text-muted" style={{ fontSize: "12px" }}>
-              Còn {product.stock} sản phẩm
+              {t('productCard.4')} {product.stock} {t('productCard.5')}
             </div>
           )}
         </div>
@@ -205,7 +207,7 @@ function ProductCard({ product, hideStoreButton = false }) {
             }}
           >
             <FiEdit className="me-2" size={16} />
-            Chỉnh sửa sản phẩm
+            {t('productCard.6')}
           </Button>
         ) : (
           <Button
@@ -227,10 +229,10 @@ function ProductCard({ product, hideStoreButton = false }) {
           >
             <FiShoppingCart className="me-2" size={16} />
             {!isAuthenticated
-              ? 'Đăng nhập để mua'
+              ? (t('productCard.7'))
               : isAddingToCart
-                ? 'Đang thêm...'
-                : 'Thêm vào giỏ'
+                ? (t('productCard.8'))
+                : (t('productCard.9'))
             }
           </Button>
         )}
@@ -241,7 +243,7 @@ function ProductCard({ product, hideStoreButton = false }) {
             className="w-100 mt-2"
             onClick={(e) => { e.stopPropagation(); navigate(`/store/${product.sellerId?._id || product.sellerId}`) }}
           >
-            Xem cửa hàng
+            {t('productCard.10')}
           </Button>
         )}
       </Card.Body>

@@ -127,6 +127,10 @@ function SiteNavbar() {
                         <FiSettings className="me-2" />
                         Store Settings
                       </Dropdown.Item>
+                      <Dropdown.Item href="/orders">
+                        <FiPackage className="me-2" />
+                        Lịch sử đơn hàng
+                      </Dropdown.Item>
                     </>
                   )}
 
