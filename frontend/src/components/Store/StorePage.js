@@ -4,14 +4,16 @@ import { Container, Row, Col, Spinner, Alert, Button, Card, Badge } from 'react-
 import { FiArrowLeft, FiHome, FiStar, FiUsers, FiPackage, FiShield, FiShoppingCart } from 'react-icons/fi'
 import { useSelector, useDispatch } from 'react-redux'
 import ProductCard from '../Product/ProductCard'
-import './StorePage.css'
+import './StorePage.css';
+import { useTranslation } from 'react-i18next';
 
 function StorePage() {
-  const { sellerId } = useParams()
-  const navigate = useNavigate()
-  const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+  const { sellerId } = useParams();
+  const navigate = useNavigate();
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { t } = useTranslation();
   
   // Redux state
   const cartItems = useSelector(state => state.cart.items)
@@ -47,12 +49,12 @@ function StorePage() {
           className="d-flex align-items-center"
         >
           <FiArrowLeft className="me-2" />
-          Quay lại
+          {t('storePage.1')}
         </Button>
         <div className="d-flex align-items-center">
           <div className="d-flex align-items-center text-muted me-4">
             <FiHome className="me-2" />
-            <span>Cửa hàng</span>
+            <span>{t('storePage.2')}</span>
           </div>
           <Button 
             variant="outline-primary" 
@@ -60,7 +62,7 @@ function StorePage() {
             className="d-flex align-items-center position-relative"
           >
             <FiShoppingCart className="me-2" />
-            Giỏ hàng
+            {t('storePage.3')}
             {cartItems.length > 0 && (
               <Badge 
                 bg="danger" 
@@ -158,26 +160,26 @@ function StorePage() {
         <div className="d-flex align-items-center justify-content-between mb-4">
           <h4 className="mb-0 d-flex align-items-center">
             <FiPackage className="me-2" />
-            Sản phẩm của cửa hàng
+            {t('storePage.5')}
           </h4>
           <div className="d-flex align-items-center text-muted">
-            <span className="me-3">Hiển thị {products.length} sản phẩm</span>
+            <span className="me-3">{t('storePage.6')} {products.length} {t('storePage.7')}</span>
           </div>
         </div>
 
         {loading && (
           <div className="text-center py-5">
             <Spinner animation="border" variant="primary" />
-            <p className="mt-3 text-muted">Đang tải sản phẩm...</p>
+            <p className="mt-3 text-muted">{t('storePage.8')}</p>
           </div>
         )}
 
         {error && (
           <Alert variant="danger" className="text-center">
-            <Alert.Heading>Không thể tải sản phẩm</Alert.Heading>
+            <Alert.Heading>{t('storePage.9')}</Alert.Heading>
             <p>{error}</p>
             <Button variant="outline-danger" onClick={() => window.location.reload()}>
-              Thử lại
+              {t('storePage.10')}
             </Button>
           </Alert>
         )}
@@ -188,8 +190,8 @@ function StorePage() {
               <Card className="text-center py-5">
                 <Card.Body>
                   <FiPackage size={64} className="text-muted mb-3" />
-                  <h5 className="text-muted">Chưa có sản phẩm nào</h5>
-                  <p className="text-muted">Cửa hàng này chưa có sản phẩm nào để hiển thị</p>
+                  <h5 className="text-muted">{t('storePage.11')}</h5>
+                  <p className="text-muted">{t('storePage.12')}</p>
                 </Card.Body>
               </Card>
             ) : (

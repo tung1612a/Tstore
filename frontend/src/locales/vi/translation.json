@@ -237,7 +237,9 @@
     "5" : "Khám phá các sản phẩm phù hợp với nhu cầu của bạn",
     "6" : "Sản phẩm nổi bật",
     "7" : "Khám phá những sản phẩm được yêu thích nhất",
-    "8" : "Thông báo"
+    "8" : "Thông báo",
+    "9" : "Chào mừng đến với cửa hàng",
+    "10" : "Khám phá sản phẩm mới nhất hôm nay"
   },
   "categories": {
     "1" : "Danh mục sản phẩm",
@@ -247,5 +249,45 @@
     "5" : "Đồng hồ",
     "6" : "Máy ảnh",
     "7" : "Nhà cửa"
+  },
+  "productCard" : {
+    "1" : "Không có ảnh",
+    "2" : "Cửa hàng: ",
+    "3" : "Người bán: ",
+    "4" : "Còn: ",
+    "5" : "Sản phẩm",
+    "6" : "Chỉnh sửa sản phẩm",
+    "7" : "Đăng nhập để mua",
+    "8" : "Đang thêm...",
+    "9" : "Thêm vào giỏ",
+    "10" : "Xem cửa hàng"
+  },
+  "storePage": {
+    "1": "Quay lại",
+    "2": "Cửa hàng",
+    "3": "Giỏ hàng",
+    "4": "Trang chủ",
+    "5": "Sản phẩm của cửa hàng",
+    "6": "Hiển thị",
+    "7": "Sản phẩm",
+    "8": "Đang tải sản phẩm...",
+    "9": "Không thể tải sản phẩm",
+    "10" : "Thử lại",
+    "11" : "Chưa có sản phẩm nào",
+    "12" : "Cửa hàng này chưa có sản phẩm nào để hiển thị"
+  },
+  "HeroCarousel": {
+    "0" : "Giảm giá cuối tuần",
+    "1" : "Ưu đãi đến 50% cho hàng ngàn sản phẩm chất lượng",
+    "2" : "Mua ngay",
+    "3" : "Sưu tầm xu nhận quà",
+    "4" : "Mua sắm mỗi ngày nhận thêm quà tặng hấp dẫn",
+    "5" : "Khám phá",
+    "6" : "Hàng mới về",
+    "7" : "Khám phá bộ siêu tập mới nhất hôm nay",
+    "8" : "Xem ngay",
+    "9" : "Thiết bị công nghệ",
+    "10": "Điện thoại, laptop, tablet và phụ kiện cao cấp",
+    "11": "Mua sắm ngay"
   }
 }

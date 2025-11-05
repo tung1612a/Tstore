@@ -99,8 +99,8 @@ function App() {
         <HeroCarousel />
         <Row className="mb-3">
           <Col>
-            <h1 className="mb-1">{hero?.title || "Trang chủ"}</h1>
-            <div className="text-muted">{hero?.subtitle}</div>
+            <h1 className="mb-1">{t('toast.9')}</h1>
+            <div className="text-muted">{t('toast.10')}</div>
           </Col>
         </Row>
 
