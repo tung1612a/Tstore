@@ -1,0 +1,100 @@
+.thank-you-card {
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+}
+
+.success-icon {
+  animation: scaleIn 0.5s ease-out;
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.order-id-badge {
+  display: inline-block;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 25px;
+  font-size: 18px;
+}
+
+.order-id-badge code {
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 20px;
+  font-weight: bold;
+  margin-left: 8px;
+}
+
+.order-item-row {
+  transition: background-color 0.2s;
+}
+
+.order-item-row:hover {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 12px !important;
+  margin-left: -12px;
+  margin-right: -12px;
+}
+
+.order-item-image {
+  flex-shrink: 0;
+}
+
+.order-summary .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.order-summary .summary-row strong {
+  font-size: 1.1rem;
+}
+
+.address-info {
+  background: #f8f9fa;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.thank-you-card h1 {
+  color: #2c3e50;
+  font-weight: 700;
+}
+
+.thank-you-card .lead {
+  font-size: 1.1rem;
+  color: #6c757d;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .order-id-badge {
+    font-size: 14px;
+    padding: 8px 16px;
+  }
+
+  .order-id-badge code {
+    font-size: 16px;
+    padding: 3px 8px;
+  }
+
+  .success-icon svg {
+    width: 60px;
+    height: 60px;
+  }
+}
+

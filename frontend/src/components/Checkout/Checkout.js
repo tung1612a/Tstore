@@ -131,11 +131,20 @@ const Checkout = () => {
 
       if (orderResponse.ok) {
         const order = await orderResponse.json();
+        console.log('Order created:', order);
+        
+        // Lấy orderId từ response
+        const orderId = order._id || order.order?._id;
+        if (!orderId) {
+          alert('Đơn hàng đã được tạo nhưng không thể lấy mã đơn hàng. Vui lòng kiểm tra trong "Đơn hàng của tôi"');
+          navigate('/orders');
+          return;
+        }
 
         // Chỉ tạo payment cho các phương thức khác COD
         if (paymentMethod !== 'cod') {
           const paymentData = {
-            orderId: order._id,
+            orderId: orderId,
             method: paymentMethod,
           };
 
@@ -170,8 +179,26 @@ const Checkout = () => {
               } catch (error) {
                 console.error('Error clearing cart:', error);
               }
-              navigate('/');
+              navigate('/thank-you', { state: { orderId } });
+            } else {
+              // Nếu payment process thất bại, vẫn chuyển đến thank you page
+              console.error('Payment process failed, but order was created');
+              try {
+                await dispatch(clearCart()).unwrap();
+              } catch (error) {
+                console.error('Error clearing cart:', error);
+              }
+              navigate('/thank-you', { state: { orderId } });
             }
+          } else {
+            // Nếu payment creation thất bại, vẫn chuyển đến thank you page
+            console.error('Payment creation failed, but order was created');
+            try {
+              await dispatch(clearCart()).unwrap();
+            } catch (error) {
+              console.error('Error clearing cart:', error);
+            }
+            navigate('/thank-you', { state: { orderId } });
           }
         } else {
           // Đối với COD, chỉ cần clear cart và chuyển hướng
@@ -180,8 +207,12 @@ const Checkout = () => {
           } catch (error) {
             console.error('Error clearing cart:', error);
           }
-          navigate('/');
+          navigate('/thank-you', { state: { orderId } });
         }
+      } else {
+        // Nếu tạo order thất bại
+        const errorData = await orderResponse.json().catch(() => ({ message: 'Không thể tạo đơn hàng' }));
+        alert(errorData.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.');
       }
     } catch (error) {
       console.error('Error during checkout:', error);
