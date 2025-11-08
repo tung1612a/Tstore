@@ -268,8 +268,15 @@ export const getOrderDetails = async (req, res) => {
       isBuyer = buyerIdStr === userId;
     }
 
-    if (role === 'seller') {
-      // Nếu là seller, chỉ lấy các items có product thuộc về seller
+    // Ưu tiên kiểm tra buyer trước (seller có thể mua hàng từ seller khác)
+    if (isBuyer) {
+      // Nếu là buyer và là chủ đơn hàng, lấy tất cả items (bất kể role là gì)
+      orderItems = await OrderItem.find({ orderId: id }).populate(
+        'productId',
+        '_id title price image imageURL description'
+      );
+    } else if (role === 'seller') {
+      // Nếu là seller và KHÔNG phải buyer, chỉ lấy các items có product thuộc về seller
       orderItems = await OrderItem.aggregate([
         {
           $match: { orderId: new OrderItem.db.base.Types.ObjectId(id) },
@@ -307,12 +314,6 @@ export const getOrderDetails = async (req, res) => {
       if (orderItems.length === 0) {
         return res.status(401).json({ message: 'Không có sản phẩm nào của bạn trong đơn hàng này' });
       }
-    } else if (isBuyer) {
-      // Nếu là buyer và là chủ đơn hàng, lấy tất cả items
-      orderItems = await OrderItem.find({ orderId: id }).populate(
-        'productId',
-        '_id title price image imageURL description'
-      );
     } else {
       return res.status(401).json({ message: 'Không được phép truy cập đơn hàng này' });
     }

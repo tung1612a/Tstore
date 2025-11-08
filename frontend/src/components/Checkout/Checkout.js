@@ -140,7 +140,7 @@ const Checkout = () => {
           navigate('/orders');
           return;
         }
-
+ 
         // Chỉ tạo payment cho các phương thức khác COD
         if (paymentMethod !== 'cod') {
           const paymentData = {
