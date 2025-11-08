@@ -10,12 +10,22 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
   
   // Helper functions
   const handleQuantityChange = async (newQuantity) => {
-    if (newQuantity >= 1) {
-      try {
-        await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
-      } catch (error) {
-        alert('Có lỗi xảy ra khi cập nhật số lượng');
-      }
+    if (newQuantity < 1) {
+      return;
+    }
+    
+    // Kiểm tra stock
+    const availableStock = item.stock ?? 0;
+    if (newQuantity > availableStock) {
+      alert(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+      return;
+    }
+    
+    try {
+      await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
+    } catch (error) {
+      const errorMessage = error.message || 'Có lỗi xảy ra khi cập nhật số lượng';
+      alert(errorMessage);
     }
   };
   
@@ -32,7 +42,15 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
 
   const handleQuantityInputChange = async (e) => {
     const value = parseInt(e.target.value) || 1;
-    await handleQuantityChange(value);
+    const availableStock = item.stock ?? 0;
+    
+    // Giới hạn giá trị nhập vào không vượt quá stock
+    const limitedValue = Math.min(value, availableStock);
+    if (value > availableStock) {
+      alert(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+    }
+    
+    await handleQuantityChange(limitedValue);
   };
   
   // Calculate total price for this item
@@ -81,6 +99,15 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
               <div className="cart-item-price">
                 <span className="text-danger fw-bold">{formatPrice(item.price)}</span>
               </div>
+              {item.stock !== undefined && (
+                <div className="stock-info mt-2">
+                  <small className={item.stock > 0 ? 'text-success' : 'text-danger'}>
+                    {item.stock > 0 
+                      ? `Còn lại: ${item.stock} sản phẩm` 
+                      : 'Đã hết hàng'}
+                  </small>
+                </div>
+              )}
             </div>
           </Col>
           
@@ -99,6 +126,7 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
               <Form.Control
                 type="number"
                 min="1"
+                max={item.stock ?? undefined}
                 value={item.quantity}
                 onChange={handleQuantityInputChange}
                 className="quantity-input text-center mx-2"
@@ -110,10 +138,17 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
                 size="sm"
                 className="quantity-btn"
                 onClick={() => handleQuantityChange(item.quantity + 1)}
+                disabled={item.stock !== undefined && item.quantity >= item.stock}
+                title={item.stock !== undefined && item.quantity >= item.stock ? `Chỉ còn ${item.stock} sản phẩm` : ''}
               >
                 <FiPlus size={14} />
               </Button>
             </div>
+            {item.stock !== undefined && item.quantity >= item.stock && (
+              <small className="text-danger d-block mt-1">
+                Đã đạt giới hạn tồn kho
+              </small>
+            )}
           </Col>
           
           <Col md={2}>

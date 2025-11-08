@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Alert, Spinner, Badge, Form } from 'react-bootstrap';
-import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin, FiTruck, FiPackage, FiCheckCircle, FiClock, FiDollarSign, FiSave } from 'react-icons/fi';
+import { FiUser, FiEdit, FiLogOut, FiMail, FiPhone, FiMapPin, FiTruck, FiPackage, FiCheckCircle, FiClock, FiSave } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTranslation } from 'react-i18next';
@@ -370,32 +370,25 @@ function Profile() {
                         </div>
                       ) : shipperStats ? (
                         <Row className="g-3">
-                          <Col md={3}>
+                          <Col md={4}>
                             <div className="text-center p-3 border rounded">
                               <FiCheckCircle size={24} className="text-success mb-2" />
                               <h6 className="text-success mb-1">{shipperStats.stats?.totalDelivered || 0}</h6>
                               <small className="text-muted">Đã giao</small>
                             </div>
                           </Col>
-                          <Col md={3}>
+                          <Col md={4}>
                             <div className="text-center p-3 border rounded">
                               <FiTruck size={24} className="text-warning mb-2" />
                               <h6 className="text-warning mb-1">{shipperStats.stats?.totalShipping || 0}</h6>
                               <small className="text-muted">Đang giao</small>
                             </div>
                           </Col>
-                          <Col md={3}>
+                          <Col md={4}>
                             <div className="text-center p-3 border rounded">
                               <FiClock size={24} className="text-info mb-2" />
                               <h6 className="text-info mb-1">{shipperStats.stats?.totalPending || 0}</h6>
                               <small className="text-muted">Chờ giao</small>
-                            </div>
-                          </Col>
-                          <Col md={3}>
-                            <div className="text-center p-3 border rounded">
-                              <FiDollarSign size={24} className="text-primary mb-2" />
-                              <h6 className="text-primary mb-1">{formatCurrency(shipperStats.stats?.totalEarnings || 0)}</h6>
-                              <small className="text-muted">Thu nhập</small>
                             </div>
                           </Col>
                         </Row>
