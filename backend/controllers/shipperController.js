@@ -26,10 +26,6 @@ export const getShipperDashboard = async (req, res) => {
       status: "awaiting_delivery" 
     });
     
-    // Tính tổng doanh thu từ phí giao hàng (ví dụ: 10k per order)
-    const deliveryFee = 10000;
-    const totalEarnings = totalDelivered * deliveryFee;
-    
     // Đơn hàng gần đây
     const recentOrdersData = await Order.find({ 
       shipperId,
@@ -72,8 +68,7 @@ export const getShipperDashboard = async (req, res) => {
       stats: {
         totalDelivered,
         totalShipping,
-        totalPending,
-        totalEarnings
+        totalPending
       },
       recentOrders,
       pendingOrders

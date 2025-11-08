@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Table } from 'react-bootstrap';
-import { FiTruck, FiPackage, FiClock, FiDollarSign, FiEye, FiCheckCircle } from 'react-icons/fi';
+import { FiTruck, FiPackage, FiClock, FiEye, FiCheckCircle } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 
 const   ShipperDashboard = () => {
@@ -92,7 +92,7 @@ const   ShipperDashboard = () => {
 
       {/* Stats Cards */}
       <Row className="g-4 mb-4">
-        <Col md={3}>
+        <Col md={4}>
           <Card className="border-0 shadow-sm">
             <Card.Body className="text-center">
               <FiCheckCircle size={32} className="text-success mb-3" />
@@ -101,7 +101,7 @@ const   ShipperDashboard = () => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
+        <Col md={4}>
           <Card className="border-0 shadow-sm">
             <Card.Body className="text-center">
               <FiTruck size={32} className="text-warning mb-3" />
@@ -110,21 +110,12 @@ const   ShipperDashboard = () => {
             </Card.Body>
           </Card>
         </Col>
-        <Col md={3}>
+        <Col md={4}>
           <Card className="border-0 shadow-sm">
             <Card.Body className="text-center">
               <FiClock size={32} className="text-info mb-3" />
               <h3 className="text-info">{dashboardData?.stats?.totalPending || 0}</h3>
               <p className="text-muted mb-0">Chờ giao</p>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="border-0 shadow-sm">
-            <Card.Body className="text-center">
-              <FiDollarSign size={32} className="text-primary mb-3" />
-              <h3 className="text-primary">{formatCurrency(dashboardData?.stats?.totalEarnings || 0)}</h3>
-              <p className="text-muted mb-0">Tổng thu nhập</p>
             </Card.Body>
           </Card>
         </Col>

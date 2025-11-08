@@ -1,5 +1,4 @@
 import Product from "../models/Product.js";
-import Inventory from "../models/Inventory.js";
 import Store from "../models/Store.js";
 import User from "../models/User.js";
 import Order from "../models/Order.js";
@@ -20,15 +19,13 @@ export const getProducts = async (req, res) => {
   
   const products = await Product.find(filter).populate("sellerId", "fullName");
   
-  // Aggregate inventory quantities for each product
-  const productsWithInventory = await Promise.all(
+  // Add store info to each product
+  const productsWithStoreInfo = await Promise.all(
     products.map(async (product) => {
-      const [inventory, store, seller] = await Promise.all([
-        Inventory.findOne({ productId: product._id }),
+      const [store, seller] = await Promise.all([
         Store.findOne({ sellerId: product.sellerId?._id }),
         User.findById(product.sellerId?._id).select('avatarUrl')
       ]);
-      const totalQuantity = inventory ? inventory.quantity : 0;
       const storeInfo = store ? { 
         storeName: store.storeName, 
         status: store.status, 
@@ -38,26 +35,24 @@ export const getProducts = async (req, res) => {
 
       return {
         ...product.toObject(),
-        inventoryQuantity: totalQuantity,
+        inventoryQuantity: product.stock ?? 0,
         storeInfo
       };
     })
   );
   
-  res.json(productsWithInventory);
+  res.json(productsWithStoreInfo);
 };
 
 export const getProductById = async (req, res) => {
   const product = await Product.findById(req.params.id).populate("sellerId", "fullName");
   if (!product) return res.status(404).json({ message: "Product not found" });
   
-  // Get inventory quantity for this product
-  const [inventory, store, seller] = await Promise.all([
-    Inventory.findOne({ productId: product._id }),
+  // Get store info for this product
+  const [store, seller] = await Promise.all([
     Store.findOne({ sellerId: product.sellerId?._id }),
     User.findById(product.sellerId?._id).select('avatarUrl')
   ]);
-  const totalQuantity = inventory ? inventory.quantity : 0;
   const storeInfo = store ? { 
     storeName: store.storeName, 
     status: store.status, 
@@ -88,15 +83,15 @@ export const getProductById = async (req, res) => {
   
   const totalSoldQuantity = soldItems.reduce((sum, item) => sum + (item.quantity || 0), 0);
 
-  const productWithInventory = {
+  const productWithInfo = {
     ...product.toObject(),
-    inventoryQuantity: totalQuantity,
+    inventoryQuantity: product.stock ?? 0,
     storeInfo,
     sold: totalSoldQuantity, // Tổng số lượng đã bán
     completedOrdersCount // Số đơn hàng đã hoàn thành
   };
   
-  res.json(productWithInventory);
+  res.json(productWithInfo);
 };
 
 export const createProduct = async (req, res) => {

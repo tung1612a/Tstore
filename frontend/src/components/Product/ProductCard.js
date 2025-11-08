@@ -31,11 +31,21 @@ function ProductCard({ product, hideStoreButton = false }) {
     return userId && sellerId && String(userId) === String(sellerId)
   }, [user, isAuthenticated, product.sellerId, product.seller])
 
+  // Lấy stock từ product (ưu tiên stock, sau đó inventoryQuantity)
+  const stock = product.stock ?? product.inventoryQuantity ?? 0;
+  const isOutOfStock = stock === 0;
+
   // Helper function for adding to cart
   const handleAddToCart = async (e) => {
     e.stopPropagation()
 
     if (isAddingToCart) return
+
+    // Kiểm tra nếu hết hàng
+    if (isOutOfStock) {
+      alert('Sản phẩm đã hết hàng!')
+      return
+    }
 
     // Kiểm tra nếu chưa đăng nhập
     if (!isAuthenticated) {
@@ -130,9 +140,12 @@ function ProductCard({ product, hideStoreButton = false }) {
         >
           <FiHeart size={16} color={isLiked ? "#ee4d2d" : "#6c757d"} fill={isLiked ? "#ee4d2d" : "none"} />
         </Button>
-        {/* <Badge bg="danger" className="position-absolute top-0 start-0 m-2" style={{ fontSize: "10px" }}>
-          -20%
-        </Badge> */}
+        {/* Badge hết hàng */}
+        {isOutOfStock && (
+          <Badge bg="danger" className="position-absolute top-0 start-0 m-2" style={{ fontSize: "12px", fontWeight: "600" }}>
+            Hết hàng
+          </Badge>
+        )}
       </div>
 
       <Card.Body className="d-flex flex-column">
@@ -180,9 +193,9 @@ function ProductCard({ product, hideStoreButton = false }) {
               {product.price && (product.price * 1.25).toLocaleString("vi-VN", { style: "currency", currency: "VND" })}
             </div> */}
           </div>
-          {typeof product.inventoryQuantity === 'number' && (
-            <div className="text-muted" style={{ fontSize: "12px" }}>
-              {t('productCard.4')} {product.stock} {t('productCard.5')}
+          {stock !== undefined && stock !== null && (
+            <div className={isOutOfStock ? "text-danger fw-bold" : "text-muted"} style={{ fontSize: "12px" }}>
+              {isOutOfStock ? "Hết hàng" : `${t('productCard.4')} ${stock} ${t('productCard.5')}`}
             </div>
           )}
         </div>
@@ -211,28 +224,34 @@ function ProductCard({ product, hideStoreButton = false }) {
           </Button>
         ) : (
           <Button
-            variant={!isAuthenticated ? "outline-primary" : "primary"}
+            variant={!isAuthenticated ? "outline-primary" : isOutOfStock ? "secondary" : "primary"}
             size="sm"
             className="w-100 d-flex align-items-center justify-content-center"
-            disabled={isAddingToCart}
+            disabled={isAddingToCart || isOutOfStock}
             style={{
               background: !isAuthenticated
                 ? "transparent"
-                : isAddingToCart
+                : isOutOfStock
                   ? "#6c757d"
-                  : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+                  : isAddingToCart
+                    ? "#6c757d"
+                    : "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
               border: !isAuthenticated ? "2px solid #007bff" : "none",
               borderRadius: "8px",
               fontWeight: "600",
+              opacity: isOutOfStock ? 0.6 : 1,
+              cursor: isOutOfStock ? "not-allowed" : "pointer",
             }}
             onClick={handleAddToCart}
           >
             <FiShoppingCart className="me-2" size={16} />
-            {!isAuthenticated
-              ? (t('productCard.7'))
-              : isAddingToCart
-                ? (t('productCard.8'))
-                : (t('productCard.9'))
+            {isOutOfStock
+              ? "Hết hàng"
+              : !isAuthenticated
+                ? (t('productCard.7'))
+                : isAddingToCart
+                  ? (t('productCard.8'))
+                  : (t('productCard.9'))
             }
           </Button>
         )}

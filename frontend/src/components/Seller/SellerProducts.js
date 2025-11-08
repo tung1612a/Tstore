@@ -1,6 +1,6 @@
     import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button, Table, Modal, Form, Alert, Badge, Spinner, Tabs, Tab } from 'react-bootstrap';
-import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch, FiFilter, FiPackage, FiTrendingUp, FiSettings, FiArrowLeft, FiImage, FiX } from 'react-icons/fi';
+import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch, FiFilter, FiPackage, FiArrowLeft, FiImage, FiX } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -10,10 +10,8 @@ const SellerProducts = () => {
   const location = useLocation();
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [inventories, setInventories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [showInventoryModal, setShowInventoryModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStock, setFilterStock] = useState('all');
@@ -49,17 +47,10 @@ const SellerProducts = () => {
     image: false
   });
 
-  // Inventory form state
-  const [inventoryFormData, setInventoryFormData] = useState({
-    productId: '',
-    quantity: '',
-    operation: 'add' // 'add' or 'subtract'
-  });
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
-    fetchInventories();
 
     // Kiểm tra nếu có sản phẩm cần edit từ state
     const state = location.state;
@@ -117,21 +108,6 @@ const SellerProducts = () => {
     }
   };
 
-  const fetchInventories = async () => {
-    try {
-      const response = await fetch('http://localhost:5000/api/seller/inventories', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setInventories(data);
-      }
-    } catch (error) {
-      console.error('Error fetching inventories:', error);
-    }
-  };
 
   const showAlert = (message, variant = 'success') => {
     setAlert({ show: true, message, variant });
@@ -164,8 +140,8 @@ const SellerProducts = () => {
     if (numPrice <= 0) {
       return 'Giá phải lớn hơn 0';
     }
-    if (numPrice > 50000000) {
-      return 'Giá không được vượt quá 50 triệu';
+    if (numPrice > 100000000) {
+      return 'Giá không được vượt quá 100 triệu';
     }
     return '';
   };
@@ -389,45 +365,6 @@ const SellerProducts = () => {
     if (fileInput) fileInput.value = '';
   };
 
-  const handleInventoryUpdate = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await fetch(`http://localhost:5000/api/seller/inventories/${inventoryFormData.productId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          quantity: parseInt(inventoryFormData.quantity),
-          operation: inventoryFormData.operation
-        })
-      });
-
-      if (response.ok) {
-        showAlert('Cập nhật tồn kho thành công!');
-        setShowInventoryModal(false);
-        setInventoryFormData({ productId: '', quantity: '', operation: 'add' });
-        fetchProducts();
-        fetchInventories();
-      } else {
-        const error = await response.json();
-        showAlert(error.message || 'Có lỗi xảy ra', 'danger');
-      }
-    } catch (error) {
-      console.error('Error updating inventory:', error);
-      showAlert('Có lỗi xảy ra khi cập nhật tồn kho', 'danger');
-    }
-  };
-
-  const handleInventoryModal = (product) => {
-    setInventoryFormData({
-      productId: product._id,
-      quantity: '',
-      operation: 'add'
-    });
-    setShowInventoryModal(true);
-  };
 
   // Filter products
   const filteredProducts = products.filter(product => {
@@ -482,7 +419,7 @@ const SellerProducts = () => {
                 <FiArrowLeft className="me-2" />
                 Dashboard
               </Button>
-              <h2 className="mb-0">Quản lý sản phẩm & Tồn kho</h2>
+              <h2 className="mb-0">Quản lý sản phẩm</h2>
             </div>
             <Button variant="primary" onClick={handleAddNew}>
               <FiPlus className="me-2" />
@@ -558,22 +495,6 @@ const SellerProducts = () => {
                 </Card.Body>
               </Card>
             </Tab>
-            
-            <Tab eventKey="inventory" title={
-              <span>
-                <FiTrendingUp className="me-2" />
-                Quản lý tồn kho
-              </span>
-            }>
-              <Card className="mb-4">
-                <Card.Header>
-                  <h5 className="mb-0">Quản lý tồn kho sản phẩm</h5>
-                </Card.Header>
-                <Card.Body>
-                  <p className="text-muted">Cập nhật số lượng tồn kho cho các sản phẩm</p>
-                </Card.Body>
-              </Card>
-            </Tab>
           </Tabs>
 
           {/* Products Table */}
@@ -640,14 +561,6 @@ const SellerProducts = () => {
                                     <FiEdit />
                                   </Button>
                                   <Button
-                                    variant="outline-info"
-                                    size="sm"
-                                    onClick={() => handleInventoryModal(product)}
-                                    title="Quản lý tồn kho"
-                                  >
-                                    <FiSettings />
-                                  </Button>
-                                  <Button
                                     variant="outline-danger"
                                     size="sm"
                                     onClick={() => handleDelete(product._id)}
@@ -674,76 +587,6 @@ const SellerProducts = () => {
             </Card>
           )}
 
-          {/* Inventory Management */}
-          {activeTab === 'inventory' && (
-            <Card>
-              <Card.Header>
-                <h5 className="mb-0">Danh sách tồn kho</h5>
-              </Card.Header>
-              <Card.Body>
-                {products.length > 0 ? (
-                  <div className="table-responsive">
-                    <Table hover>
-                      <thead>
-                        <tr>
-                          <th>Sản phẩm</th>
-                          <th>Tồn kho hiện tại</th>
-                          <th>Trạng thái</th>
-                          <th>Hành động</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {products.map(product => (
-                          <tr key={product._id}>
-                            <td>
-                              <div className="d-flex align-items-center">
-                                <img
-                                  src={
-                                    product.image || product.imageURL
-                                      ? (product.image || product.imageURL).startsWith('http')
-                                        ? (product.image || product.imageURL)
-                                        : `http://localhost:5000${product.image || product.imageURL}`
-                                      : '/placeholder-image.jpg'
-                                  }
-                                  alt={product.title}
-                                  style={{ width: '40px', height: '40px', objectFit: 'cover' }}
-                                  className="rounded me-3"
-                                />
-                                <div>
-                                  <strong>{product.title}</strong>
-                                  <div className="text-muted small">${product.price}</div>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <span className="fw-bold">{product.stock}</span>
-                            </td>
-                            <td>{getStockBadge(product.stock)}</td>
-                            <td>
-                              <Button
-                                variant="outline-primary"
-                                size="sm"
-                                onClick={() => handleInventoryModal(product)}
-                              >
-                                <FiSettings className="me-1" />
-                                Cập nhật
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </Table>
-                  </div>
-                ) : (
-                  <div className="text-center py-5">
-                    <FiPackage size={48} className="text-muted mb-3" />
-                    <h5 className="text-muted">Chưa có sản phẩm nào</h5>
-                    <p className="text-muted">Thêm sản phẩm để bắt đầu quản lý tồn kho</p>
-                  </div>
-                )}
-              </Card.Body>
-            </Card>
-          )}
         </Col>
       </Row>
 
@@ -951,76 +794,6 @@ const SellerProducts = () => {
         </Form>
       </Modal>
 
-      {/* Inventory Management Modal */}
-      <Modal show={showInventoryModal} onHide={() => setShowInventoryModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Cập nhật tồn kho</Modal.Title>
-        </Modal.Header>
-        <Form onSubmit={handleInventoryUpdate}>
-          <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label>Sản phẩm</Form.Label>
-              <Form.Control
-                type="text"
-                value={products.find(p => p._id === inventoryFormData.productId)?.title || ''}
-                disabled
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Tồn kho hiện tại</Form.Label>
-              <Form.Control
-                type="text"
-                value={products.find(p => p._id === inventoryFormData.productId)?.stock || 0}
-                disabled
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Thao tác</Form.Label>
-              <Form.Select
-                value={inventoryFormData.operation}
-                onChange={(e) => setInventoryFormData({ ...inventoryFormData, operation: e.target.value })}
-              >
-                <option value="add">Thêm vào kho</option>
-                <option value="subtract">Trừ khỏi kho</option>
-                <option value="set">Đặt số lượng mới</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Số lượng</Form.Label>
-              <Form.Control
-                type="number"
-                value={inventoryFormData.quantity}
-                onChange={(e) => setInventoryFormData({ ...inventoryFormData, quantity: e.target.value })}
-                required
-                min="0"
-              />
-            </Form.Group>
-            {inventoryFormData.operation === 'add' && (
-              <Alert variant="info">
-                Số lượng mới sẽ là: {products.find(p => p._id === inventoryFormData.productId)?.stock || 0} + {inventoryFormData.quantity || 0} = {(products.find(p => p._id === inventoryFormData.productId)?.stock || 0) + parseInt(inventoryFormData.quantity || 0)}
-              </Alert>
-            )}
-            {inventoryFormData.operation === 'subtract' && (
-              <Alert variant="warning">
-                Số lượng mới sẽ là: {products.find(p => p._id === inventoryFormData.productId)?.stock || 0} - {inventoryFormData.quantity || 0} = {Math.max(0, (products.find(p => p._id === inventoryFormData.productId)?.stock || 0) - parseInt(inventoryFormData.quantity || 0))}
-              </Alert>
-            )}
-            {inventoryFormData.operation === 'set' && (
-              <Alert variant="primary">
-                Số lượng sẽ được đặt thành: {inventoryFormData.quantity || 0}
-              </Alert>
-            )}
-          </Modal.Body>
-          <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowInventoryModal(false)}>
-              Hủy
-            </Button>
-            <Button variant="primary" type="submit">
-              Cập nhật tồn kho
-            </Button>
-          </Modal.Footer>
-        </Form>
-      </Modal>
     </Container>
   );
 };
