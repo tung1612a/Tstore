@@ -260,6 +260,13 @@ export const getOrderDetails = async (req, res) => {
     }
 
     let orderItems;
+    let isBuyer = false;
+
+    // Kiểm tra xem user có phải là buyer không
+    if (order.buyerId) {
+      const buyerIdStr = order.buyerId._id ? order.buyerId._id.toString() : order.buyerId.toString();
+      isBuyer = buyerIdStr === userId;
+    }
 
     if (role === 'seller') {
       // Nếu là seller, chỉ lấy các items có product thuộc về seller
@@ -300,7 +307,7 @@ export const getOrderDetails = async (req, res) => {
       if (orderItems.length === 0) {
         return res.status(401).json({ message: 'Không có sản phẩm nào của bạn trong đơn hàng này' });
       }
-    } else if (order.buyerId._id.toString() === userId) {
+    } else if (isBuyer) {
       // Nếu là buyer và là chủ đơn hàng, lấy tất cả items
       orderItems = await OrderItem.find({ orderId: id }).populate(
         'productId',

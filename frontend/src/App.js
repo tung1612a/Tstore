@@ -15,6 +15,7 @@ import Profile from "./components/Profile/Profile";
 import ChangePassword from "./components/Profile/ChangePassword";
 import StorePage from "./components/Store/StorePage";
 import Checkout from "./components/Checkout/Checkout";
+import ThankYou from "./components/Checkout/ThankYou";
 import OrderHistory from "./components/Orders/OrderHistory";
 import OrderDetails from "./components/Orders/OrderDetails";
 import AdminDashboard from "./components/Admin/AdminDashboard";
@@ -57,6 +58,7 @@ function App() {
 
             <Route path="/cart" element={<Cart />} />
             <Route path="/checkout" element={<Checkout />} />
+            <Route path="/thank-you" element={<ProtectedRoute><ThankYou /></ProtectedRoute>} />
             <Route path="/redirect" element={<RoleRedirect />} />
             <Route path="/addresses" element={<AddressPage />} />
             
