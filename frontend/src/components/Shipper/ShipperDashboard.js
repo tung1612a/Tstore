@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Badge, Button, Table } from 'react-bootstrap';
-import { FiTruck, FiPackage, FiClock, FiEye, FiCheckCircle } from 'react-icons/fi';
+import { FiTruck, FiPackage, FiClock, FiEye, FiCheckCircle, FiLogOut } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const   ShipperDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   useEffect(() => {
     fetchDashboardData();
@@ -62,6 +64,11 @@ const   ShipperDashboard = () => {
     return <Badge bg={config.variant}>{config.text}</Badge>;
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
+
   if (loading) {
     return (
       <Container className="py-4">
@@ -82,9 +89,6 @@ const   ShipperDashboard = () => {
             <h2>Shipper Dashboard</h2>
             <Button variant="outline-primary" onClick={() => navigate('/shipper/orders')}>
               Xem tất cả đơn hàng
-            </Button>
-            <Button variant="primary" onClick={() => navigate('/shipper')}>
-              Quay lại dashboard
             </Button>
           </div>
         </Col>
@@ -231,6 +235,21 @@ const   ShipperDashboard = () => {
               )}
             </Card.Body>
           </Card>
+        </Col>
+      </Row>
+
+      {/* Logout Button */}
+      <Row className="mt-5">
+        <Col className="text-center">
+          <Button 
+            variant="outline-danger" 
+            size="lg"
+            onClick={handleLogout}
+            className="d-inline-flex align-items-center"
+          >
+            <FiLogOut className="me-2" />
+            Đăng xuất
+          </Button>
         </Col>
       </Row>
     </Container>

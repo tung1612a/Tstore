@@ -55,8 +55,15 @@ function Login() {
         // Giả sử role nằm trong result.user.role
         const userRole = result.user?.role;
 
+        // Redirect theo role
         if (userRole === "devadmin") {
           navigate("/admin/dashboard", { state: { loginSuccess: true } });
+        } else if (userRole === "admin") {
+          navigate("/admin", { state: { loginSuccess: true } });
+        } else if (userRole === "seller") {
+          navigate("/seller", { state: { loginSuccess: true } });
+        } else if (userRole === "shipper") {
+          navigate("/shipper", { state: { loginSuccess: true } });
         } else {
           navigate("/", { state: { loginSuccess: true } });
         }
