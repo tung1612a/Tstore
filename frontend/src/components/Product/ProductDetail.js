@@ -1,5 +1,3 @@
-"use client"
-
 import React, { useState, useEffect } from "react"
 import { useParams, useNavigate, useLocation } from "react-router-dom"
 import { Container, Row, Col, Button, Badge, Spinner, Alert, Breadcrumb, Modal, Form } from "react-bootstrap"
@@ -24,7 +22,11 @@ import {
 import "./ProductDetail.css"
 import Footer from "../Footer"
 import ProductReviews from "../ProductReviews"
+import { useTranslation } from 'react-i18next';
+
+
 function ProductDetail() {
+    const { t } = useTranslation();
     const { id } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
@@ -304,7 +306,7 @@ function ProductDetail() {
         return (
             <Container className="py-5 text-center">
                 <Spinner animation="border" variant="primary" />
-                <p className="mt-3 text-muted">Đang tải thông tin sản phẩm...</p>
+                <p className="mt-3 text-muted">{t('productDetail.0')}</p>
             </Container>
         )
     }
@@ -313,11 +315,11 @@ function ProductDetail() {
         return (
             <Container className="py-5">
                 <Alert variant="danger">
-                    <Alert.Heading>Không thể tải sản phẩm</Alert.Heading>
+                    <Alert.Heading>{t('productDetail.1')}</Alert.Heading>
                     <p>{error}</p>
                     <Button variant="outline-danger" onClick={() => navigate("/")}>
                         <FiArrowLeft className="me-2" />
-                        Quay về trang chủ
+                        {t('productDetail.2')}
                     </Button>
                 </Alert>
             </Container>
@@ -328,10 +330,10 @@ function ProductDetail() {
         return (
             <Container className="py-5">
                 <Alert variant="warning">
-                    <Alert.Heading>Không tìm thấy sản phẩm</Alert.Heading>
+                    <Alert.Heading>{t('productDetail.3')}</Alert.Heading>
                     <Button variant="outline-warning" onClick={() => navigate("/")}>
                         <FiArrowLeft className="me-2" />
-                        Quay về trang chủ
+                        {t('productDetail.2')}
                     </Button>
                 </Alert>
             </Container>
@@ -363,7 +365,7 @@ function ProductDetail() {
                                 size="sm"
                             >
                                 <FiChevronLeft className="me-1" />
-                                Quay lại
+                                {t('productDetail.4')}
                             </Button>
                             <Button
                                 variant="outline-primary"
@@ -372,7 +374,7 @@ function ProductDetail() {
                                 size="sm"
                             >
                                 <FiHome className="me-1" />
-                                Trang chủ
+                                {t('productDetail.5')}
                             </Button>
                         </div>
                         <div className="d-flex align-items-center">
@@ -415,7 +417,7 @@ function ProductDetail() {
                                     }}
                                 >
                                     <FiEdit className="me-1" size={16} />
-                                    Chỉnh sửa
+                                    {t('productDetail.6')}
                                 </Button>
                             ) : (
                                 <Button
@@ -434,10 +436,10 @@ function ProductDetail() {
                                 >
                                     <FiShoppingCart className="me-1" size={16} />
                                     {!isAuthenticated
-                                        ? 'Đăng nhập'
+                                        ? (t('productDetail.7'))
                                         : isAddingToCart
-                                            ? 'Đang thêm...'
-                                            : 'Thêm vào giỏ'
+                                            ? (t('productDetail.8'))
+                                            : (t('productDetail.9'))
                                     }
                                 </Button>
                             )}
@@ -451,10 +453,10 @@ function ProductDetail() {
                 {/* Breadcrumb */}
                 <Breadcrumb className="mb-4">
                     <Breadcrumb.Item onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
-                        Trang chủ
+                        {t('productDetail.5')}
                     </Breadcrumb.Item>
                     <Breadcrumb.Item onClick={() => navigate(-1)} style={{ cursor: "pointer" }}>
-                        Danh sách sản phẩm
+                        {t('productDetail.10')}
                     </Breadcrumb.Item>
                     <Breadcrumb.Item active>{product.title}</Breadcrumb.Item>
                 </Breadcrumb>
@@ -468,7 +470,7 @@ function ProductDetail() {
                                     <img src={images[selectedImage] || "/placeholder.svg"} alt={product.title} className="main-image" />
                                 ) : (
                                     <div className="no-image-placeholder">
-                                        <span>Không có ảnh</span>
+                                        <span>{t('productDetail.11')}</span>
                                     </div>
                                 )}
                                 <Badge bg="danger" className="discount-badge">
@@ -511,8 +513,8 @@ function ProductDetail() {
                                         ))}
                                     </div>
                                     <span className="rating-text">{averageRating}</span>
-                                    <span className="text-muted ms-2">({totalReviews} {totalReviews === 1 ? 'đánh giá' : 'đánh giá'})</span>
-                                    <span className="text-muted ms-3">| Đã bán: {soldCount}</span>
+                                    <span className="text-muted ms-2">({totalReviews} {totalReviews === 1 ? (t('productDetail.12')) : (t('productDetail.12'))})</span>
+                                    <span className="text-muted ms-3">| {t('productDetail.13')} {soldCount}</span>
                                 </div>
                             </div>
 
@@ -522,11 +524,11 @@ function ProductDetail() {
                                     <span className="current-price">{price}</span>
                                     <span className="original-price ms-3">{originalPrice}</span>
                                     <Badge bg="danger" className="ms-3">
-                                        Giảm 20%
+                                        {t('productDetail.14')}
                                     </Badge>
                                     {typeof product.inventoryQuantity === 'number' && (
                                         <span className="ms-3 text-muted" style={{ fontSize: '14px' }}>
-                                            Còn {product.stock} sản phẩm
+                                            {t('productDetail.15')} {product.stock} {t('productDetail.16')}
                                         </span>
                                     )}
                                 </div>
@@ -534,25 +536,25 @@ function ProductDetail() {
 
                             {/* Description */}
                             <div className="description-section mb-4">
-                                <h5 className="section-title">Mô tả sản phẩm</h5>
+                                <h5 className="section-title">{t('productDetail.17')}</h5>
                                 <p className="text-muted">
                                     {product.description ||
                                         "Sản phẩm chất lượng cao, được nhiều khách hàng tin dùng. Đảm bảo chính hãng 100%, giao hàng nhanh chóng trên toàn quốc."}
                                 </p>
                                 {product.storeInfo?.storeName ? (
                                     <div className="mt-2 text-muted" style={{ fontSize: "14px" }}>
-                                        Cửa hàng: <strong>{product.storeInfo.storeName}</strong>
+                                        {t('productDetail.18')} <strong>{product.storeInfo.storeName}</strong>
                                     </div>
                                 ) : ((product.sellerId?.fullName || product.seller?.fullName) && (
                                     <div className="mt-2 text-muted" style={{ fontSize: "14px" }}>
-                                        Người bán: <strong>{product.sellerId?.fullName || product.seller?.fullName}</strong>
+                                        {t('productDetail.19')} <strong>{product.sellerId?.fullName || product.seller?.fullName}</strong>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Quantity Selector */}
                             <div className="quantity-section mb-4">
-                                <h5 className="section-title mb-3">Số lượng</h5>
+                                <h5 className="section-title mb-3">{t('productDetail.20')}</h5>
                                 <div className="quantity-selector">
                                     <Button
                                         variant="outline-secondary"
@@ -584,7 +586,7 @@ function ProductDetail() {
                                             }}
                                         >
                                             <FiEdit className="me-2" size={20} />
-                                            Chỉnh sửa
+                                            {t('productDetail.21')}
                                         </Button>
                                     ) : (
                                         <Button
@@ -604,10 +606,10 @@ function ProductDetail() {
                                         >
                                             <FiShoppingCart className="me-2" size={20} />
                                             {!isAuthenticated
-                                                ? 'Đăng nhập để mua'
+                                                ? (t('productDetail.22'))
                                                 : isAddingToCart
-                                                    ? 'Đang thêm...'
-                                                    : 'Thêm vào giỏ hàng'
+                                                    ? (t('productDetail.8'))
+                                                    : (t('productDetail.9'))
                                             }
                                         </Button>
                                     )}
@@ -618,7 +620,7 @@ function ProductDetail() {
                                             onClick={handleChatWithSeller}
                                         >
                                             <FiMessageSquare className="me-2" size={20} />
-                                            Chat với người bán
+                                            {t('productDetail.23')}
                                         </Button>
                                     )}
                                     {(product.sellerId?._id || product.sellerId) && (
@@ -627,7 +629,7 @@ function ProductDetail() {
                                             size="lg"
                                             onClick={() => navigate(`/store/${product.sellerId?._id || product.sellerId}`)}
                                         >
-                                            Xem cửa hàng
+                                            {t('productDetail.24')}
                                         </Button>
                                     )}
                                 </div>
@@ -638,22 +640,22 @@ function ProductDetail() {
                                 <div className="feature-item">
                                     <FiTruck size={24} className="feature-icon" />
                                     <div>
-                                        <div className="feature-title">Miễn phí vận chuyển</div>
-                                        <div className="feature-desc">Cho đơn hàng từ 500.000đ</div>
+                                        <div className="feature-title">{t('productDetail.25')}</div>
+                                        <div className="feature-desc">{t('productDetail.26')}</div>
                                     </div>
                                 </div>
                                 <div className="feature-item">
                                     <FiShield size={24} className="feature-icon" />
                                     <div>
-                                        <div className="feature-title">Bảo hành chính hãng</div>
-                                        <div className="feature-desc">12 tháng bảo hành</div>
+                                        <div className="feature-title">{t('productDetail.27')}</div>
+                                        <div className="feature-desc">{t('productDetail.28')}</div>
                                     </div>
                                 </div>
                                 <div className="feature-item">
                                     <FiRefreshCw size={24} className="feature-icon" />
                                     <div>
-                                        <div className="feature-title">Đổi trả dễ dàng</div>
-                                        <div className="feature-desc">Trong vòng 7 ngày</div>
+                                        <div className="feature-title">{t('productDetail.29')}</div>
+                                        <div className="feature-desc">{t('productDetail.30')}</div>
                                     </div>
                                 </div>
                             </div>
@@ -665,24 +667,24 @@ function ProductDetail() {
                 <Row className="mt-5">
                     <Col>
                         <div className="product-details-section">
-                            <h3 className="mb-4">Chi tiết sản phẩm</h3>
+                            <h3 className="mb-4">{t('productDetail.31')}</h3>
                             <div className="details-grid">
                                 <div className="detail-row">
-                                    <span className="detail-label">Danh mục:</span>
+                                    <span className="detail-label">{t('productDetail.32')}</span>
                                     <span className="detail-value">{product.category || "Chưa phân loại"}</span>
                                 </div>
                                 <div className="detail-row">
-                                    <span className="detail-label">Thương hiệu:</span>
-                                    <span className="detail-value">Chính hãng</span>
+                                    <span className="detail-label">{t('productDetail.33')}</span>
+                                    <span className="detail-value">{t('productDetail.34')}</span>
                                 </div>
                                 <div className="detail-row">
-                                    <span className="detail-label">Xuất xứ:</span>
-                                    <span className="detail-value">Việt Nam</span>
+                                    <span className="detail-label">{t('productDetail.35')}</span>
+                                    <span className="detail-value">{t('productDetail.36')}</span>
                                 </div>
                                 <div className="detail-row">
-                                    <span className="detail-label">Tình trạng:</span>
+                                    <span className="detail-label">{t('productDetail.37')}</span>
                                     <span className="detail-value">
-                                        <Badge bg="success">Còn hàng</Badge>
+                                        <Badge bg="success">{t('productDetail.38')}</Badge>
                                     </span>
                                 </div>
                             </div>
@@ -709,14 +711,14 @@ function ProductDetail() {
             {/* Edit Product Modal */}
             <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
                 <Modal.Header closeButton>
-                    <Modal.Title>Chỉnh sửa sản phẩm</Modal.Title>
+                    <Modal.Title>{t('productDetail.39')}</Modal.Title>
                 </Modal.Header>
                 <Form onSubmit={handleEditSubmit}>
                     <Modal.Body>
                         <Row>
                             <Col md={6}>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Tên sản phẩm *</Form.Label>
+                                    <Form.Label>{t('productDetail.40')}</Form.Label>
                                     <Form.Control
                                         type="text"
                                         value={editFormData.title}
@@ -741,7 +743,7 @@ function ProductDetail() {
                         <Row>
                             <Col md={4}>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Số lượng tồn kho *</Form.Label>
+                                    <Form.Label>{t('productDetail.41')}</Form.Label>
                                     <Form.Control
                                         type="number"
                                         value={editFormData.stock}
@@ -752,12 +754,12 @@ function ProductDetail() {
                             </Col>
                             <Col md={4}>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>Danh mục</Form.Label>
+                                    <Form.Label>{t('productDetail.42')}</Form.Label>
                                     <Form.Select
                                         value={editFormData.categoryId}
                                         onChange={(e) => setEditFormData({ ...editFormData, categoryId: e.target.value })}
                                     >
-                                        <option value="">Chọn danh mục</option>
+                                        <option value="">{t('productDetail.44')}</option>
                                         {categories.map(category => (
                                             <option key={category._id} value={category._id}>
                                                 {category.name}
@@ -768,7 +770,7 @@ function ProductDetail() {
                             </Col>
                             <Col md={4}>
                                 <Form.Group className="mb-3">
-                                    <Form.Label>URL hình ảnh</Form.Label>
+                                    <Form.Label>{t('productDetail.43')}</Form.Label>
                                     <Form.Control
                                         type="url"
                                         value={editFormData.image}
@@ -779,7 +781,7 @@ function ProductDetail() {
                             </Col>
                         </Row>
                         <Form.Group className="mb-3">
-                            <Form.Label>Mô tả sản phẩm</Form.Label>
+                            <Form.Label>{t('productDetail.45')}</Form.Label>
                             <Form.Control
                                 as="textarea"
                                 rows={3}
@@ -790,7 +792,7 @@ function ProductDetail() {
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowEditModal(false)}>
-                            Hủy
+                            {t('productDetail.46')}
                         </Button>
                         <Button
                             variant="primary"
@@ -800,7 +802,7 @@ function ProductDetail() {
                                 border: "none"
                             }}
                         >
-                            CẬP NHẬT
+                            {t('productDetail.47')}
                         </Button>
                     </Modal.Footer>
                 </Form>
