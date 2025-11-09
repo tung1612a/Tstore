@@ -59,7 +59,7 @@ function StorePage() {
     }
 
     try {
-      // Tạo hoặc lấy conversation
+      // Tạo hoặc lấy conversation (không có productId vì chat từ store page)
       const response = await fetch('http://localhost:5000/api/chat/conversations', {
         method: 'POST',
         headers: {

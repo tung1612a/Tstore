@@ -274,14 +274,17 @@ function ProductDetail() {
         }
 
         try {
-            // Tạo hoặc lấy conversation
+            // Tạo hoặc lấy conversation với productId
             const response = await fetch('http://localhost:5000/api/chat/conversations', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ sellerId })
+                body: JSON.stringify({ 
+                    sellerId,
+                    productId: product._id
+                })
             })
 
             if (response.ok) {
