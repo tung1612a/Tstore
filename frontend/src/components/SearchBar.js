@@ -1,5 +1,6 @@
 import React from 'react';
 import { Form, FormControl, Button, InputGroup } from 'react-bootstrap';
+import { useTranslation } from 'react-i18next';
 
 function SearchBar({ onSearch }) {
   const [keyword, setKeyword] = React.useState('');
@@ -7,15 +8,17 @@ function SearchBar({ onSearch }) {
     e.preventDefault();
     onSearch?.(keyword);
   };
+  const { t } = useTranslation();
+
   return (
     <Form onSubmit={submit} className="mb-3">
       <InputGroup>
         <FormControl
-          placeholder="Tìm sản phẩm..."
+          placeholder={t('SearchBar.1')}
           value={keyword}
           onChange={(e) => setKeyword(e.target.value)}
         />
-        <Button type="submit" variant="primary">Tìm</Button>
+        <Button type="submit" variant="primary">{t('SearchBar.2')}</Button>
       </InputGroup>
     </Form>
   );
