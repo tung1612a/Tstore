@@ -9,6 +9,8 @@ const productSchema = new mongoose.Schema({
   // Keep backward compatibility if some docs still use imageURL
   imageURL: String,
   stock: { type: Number },
+  // Maximum quantity a customer can purchase per order
+  maxPurchaseQuantity: { type: Number, default: null },
   // Follow existing DB: sellerId ref User
   sellerId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   // Optional: categoryId from DB

@@ -1,18 +1,65 @@
 .category-item {
   background-color: #f8f9fa;
   color: #333;
-  font-weight: 500;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  transition: all 0.2s ease;
+  font-weight: 600;
+  border-radius: 14px;
+  margin-bottom: 8px;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  border: 2px solid transparent;
+}
+
+.category-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  background: linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%);
+  transition: width 0.3s ease;
+  z-index: 0;
 }
 
 .category-item:hover {
-  background-color: #007bff;
-  color: white;
+  transform: translateX(8px);
+  color: white !important;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(238, 77, 45, 0.3);
+}
+
+.category-item:hover::before {
+  width: 100%;
 }
 
 .category-item.active {
-  background-color: #007bff !important;
+  background: linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%) !important;
   color: white !important;
+  box-shadow: 0 6px 20px rgba(238, 77, 45, 0.35);
+  border-color: transparent;
+  transform: translateX(0);
+}
+
+.category-item.active::before {
+  width: 100%;
+  background: linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%);
+}
+
+.category-item.active > * {
+  color: white !important;
+}
+
+.category-item.active svg {
+  color: white !important;
+  fill: white !important;
+}
+
+.category-item.active .me-2 {
+  color: white !important;
+}
+
+.category-item > * {
+  position: relative;
+  z-index: 1;
 }

@@ -190,7 +190,29 @@ function ProductDetail() {
     }
 
     const handleQuantityChange = (delta) => {
-        setQuantity(Math.max(1, quantity + delta))
+        const stock = product?.stock ?? product?.inventoryQuantity ?? 0;
+        const maxPurchaseQuantity = product?.maxPurchaseQuantity;
+        const newQuantity = quantity + delta;
+        
+        // Validate against stock
+        if (newQuantity < 1) {
+            setQuantity(1);
+            return;
+        }
+        if (newQuantity > stock) {
+            alert(`Chỉ còn ${stock} sản phẩm trong kho`);
+            setQuantity(Math.max(1, stock));
+            return;
+        }
+        
+        // Validate against maxPurchaseQuantity if set
+        if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && newQuantity > maxPurchaseQuantity) {
+            alert(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
+            setQuantity(Math.max(1, maxPurchaseQuantity));
+            return;
+        }
+        
+        setQuantity(newQuantity);
     }
 
     // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
@@ -565,10 +587,37 @@ function ProductDetail() {
                                         <FiMinus />
                                     </Button>
                                     <input type="text" value={quantity} readOnly className="quantity-input" />
-                                    <Button variant="outline-secondary" size="sm" onClick={() => handleQuantityChange(1)}>
+                                    <Button 
+                                        variant="outline-secondary" 
+                                        size="sm" 
+                                        onClick={() => handleQuantityChange(1)}
+                                        disabled={
+                                            quantity >= (product?.stock ?? product?.inventoryQuantity ?? 0) ||
+                                            (product?.maxPurchaseQuantity !== null && 
+                                             product?.maxPurchaseQuantity !== undefined && 
+                                             quantity >= product.maxPurchaseQuantity)
+                                        }
+                                    >
                                         <FiPlus />
                                     </Button>
                                 </div>
+                                {product?.maxPurchaseQuantity !== null && 
+                                 product?.maxPurchaseQuantity !== undefined && (
+                                    <div className="mt-2">
+                                        <small className="text-muted">
+                                            Số lượng mua tối đa: <strong>{product.maxPurchaseQuantity}</strong> sản phẩm/đơn hàng
+                                        </small>
+                                    </div>
+                                )}
+                                {(product?.maxPurchaseQuantity !== null && 
+                                  product?.maxPurchaseQuantity !== undefined && 
+                                  quantity >= product.maxPurchaseQuantity) && (
+                                    <div className="mt-1">
+                                        <small className="text-danger">
+                                            Bạn đã đạt giới hạn mua tối đa cho sản phẩm này
+                                        </small>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Action Buttons */}
