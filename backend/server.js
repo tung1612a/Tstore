@@ -16,6 +16,7 @@ import sellerRoutes from "./routes/sellerRoutes.js";
 import shipperRoutes from "./routes/shipperRoutes.js";
 import reviewRoutes from './routes/reviewRoutes.js';
 import complaintRoutes from './routes/complaintRoutes.js';
+import chatRoutes from './routes/chatRoutes.js';
 dotenv.config();
 const app = express();
 
@@ -45,5 +46,6 @@ app.use("/api/seller", sellerRoutes);
 app.use("/api/shipper", shipperRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/complaints', complaintRoutes);
+app.use('/api/chat', chatRoutes);
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

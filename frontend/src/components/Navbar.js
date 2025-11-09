@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings, FiMapPin, FiBarChart, FiTruck, FiAlertTriangle } from 'react-icons/fi';
+import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings, FiMapPin, FiBarChart, FiTruck, FiAlertTriangle, FiMessageSquare } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart } from '../store/cartSlice';
 import { useCart } from '../hooks/useCart';
@@ -66,6 +66,12 @@ function SiteNavbar() {
                     <FiMapPin className="me-2" />
                     {t('navbar.addresses')}
                   </Dropdown.Item>
+                  {(user?.role === 'customer' || user?.role === 'seller') && (
+                    <Dropdown.Item href="/chat">
+                      <FiMessageSquare className="me-2" />
+                      Tin nhắn
+                    </Dropdown.Item>
+                  )}
                   {(user?.role === 'buyer' || user?.role === 'customer') && (
                     <Dropdown.Item href="/buyer/complaints">
                       <FiAlertTriangle className="me-2" />

@@ -39,6 +39,8 @@ import SellerApplications from "./components/Admin/SellerApplications";
 import ReportAdmin from "./components/DevAdmin/ReportAdmin";
 import BuyerComplaints from "./components/Orders/BuyerComplaints";
 import AdminComplaints from "./components/Admin/AdminComplaints";
+import ChatList from "./components/Chat/ChatList";
+import Chat from "./components/Chat/Chat";
 
 function App() {
   return (
@@ -65,6 +67,8 @@ function App() {
             <Route path="/orders" element={<OrderHistory />} />
             <Route path="/orders/:id" element={<OrderDetails />} />
             <Route path="/buyer/complaints" element={<ProtectedRoute><BuyerComplaints /></ProtectedRoute>} />
+            <Route path="/chat" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
+            <Route path="/chat/:conversationId" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
 
             {/* Protected routes */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>}/>
