@@ -1,11 +1,12 @@
 import React, { useEffect, useState, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Container, Row, Col, Spinner, Alert, Button, Card, Badge } from 'react-bootstrap'
-import { FiArrowLeft, FiHome, FiStar, FiUsers, FiPackage, FiShield, FiShoppingCart } from 'react-icons/fi'
+import { FiArrowLeft, FiHome, FiStar, FiUsers, FiPackage, FiShield, FiShoppingCart, FiMessageSquare } from 'react-icons/fi'
 import { useSelector, useDispatch } from 'react-redux'
 import ProductCard from '../Product/ProductCard'
 import './StorePage.css';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../contexts/AuthContext';
 
 function StorePage() {
   const { sellerId } = useParams();
@@ -14,6 +15,7 @@ function StorePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { t } = useTranslation();
+  const { user, isAuthenticated, token } = useAuth();
   
   // Redux state
   const cartItems = useSelector(state => state.cart.items)
@@ -38,6 +40,47 @@ function StorePage() {
     const first = products?.[0]
     return first?.storeInfo || null
   }, [products])
+
+  const handleChatWithSeller = async () => {
+    if (!isAuthenticated) {
+      alert('Vui lòng đăng nhập để chat với người bán!')
+      navigate('/login')
+      return
+    }
+
+    if (user.role !== 'customer') {
+      alert('Chỉ khách hàng mới có thể chat với người bán!')
+      return
+    }
+
+    if (!sellerId) {
+      alert('Không tìm thấy thông tin người bán!')
+      return
+    }
+
+    try {
+      // Tạo hoặc lấy conversation
+      const response = await fetch('http://localhost:5000/api/chat/conversations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ sellerId })
+      })
+
+      if (response.ok) {
+        const conversation = await response.json()
+        navigate(`/chat/${conversation._id}`)
+      } else {
+        const error = await response.json()
+        alert(error.message || 'Không thể tạo cuộc trò chuyện')
+      }
+    } catch (err) {
+      console.error('Error starting chat:', err)
+      alert('Có lỗi xảy ra khi bắt đầu chat')
+    }
+  }
 
   return (
     <Container className="py-4">
@@ -149,6 +192,18 @@ function StorePage() {
                 <p className="text-muted mb-0">
                   Cửa hàng chuyên cung cấp các sản phẩm công nghệ chất lượng cao với giá cả hợp lý
                 </p>
+                {isAuthenticated && user.role === 'customer' && (
+                  <div className="mt-3">
+                    <Button
+                      variant="primary"
+                      onClick={handleChatWithSeller}
+                      className="d-flex align-items-center"
+                    >
+                      <FiMessageSquare className="me-2" />
+                      Chat với cửa hàng
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </Card.Body>

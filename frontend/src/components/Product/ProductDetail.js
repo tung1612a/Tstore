@@ -19,6 +19,7 @@ import {
     FiHome,
     FiChevronLeft,
     FiEdit,
+    FiMessageSquare,
 } from "react-icons/fi"
 import "./ProductDetail.css"
 import Footer from "../Footer"
@@ -88,7 +89,7 @@ function ProductDetail() {
                 product.seller?._id === user._id ||
                 product.seller === user._id
             )
-            
+
             if (isOwn) {
                 setEditFormData({
                     title: product.title || '',
@@ -108,7 +109,7 @@ function ProductDetail() {
     // Lấy reviews của sản phẩm
     useEffect(() => {
         if (!id) return
-        
+
         const fetchReviews = async () => {
             try {
                 const response = await fetch(`http://localhost:5000/api/reviews/product/${id}`)
@@ -158,7 +159,7 @@ function ProductDetail() {
     // Hàm submit chỉnh sửa
     const handleEditSubmit = async (e) => {
         e.preventDefault()
-        
+
         try {
             const response = await fetch(`http://localhost:5000/api/seller/products/${product._id}`, {
                 method: 'PUT',
@@ -195,12 +196,12 @@ function ProductDetail() {
         if (!user || !isAuthenticated || user.role !== 'seller') {
             return false
         }
-        
+
         if (!product) return false
-        
+
         const userId = user._id || user.id
         const sellerId = product.sellerId?._id || product.sellerId || product.seller?._id || product.seller
-        
+
         // So sánh dạng string để đảm bảo chính xác
         return userId && sellerId && String(userId) === String(sellerId)
     }, [user, isAuthenticated, product])
@@ -251,6 +252,48 @@ function ProductDetail() {
             alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
         } finally {
             setIsAddingToCart(false)
+        }
+    }
+
+    const handleChatWithSeller = async () => {
+        if (!isAuthenticated) {
+            alert('Vui lòng đăng nhập để chat với người bán!')
+            navigate('/login')
+            return
+        }
+
+        if (user.role !== 'customer') {
+            alert('Chỉ khách hàng mới có thể chat với người bán!')
+            return
+        }
+
+        const sellerId = product.sellerId?._id || product.sellerId || product.seller?._id || product.seller
+        if (!sellerId) {
+            alert('Không tìm thấy thông tin người bán!')
+            return
+        }
+
+        try {
+            // Tạo hoặc lấy conversation
+            const response = await fetch('http://localhost:5000/api/chat/conversations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ sellerId })
+            })
+
+            if (response.ok) {
+                const conversation = await response.json()
+                navigate(`/chat/${conversation._id}`)
+            } else {
+                const error = await response.json()
+                alert(error.message || 'Không thể tạo cuộc trò chuyện')
+            }
+        } catch (err) {
+            console.error('Error starting chat:', err)
+            alert('Có lỗi xảy ra khi bắt đầu chat')
         }
     }
 
@@ -456,11 +499,11 @@ function ProductDetail() {
                                 <div className="d-flex align-items-center">
                                     <div className="stars me-2">
                                         {[...Array(5)].map((_, i) => (
-                                            <FiStar 
-                                                key={i} 
-                                                size={18} 
-                                                color="#ffc107" 
-                                                fill={i < Math.round(parseFloat(averageRating)) ? "#ffc107" : "none"} 
+                                            <FiStar
+                                                key={i}
+                                                size={18}
+                                                color="#ffc107"
+                                                fill={i < Math.round(parseFloat(averageRating)) ? "#ffc107" : "none"}
                                             />
                                         ))}
                                     </div>
@@ -565,6 +608,16 @@ function ProductDetail() {
                                             }
                                         </Button>
                                     )}
+                                    {(product.sellerId?._id || product.sellerId) && !isOwnProduct && isAuthenticated && user.role === 'customer' && (
+                                        <Button
+                                            variant="outline-primary"
+                                            size="lg"
+                                            onClick={handleChatWithSeller}
+                                        >
+                                            <FiMessageSquare className="me-2" size={20} />
+                                            Chat với người bán
+                                        </Button>
+                                    )}
                                     {(product.sellerId?._id || product.sellerId) && (
                                         <Button
                                             variant="outline-secondary"
@@ -649,7 +702,7 @@ function ProductDetail() {
                     </Col>
                 </Row>
             </Container>
-            
+
             {/* Edit Product Modal */}
             <Modal show={showEditModal} onHide={() => setShowEditModal(false)} size="lg">
                 <Modal.Header closeButton>
@@ -736,8 +789,8 @@ function ProductDetail() {
                         <Button variant="secondary" onClick={() => setShowEditModal(false)}>
                             Hủy
                         </Button>
-                        <Button 
-                            variant="primary" 
+                        <Button
+                            variant="primary"
                             type="submit"
                             style={{
                                 background: "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
@@ -749,7 +802,7 @@ function ProductDetail() {
                     </Modal.Footer>
                 </Form>
             </Modal>
-            
+
             <Footer />
         </div>
     )
