@@ -8,14 +8,15 @@ const RoleRedirect = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'admin') {
-        navigate('/');
-      } else if (user.role === 'seller') {
-        navigate('/');
-      } else if (user.role === 'shipper') {
-        navigate('/');
-      } else if (user.role === 'devadmin') {
+      // Redirect theo role đến dashboard tương ứng
+      if (user.role === 'devadmin') {
+        navigate('/admin/dashboard');
+      } else if (user.role === 'admin') {
         navigate('/admin');
+      } else if (user.role === 'seller') {
+        navigate('/seller');
+      } else if (user.role === 'shipper') {
+        navigate('/shipper');
       } else {
         navigate('/');
       }

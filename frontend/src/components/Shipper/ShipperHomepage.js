@@ -1,10 +1,17 @@
 import React from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { FiTruck, FiPackage, FiClock, FiCheckCircle } from 'react-icons/fi';
+import { FiTruck, FiPackage, FiClock, FiCheckCircle, FiLogOut } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
 
 const ShipperHomepage = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
 
   const quickActions = [
     {
@@ -100,14 +107,17 @@ const ShipperHomepage = () => {
           </Card>
         </Col>
       </Row>
-      <Row>
-        <Col>
+      {/* Logout Button */}
+      <Row className="mt-5">
+        <Col className="text-center">
           <Button 
-            variant="secondary" 
-            className="mt-4"
-            onClick={() => navigate('/')}
+            variant="outline-danger" 
+            size="lg"
+            onClick={handleLogout}
+            className="d-inline-flex align-items-center"
           >
-            Quay lại cửa hàng
+            <FiLogOut className="me-2" />
+            Đăng xuất
           </Button>
         </Col>
       </Row>
