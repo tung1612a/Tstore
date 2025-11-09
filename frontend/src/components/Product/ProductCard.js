@@ -202,25 +202,23 @@ function ProductCard({ product, hideStoreButton = false }) {
 
         {isOwnProduct ? (
           <Button
-            variant="warning"
+            variant="primary"
             size="sm"
             className="w-100 d-flex align-items-center justify-content-center"
-            style={{
-              borderRadius: "8px",
-              fontWeight: "600",
-            }}
             onClick={(e) => {
               e.stopPropagation();
-              navigate(`/seller/products`, {
-                state: {
-                  editProduct: product,
-                  apiEndpoint: `http://localhost:5000/api/seller/products/${product._id}`
-                }
-              });
+              navigate('/seller/products', { state: { editProduct: product } });
+            }}
+            style={{
+              background: "linear-gradient(135deg, #ee4d2d 0%, #ff6b35 100%)",
+              border: "none",
+              borderRadius: "8px",
+              fontWeight: "600",
+              cursor: "pointer",
             }}
           >
             <FiEdit className="me-2" size={16} />
-            {t('productCard.6')}
+            Chỉnh sửa sản phẩm
           </Button>
         ) : (
           <Button

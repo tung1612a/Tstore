@@ -25,6 +25,7 @@ const SellerProducts = () => {
     price: '',
     description: '',
     stock: '',
+    maxPurchaseQuantity: '',
     image: '',
     categoryId: ''
   });
@@ -36,6 +37,7 @@ const SellerProducts = () => {
     title: '',
     price: '',
     stock: '',
+    maxPurchaseQuantity: '',
     description: '',
     image: ''
   });
@@ -43,6 +45,7 @@ const SellerProducts = () => {
     title: false,
     price: false,
     stock: false,
+    maxPurchaseQuantity: false,
     description: false,
     image: false
   });
@@ -62,6 +65,7 @@ const SellerProducts = () => {
         price: state.editProduct.price.toString(),
         description: state.editProduct.description || '',
         stock: state.editProduct.stock.toString(),
+        maxPurchaseQuantity: state.editProduct.maxPurchaseQuantity ? state.editProduct.maxPurchaseQuantity.toString() : '',
         image: imageUrl,
         categoryId: state.editProduct.categoryId || ''
       });
@@ -163,6 +167,24 @@ const SellerProducts = () => {
     return '';
   };
 
+  const validateMaxPurchaseQuantity = (maxPurchaseQuantity, stock) => {
+    if (maxPurchaseQuantity === '' || maxPurchaseQuantity === null || maxPurchaseQuantity === undefined) {
+      return ''; // Optional field
+    }
+    const numMaxPurchaseQuantity = parseInt(maxPurchaseQuantity);
+    if (isNaN(numMaxPurchaseQuantity)) {
+      return 'Số lượng mua tối đa phải là số nguyên';
+    }
+    if (numMaxPurchaseQuantity < 1) {
+      return 'Số lượng mua tối đa phải lớn hơn 0';
+    }
+    const numStock = parseInt(stock);
+    if (!isNaN(numStock) && numMaxPurchaseQuantity > numStock) {
+      return 'Số lượng mua tối đa không được vượt quá số lượng tồn kho';
+    }
+    return '';
+  };
+
   const validateDescription = (description) => {
     if (description && description.length > 1000) {
       return 'Mô tả không được vượt quá 1000 ký tự';
@@ -185,6 +207,7 @@ const SellerProducts = () => {
       title: validateTitle(formData.title),
       price: validatePrice(formData.price),
       stock: validateStock(formData.stock),
+      maxPurchaseQuantity: validateMaxPurchaseQuantity(formData.maxPurchaseQuantity, formData.stock),
       description: validateDescription(formData.description),
       image: validateImage(!!productImage, !!editingProduct, !!imagePreview && !productImage)
     };
@@ -200,6 +223,7 @@ const SellerProducts = () => {
       title: true,
       price: true,
       stock: true,
+      maxPurchaseQuantity: true,
       description: true,
       image: true
     });
@@ -223,6 +247,9 @@ const SellerProducts = () => {
       submitData.append('price', parseFloat(formData.price));
       submitData.append('description', formData.description.trim());
       submitData.append('stock', parseInt(formData.stock));
+      if (formData.maxPurchaseQuantity && formData.maxPurchaseQuantity !== '') {
+        submitData.append('maxPurchaseQuantity', parseInt(formData.maxPurchaseQuantity));
+      }
       submitData.append('categoryId', formData.categoryId);
       
       // Chỉ append file nếu có file mới được chọn
@@ -243,11 +270,11 @@ const SellerProducts = () => {
         showAlert(editingProduct ? 'Cập nhật sản phẩm thành công!' : 'Thêm sản phẩm thành công!');
         setShowModal(false);
         setEditingProduct(null);
-        setFormData({ title: '', price: '', description: '', stock: '', image: '', categoryId: '' });
+        setFormData({ title: '', price: '', description: '', stock: '', maxPurchaseQuantity: '', image: '', categoryId: '' });
         setProductImage(null);
         setImagePreview(null);
-        setErrors({ title: '', price: '', stock: '', description: '', image: '' });
-        setTouched({ title: false, price: false, stock: false, description: false, image: false });
+        setErrors({ title: '', price: '', stock: '', maxPurchaseQuantity: '', description: '', image: '' });
+        setTouched({ title: false, price: false, stock: false, maxPurchaseQuantity: false, description: false, image: false });
         fetchProducts();
       } else {
         const error = await response.json();
@@ -267,13 +294,14 @@ const SellerProducts = () => {
       price: product.price.toString(),
       description: product.description || '',
       stock: product.stock.toString(),
+      maxPurchaseQuantity: product.maxPurchaseQuantity ? product.maxPurchaseQuantity.toString() : '',
       image: imageUrl,
       categoryId: product.categoryId || ''
     });
     setProductImage(null);
     setImagePreview(imageUrl ? (imageUrl.startsWith('http') ? imageUrl : `http://localhost:5000${imageUrl}`) : null);
-    setErrors({ title: '', price: '', stock: '', description: '', image: '' });
-    setTouched({ title: false, price: false, stock: false, description: false, image: false });
+    setErrors({ title: '', price: '', stock: '', maxPurchaseQuantity: '', description: '', image: '' });
+    setTouched({ title: false, price: false, stock: false, maxPurchaseQuantity: false, description: false, image: false });
     setShowModal(true);
   };
 
@@ -292,6 +320,14 @@ const SellerProducts = () => {
         break;
       case 'stock':
         error = validateStock(value);
+        // Re-validate maxPurchaseQuantity when stock changes
+        if (formData.maxPurchaseQuantity) {
+          const maxPurchaseError = validateMaxPurchaseQuantity(formData.maxPurchaseQuantity, value);
+          setErrors(prev => ({ ...prev, maxPurchaseQuantity: maxPurchaseError }));
+        }
+        break;
+      case 'maxPurchaseQuantity':
+        error = validateMaxPurchaseQuantity(value, formData.stock);
         break;
       case 'description':
         error = validateDescription(value);
@@ -327,11 +363,11 @@ const SellerProducts = () => {
 
   const handleAddNew = () => {
     setEditingProduct(null);
-    setFormData({ title: '', price: '', description: '', stock: '', image: '', categoryId: '' });
+    setFormData({ title: '', price: '', description: '', stock: '', maxPurchaseQuantity: '', image: '', categoryId: '' });
     setProductImage(null);
     setImagePreview(null);
-    setErrors({ title: '', price: '', stock: '', description: '', image: '' });
-    setTouched({ title: false, price: false, stock: false, description: false, image: false });
+    setErrors({ title: '', price: '', stock: '', maxPurchaseQuantity: '', description: '', image: '' });
+    setTouched({ title: false, price: false, stock: false, maxPurchaseQuantity: false, description: false, image: false });
     setShowModal(true);
   };
 
@@ -665,6 +701,28 @@ const SellerProducts = () => {
                   )}
                   <Form.Text className="text-muted">
                     Số lượng phải là số nguyên không âm
+                  </Form.Text>
+                </Form.Group>
+              </Col>
+              <Col md={4}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Số lượng mua tối đa/đơn hàng</Form.Label>
+                  <Form.Control
+                    type="number"
+                    min="1"
+                    placeholder="Không giới hạn"
+                    value={formData.maxPurchaseQuantity}
+                    onChange={(e) => handleFieldChange('maxPurchaseQuantity', e.target.value)}
+                    onBlur={() => setTouched(prev => ({ ...prev, maxPurchaseQuantity: true }))}
+                    isInvalid={touched.maxPurchaseQuantity && !!errors.maxPurchaseQuantity}
+                  />
+                  {touched.maxPurchaseQuantity && errors.maxPurchaseQuantity && (
+                    <Form.Control.Feedback type="invalid">
+                      {errors.maxPurchaseQuantity}
+                    </Form.Control.Feedback>
+                  )}
+                  <Form.Text className="text-muted">
+                    Để trống nếu không giới hạn. Tối đa không được vượt quá số lượng tồn kho.
                   </Form.Text>
                 </Form.Group>
               </Col>

@@ -1,20 +1,30 @@
 .products-grid {
   display: grid;
-  /* Tạo các cột có chiều rộng tối thiểu 220px và tối đa 1fr (chiếm không gian bằng nhau) */
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 24px; /* Khoảng cách giữa các sản phẩm */
-  padding: 20px 0; /* Thêm khoảng đệm trên dưới */
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  padding: 1.5rem 0;
 }
 
 .loading-message,
 .error-message,
 .empty-message {
   text-align: center;
-  padding: 40px;
-  font-size: 1.2rem;
-  color: #666;
+  padding: 60px 20px;
+  font-size: 1.25rem;
+  color: #6c757d;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+  margin: 2rem 0;
+  font-weight: 500;
 }
 
 .error-message {
-  color: #d9534f; /* Màu đỏ cho lỗi */
+  color: #ee4d2d;
+  background: linear-gradient(135deg, rgba(238, 77, 45, 0.05) 0%, rgba(255, 107, 53, 0.05) 100%);
+  border: 2px solid rgba(238, 77, 45, 0.2);
+}
+
+.empty-message {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }

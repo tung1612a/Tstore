@@ -8,6 +8,15 @@ const getProductStock = async (productId) => {
   return product?.stock ?? 0;
 };
 
+// Helper function to get product with stock and maxPurchaseQuantity
+const getProductInfo = async (productId) => {
+  const product = await Product.findById(productId).select('stock maxPurchaseQuantity');
+  return {
+    stock: product?.stock ?? 0,
+    maxPurchaseQuantity: product?.maxPurchaseQuantity ?? null
+  };
+};
+
 // Lấy giỏ hàng của user
 export const getCart = async (req, res) => {
   try {
@@ -16,7 +25,7 @@ export const getCart = async (req, res) => {
         path: 'items',
         populate: {
           path: 'productId',
-          select: 'title price image imageURL sellerId stock',
+          select: 'title price image imageURL sellerId stock maxPurchaseQuantity',
           populate: { path: 'sellerId', select: 'fullName' }
         }
       });
@@ -30,7 +39,7 @@ export const getCart = async (req, res) => {
       cart.items
         .filter(ci => ci?.productId)
         .map(async (ci) => {
-          const stock = await getProductStock(ci.productId._id);
+          const productInfo = await getProductInfo(ci.productId._id);
           return {
             _id: ci.productId._id,
             title: ci.productId.title,
@@ -38,7 +47,8 @@ export const getCart = async (req, res) => {
             image: ci.productId.image,
             imageURL: ci.productId.imageURL,
             quantity: ci.quantity,
-            stock: stock,
+            stock: productInfo.stock,
+            maxPurchaseQuantity: productInfo.maxPurchaseQuantity,
             sellerId: ci.productId.sellerId,
             addedAt: ci.createdAt
           };
@@ -63,8 +73,11 @@ export const addToCart = async (req, res) => {
       return res.status(404).json({ message: 'Sản phẩm không tồn tại' });
     }
 
-    // Kiểm tra stock
-    const availableStock = await getProductStock(productId);
+    // Kiểm tra stock và maxPurchaseQuantity
+    const productInfo = await getProductInfo(productId);
+    const availableStock = productInfo.stock;
+    const maxPurchaseQuantity = productInfo.maxPurchaseQuantity;
+    
     if (availableStock <= 0) {
       return res.status(400).json({ message: 'Sản phẩm đã hết hàng' });
     }
@@ -86,6 +99,13 @@ export const addToCart = async (req, res) => {
       });
     }
 
+    // Kiểm tra maxPurchaseQuantity nếu có
+    if (maxPurchaseQuantity !== null && newQuantity > maxPurchaseQuantity) {
+      return res.status(400).json({ 
+        message: `Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng. Bạn đã có ${cartItem?.quantity || 0} sản phẩm trong giỏ hàng.` 
+      });
+    }
+
     if (cartItem) {
       cartItem.quantity = newQuantity;
       await cartItem.save();
@@ -99,14 +119,14 @@ export const addToCart = async (req, res) => {
     const populated = await Cart.findById(cart._id)
       .populate({
         path: 'items',
-        populate: { path: 'productId', select: 'title price image imageURL sellerId stock', populate: { path: 'sellerId', select: 'fullName' } }
+        populate: { path: 'productId', select: 'title price image imageURL sellerId stock maxPurchaseQuantity', populate: { path: 'sellerId', select: 'fullName' } }
       });
 
     const formattedItems = await Promise.all(
       populated.items
         .filter(ci => ci?.productId)
         .map(async (ci) => {
-          const stock = await getProductStock(ci.productId._id);
+          const productInfo = await getProductInfo(ci.productId._id);
           return {
             _id: ci.productId._id,
             title: ci.productId.title,
@@ -114,7 +134,8 @@ export const addToCart = async (req, res) => {
             image: ci.productId.image,
             imageURL: ci.productId.imageURL,
             quantity: ci.quantity,
-            stock: stock,
+            stock: productInfo.stock,
+            maxPurchaseQuantity: productInfo.maxPurchaseQuantity,
             sellerId: ci.productId.sellerId,
             addedAt: ci.createdAt
           };
@@ -153,11 +174,21 @@ export const updateQuantity = async (req, res) => {
       cart.items = cart.items.filter(id => id.toString() !== cartItem._id.toString());
       await cart.save();
     } else {
-      // Kiểm tra stock trước khi cập nhật
-      const availableStock = await getProductStock(productId);
+      // Kiểm tra stock và maxPurchaseQuantity trước khi cập nhật
+      const productInfo = await getProductInfo(productId);
+      const availableStock = productInfo.stock;
+      const maxPurchaseQuantity = productInfo.maxPurchaseQuantity;
+      
       if (quantity > availableStock) {
         return res.status(400).json({ 
           message: `Chỉ còn ${availableStock} sản phẩm trong kho` 
+        });
+      }
+
+      // Kiểm tra maxPurchaseQuantity nếu có
+      if (maxPurchaseQuantity !== null && quantity > maxPurchaseQuantity) {
+        return res.status(400).json({ 
+          message: `Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng` 
         });
       }
       
@@ -168,14 +199,14 @@ export const updateQuantity = async (req, res) => {
     const populated = await Cart.findById(cart._id)
       .populate({
         path: 'items',
-        populate: { path: 'productId', select: 'title price image imageURL sellerId stock', populate: { path: 'sellerId', select: 'fullName' } }
+        populate: { path: 'productId', select: 'title price image imageURL sellerId stock maxPurchaseQuantity', populate: { path: 'sellerId', select: 'fullName' } }
       });
 
     const formattedItems = await Promise.all(
       populated.items
         .filter(ci => ci?.productId)
         .map(async (ci) => {
-          const stock = await getProductStock(ci.productId._id);
+          const productInfo = await getProductInfo(ci.productId._id);
           return {
             _id: ci.productId._id,
             title: ci.productId.title,
@@ -183,7 +214,8 @@ export const updateQuantity = async (req, res) => {
             image: ci.productId.image,
             imageURL: ci.productId.imageURL,
             quantity: ci.quantity,
-            stock: stock,
+            stock: productInfo.stock,
+            maxPurchaseQuantity: productInfo.maxPurchaseQuantity,
             sellerId: ci.productId.sellerId,
             addedAt: ci.createdAt
           };
@@ -217,14 +249,14 @@ export const removeFromCart = async (req, res) => {
     const populated = await Cart.findById(cart._id)
       .populate({
         path: 'items',
-        populate: { path: 'productId', select: 'title price image imageURL sellerId stock', populate: { path: 'sellerId', select: 'fullName' } }
+        populate: { path: 'productId', select: 'title price image imageURL sellerId stock maxPurchaseQuantity', populate: { path: 'sellerId', select: 'fullName' } }
       });
 
     const formattedItems = await Promise.all(
       populated.items
         .filter(ci => ci?.productId)
         .map(async (ci) => {
-          const stock = await getProductStock(ci.productId._id);
+          const productInfo = await getProductInfo(ci.productId._id);
           return {
             _id: ci.productId._id,
             title: ci.productId.title,
@@ -232,7 +264,8 @@ export const removeFromCart = async (req, res) => {
             image: ci.productId.image,
             imageURL: ci.productId.imageURL,
             quantity: ci.quantity,
-            stock: stock,
+            stock: productInfo.stock,
+            maxPurchaseQuantity: productInfo.maxPurchaseQuantity,
             sellerId: ci.productId.sellerId,
             addedAt: ci.createdAt
           };

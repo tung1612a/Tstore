@@ -21,6 +21,13 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
       return;
     }
     
+    // Kiểm tra maxPurchaseQuantity nếu có
+    const maxPurchaseQuantity = item.maxPurchaseQuantity;
+    if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && newQuantity > maxPurchaseQuantity) {
+      alert(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
+      return;
+    }
+    
     try {
       await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
     } catch (error) {
@@ -43,11 +50,18 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
   const handleQuantityInputChange = async (e) => {
     const value = parseInt(e.target.value) || 1;
     const availableStock = item.stock ?? 0;
+    const maxPurchaseQuantity = item.maxPurchaseQuantity;
     
-    // Giới hạn giá trị nhập vào không vượt quá stock
-    const limitedValue = Math.min(value, availableStock);
+    // Giới hạn giá trị nhập vào không vượt quá stock và maxPurchaseQuantity
+    let limitedValue = Math.min(value, availableStock);
+    if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined) {
+      limitedValue = Math.min(limitedValue, maxPurchaseQuantity);
+    }
+    
     if (value > availableStock) {
       alert(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+    } else if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && value > maxPurchaseQuantity) {
+      alert(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
     }
     
     await handleQuantityChange(limitedValue);
@@ -126,7 +140,11 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
               <Form.Control
                 type="number"
                 min="1"
-                max={item.stock ?? undefined}
+                max={
+                  item.maxPurchaseQuantity !== null && item.maxPurchaseQuantity !== undefined
+                    ? Math.min(item.stock ?? Infinity, item.maxPurchaseQuantity)
+                    : item.stock ?? undefined
+                }
                 value={item.quantity}
                 onChange={handleQuantityInputChange}
                 className="quantity-input text-center mx-2"
@@ -138,15 +156,44 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
                 size="sm"
                 className="quantity-btn"
                 onClick={() => handleQuantityChange(item.quantity + 1)}
-                disabled={item.stock !== undefined && item.quantity >= item.stock}
-                title={item.stock !== undefined && item.quantity >= item.stock ? `Chỉ còn ${item.stock} sản phẩm` : ''}
+                disabled={
+                  (item.stock !== undefined && item.quantity >= item.stock) ||
+                  (item.maxPurchaseQuantity !== null && 
+                   item.maxPurchaseQuantity !== undefined && 
+                   item.quantity >= item.maxPurchaseQuantity)
+                }
+                title={
+                  item.maxPurchaseQuantity !== null && item.maxPurchaseQuantity !== undefined && item.quantity >= item.maxPurchaseQuantity
+                    ? `Số lượng mua tối đa: ${item.maxPurchaseQuantity} sản phẩm/đơn hàng`
+                    : item.stock !== undefined && item.quantity >= item.stock
+                    ? `Chỉ còn ${item.stock} sản phẩm`
+                    : ''
+                }
               >
                 <FiPlus size={14} />
               </Button>
             </div>
-            {item.stock !== undefined && item.quantity >= item.stock && (
+            {item.maxPurchaseQuantity !== null && 
+             item.maxPurchaseQuantity !== undefined && 
+             item.quantity >= item.maxPurchaseQuantity && (
+              <small className="text-danger d-block mt-1">
+                Đã đạt giới hạn mua tối đa ({item.maxPurchaseQuantity} sản phẩm/đơn hàng)
+              </small>
+            )}
+            {item.stock !== undefined && 
+             item.quantity >= item.stock && 
+             (item.maxPurchaseQuantity === null || 
+              item.maxPurchaseQuantity === undefined || 
+              item.maxPurchaseQuantity > item.stock) && (
               <small className="text-danger d-block mt-1">
                 Đã đạt giới hạn tồn kho
+              </small>
+            )}
+            {item.maxPurchaseQuantity !== null && 
+             item.maxPurchaseQuantity !== undefined && 
+             item.quantity < item.maxPurchaseQuantity && (
+              <small className="text-muted d-block mt-1">
+                Giới hạn mua: {item.maxPurchaseQuantity} sản phẩm/đơn hàng
               </small>
             )}
           </Col>

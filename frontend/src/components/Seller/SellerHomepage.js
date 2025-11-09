@@ -120,7 +120,7 @@ const SellerHomepage = () => {
         <Row>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
-              <Card.Header className="bg-primary text-white">
+              <Card.Header className="bg-primary text-dark">
                 <h5 className="mb-0">{t('seller.manageProducts')}</h5>
               </Card.Header>
               <Card.Body>
@@ -140,7 +140,7 @@ const SellerHomepage = () => {
           </Col>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
-              <Card.Header className="bg-success text-white">
+              <Card.Header className="bg-success text-dark">
                 <h5 className="mb-0">{t('seller.manageOrders')}</h5>
               </Card.Header>
               <Card.Body>
@@ -154,7 +154,7 @@ const SellerHomepage = () => {
           </Col>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
-              <Card.Header className="bg-danger text-white">
+              <Card.Header className="bg-danger text-dark">
                 <h5 className="mb-0">Khiếu nại</h5>
               </Card.Header>
               <Card.Body>
@@ -168,7 +168,7 @@ const SellerHomepage = () => {
           </Col>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
-              <Card.Header className="bg-info text-white">
+              <Card.Header className="bg-info text-dark">
                 <h5 className="mb-0">{t('seller.reports')}</h5>
               </Card.Header>
               <Card.Body>
@@ -182,7 +182,7 @@ const SellerHomepage = () => {
           </Col>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
-              <Card.Header className="bg-warning text-white">
+              <Card.Header className="bg-warning text-dark">
                 <h5 className="mb-0">{t('seller.settings')}</h5>
               </Card.Header>
               <Card.Body>
@@ -201,7 +201,7 @@ const SellerHomepage = () => {
           <Row className="mt-4">
             <Col>
               <Card className="border-0 shadow-sm">
-                <Card.Header className="bg-warning text-white">
+                <Card.Header className="bg-warning text-dark">
                   <h5 className="mb-0">{t('seller.lowStock')}</h5>
                 </Card.Header>
                 <Card.Body>

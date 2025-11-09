@@ -169,7 +169,7 @@ export const getSellerProducts = async (req, res) => {
 export const createProduct = async (req, res) => {
   try {
     const sellerId = req.user._id;
-    const { title, price, stock, description, categoryId } = req.body;
+    const { title, price, stock, description, categoryId, maxPurchaseQuantity } = req.body;
 
     // Validate title
     if (!title || typeof title !== 'string' || !title.trim()) {
@@ -213,6 +213,21 @@ export const createProduct = async (req, res) => {
       return res.status(400).json({ message: 'Số lượng tồn kho không được vượt quá 500' });
     }
 
+    // Validate maxPurchaseQuantity
+    let numMaxPurchaseQuantity = null;
+    if (maxPurchaseQuantity !== undefined && maxPurchaseQuantity !== '' && maxPurchaseQuantity !== null) {
+      numMaxPurchaseQuantity = parseInt(maxPurchaseQuantity);
+      if (isNaN(numMaxPurchaseQuantity)) {
+        return res.status(400).json({ message: 'Số lượng mua tối đa phải là số nguyên' });
+      }
+      if (numMaxPurchaseQuantity < 1) {
+        return res.status(400).json({ message: 'Số lượng mua tối đa phải lớn hơn 0' });
+      }
+      if (numMaxPurchaseQuantity > numStock) {
+        return res.status(400).json({ message: 'Số lượng mua tối đa không được vượt quá số lượng tồn kho' });
+      }
+    }
+
     // Validate description
     if (description && typeof description === 'string' && description.length > 1000) {
       return res.status(400).json({ message: 'Mô tả không được vượt quá 1000 ký tự' });
@@ -227,6 +242,7 @@ export const createProduct = async (req, res) => {
       title: trimmedTitle,
       price: numPrice,
       stock: numStock,
+      maxPurchaseQuantity: numMaxPurchaseQuantity,
       description: description ? description.trim() : '',
       categoryId: categoryId || null,
       sellerId,
@@ -249,7 +265,7 @@ export const updateProduct = async (req, res) => {
 
     if (!product) return res.status(404).json({ message: "Product not found" });
 
-    const { title, price, stock, description, categoryId } = req.body;
+    const { title, price, stock, description, categoryId, maxPurchaseQuantity } = req.body;
 
     // Validate title nếu có
     if (title !== undefined) {
@@ -300,6 +316,26 @@ export const updateProduct = async (req, res) => {
         return res.status(400).json({ message: 'Số lượng tồn kho không được vượt quá 500' });
       }
       product.stock = numStock;
+    }
+
+    // Validate maxPurchaseQuantity nếu có
+    if (maxPurchaseQuantity !== undefined) {
+      if (maxPurchaseQuantity === '' || maxPurchaseQuantity === null) {
+        product.maxPurchaseQuantity = null;
+      } else {
+        const numMaxPurchaseQuantity = parseInt(maxPurchaseQuantity);
+        if (isNaN(numMaxPurchaseQuantity)) {
+          return res.status(400).json({ message: 'Số lượng mua tối đa phải là số nguyên' });
+        }
+        if (numMaxPurchaseQuantity < 1) {
+          return res.status(400).json({ message: 'Số lượng mua tối đa phải lớn hơn 0' });
+        }
+        const currentStock = product.stock;
+        if (numMaxPurchaseQuantity > currentStock) {
+          return res.status(400).json({ message: 'Số lượng mua tối đa không được vượt quá số lượng tồn kho' });
+        }
+        product.maxPurchaseQuantity = numMaxPurchaseQuantity;
+      }
     }
 
     // Validate description nếu có
