@@ -13,7 +13,16 @@ const messageSchema = new mongoose.Schema({
   },
   content: {
     type: String,
-    required: true,
+    default: "",
+  },
+  imageUrl: {
+    type: String,
+    default: null,
+  },
+  messageType: {
+    type: String,
+    enum: ["text", "image", "text_image"],
+    default: "text",
   },
   read: {
     type: Boolean,
@@ -25,4 +34,5 @@ const messageSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 export default mongoose.model("Message", messageSchema);
+
 

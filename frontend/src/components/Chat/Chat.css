@@ -113,3 +113,25 @@
   background: #555;
 }
 
+.product-info-card {
+  background-color: #f8f9fa;
+  border-radius: 12px;
+}
+
+.product-info-card:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.message-image img {
+  transition: opacity 0.2s;
+}
+
+.message-image img:hover {
+  opacity: 0.9;
+}
+
+.chat-footer {
+  position: relative;
+}
+
+

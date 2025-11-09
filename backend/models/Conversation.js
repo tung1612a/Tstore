@@ -27,10 +27,16 @@ const conversationSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  productId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Product",
+    default: null,
+  },
 }, { timestamps: true });
 
 // Đảm bảo chỉ có 1 conversation duy nhất giữa 1 customer và 1 seller
 conversationSchema.index({ customerId: 1, sellerId: 1 }, { unique: true });
 
 export default mongoose.model("Conversation", conversationSchema);
+
 

@@ -1,11 +1,12 @@
 import Conversation from "../models/Conversation.js";
 import Message from "../models/Message.js";
 import User from "../models/User.js";
+import Product from "../models/Product.js";
 
 // Tạo hoặc lấy conversation giữa customer và seller
 export const getOrCreateConversation = async (req, res) => {
   try {
-    const { sellerId } = req.body;
+    const { sellerId, productId } = req.body;
     const customerId = req.user._id;
 
     if (!sellerId) {
@@ -23,23 +24,44 @@ export const getOrCreateConversation = async (req, res) => {
       return res.status(403).json({ message: "Only customers can create conversations" });
     }
 
+    // Kiểm tra product nếu có productId
+    if (productId) {
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
+      }
+      // Đảm bảo product thuộc về seller này
+      if (product.sellerId.toString() !== sellerId.toString()) {
+        return res.status(400).json({ message: "Product does not belong to this seller" });
+      }
+    }
+
     // Tìm hoặc tạo conversation
     let conversation = await Conversation.findOne({
       customerId,
       sellerId,
     })
       .populate("customerId", "fullName avatarUrl")
-      .populate("sellerId", "fullName avatarUrl");
+      .populate("sellerId", "fullName avatarUrl")
+      .populate("productId", "title price image imageURL");
 
     if (!conversation) {
       conversation = await Conversation.create({
         customerId,
         sellerId,
+        productId: productId || null,
       });
-      conversation = await Conversation.findById(conversation._id)
-        .populate("customerId", "fullName avatarUrl")
-        .populate("sellerId", "fullName avatarUrl");
+    } else if (productId && !conversation.productId) {
+      // Nếu conversation đã tồn tại nhưng chưa có productId, cập nhật nó
+      conversation.productId = productId;
+      await conversation.save();
     }
+
+    // Populate lại để có thông tin đầy đủ
+    conversation = await Conversation.findById(conversation._id)
+      .populate("customerId", "fullName avatarUrl")
+      .populate("sellerId", "fullName avatarUrl")
+      .populate("productId", "title price image imageURL description stock");
 
     res.json(conversation);
   } catch (err) {
@@ -59,11 +81,13 @@ export const getMyConversations = async (req, res) => {
       conversations = await Conversation.find({ customerId: userId })
         .populate("customerId", "fullName avatarUrl")
         .populate("sellerId", "fullName avatarUrl")
+        .populate("productId", "title price image imageURL")
         .sort({ lastMessageAt: -1 });
     } else if (userRole === "seller") {
       conversations = await Conversation.find({ sellerId: userId })
         .populate("customerId", "fullName avatarUrl")
         .populate("sellerId", "fullName avatarUrl")
+        .populate("productId", "title price image imageURL")
         .sort({ lastMessageAt: -1 });
     } else {
       return res.status(403).json({ message: "Only customers and sellers can view conversations" });
@@ -147,8 +171,8 @@ export const sendMessage = async (req, res) => {
     const { conversationId, content } = req.body;
     const userId = req.user._id;
 
-    if (!conversationId || !content) {
-      return res.status(400).json({ message: "conversationId and content are required" });
+    if (!conversationId) {
+      return res.status(400).json({ message: "conversationId is required" });
     }
 
     // Kiểm tra user có quyền gửi message trong conversation này không
@@ -164,15 +188,32 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
+    // Xử lý ảnh nếu có
+    let imageUrl = null;
+    let messageType = "text";
+    
+    if (req.file) {
+      imageUrl = `/uploads/${req.file.filename}`;
+      messageType = content && content.trim() ? "text_image" : "image";
+    } else if (!content || !content.trim()) {
+      return res.status(400).json({ message: "Content or image is required" });
+    }
+
     // Tạo message
     const message = await Message.create({
       conversationId,
       senderId: userId,
-      content,
+      content: content || "",
+      imageUrl: imageUrl || null,
+      messageType,
     });
 
-    // Cập nhật conversation
-    conversation.lastMessage = content;
+    // Cập nhật conversation last message
+    if (imageUrl) {
+      conversation.lastMessage = content ? `${content} [Hình ảnh]` : "[Hình ảnh]";
+    } else {
+      conversation.lastMessage = content;
+    }
     conversation.lastMessageAt = new Date();
 
     // Tăng unread count cho người nhận và reset unread count của người gửi
@@ -205,7 +246,8 @@ export const getConversation = async (req, res) => {
 
     const conversation = await Conversation.findById(conversationId)
       .populate("customerId", "fullName avatarUrl")
-      .populate("sellerId", "fullName avatarUrl");
+      .populate("sellerId", "fullName avatarUrl")
+      .populate("productId", "title price image imageURL description stock");
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });

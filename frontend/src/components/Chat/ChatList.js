@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Container, Card, ListGroup, Badge, Spinner, Alert, Button } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { FiMessageSquare, FiClock, FiHome } from 'react-icons/fi';
+import { FiMessageSquare, FiClock, FiHome, FiPackage } from 'react-icons/fi';
 import './Chat.css';
 
 function ChatList() {
@@ -159,6 +159,14 @@ function ChatList() {
                         {formatTime(conversation.lastMessageAt)}
                       </small>
                     </div>
+                    {conversation.productId && (
+                      <div className="d-flex align-items-center mb-1">
+                        <FiPackage size={12} className="me-1 text-muted" />
+                        <small className="text-muted" style={{ fontSize: '12px' }}>
+                          {conversation.productId.title}
+                        </small>
+                      </div>
+                    )}
                     <div className="d-flex justify-content-between align-items-center">
                       <p className="mb-0 text-muted text-truncate" style={{ maxWidth: '400px' }}>
                         {conversation.lastMessage || 'Chưa có tin nhắn'}
