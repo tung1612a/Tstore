@@ -8,38 +8,9 @@ import { useToast } from '../../contexts/ToastContext';
 
 function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
   const dispatch = useDispatch();
-  const { showWarning, showError, showConfirm } = useToast();
-  
-  // Helper functions
-  const handleQuantityChange = async (newQuantity) => {
-    if (newQuantity < 1) {
-      return;
-    }
-    
-    // Kiểm tra stock
-    const availableStock = item.stock ?? 0;
-    if (newQuantity > availableStock) {
-      showWarning(`Chỉ còn ${availableStock} sản phẩm trong kho`);
-      return;
-    }
-    
-    // Kiểm tra maxPurchaseQuantity nếu có
-    const maxPurchaseQuantity = item.maxPurchaseQuantity;
-    if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && newQuantity > maxPurchaseQuantity) {
-      showWarning(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
-      return;
-    }
-    
-    try {
-      await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
-    } catch (error) {
-      const errorMessage = error.message || 'Có lỗi xảy ra khi cập nhật số lượng';
-      showError(errorMessage);
-    }
-  };
-  
-  const handleRemove = async () => {
-    showConfirm('Bạn có chắc muốn xóa sản phẩm này?', async () => {
+  const { showWarning, showError } = useToast();
+
+  // Toast & Modal state (PHẢI ở top-level)
   const [showToast, setShowToast] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState('');
   const [toastBg, setToastBg] = React.useState('success');
@@ -51,22 +22,41 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
     setShowToast(true);
   };
 
-  // Helper functions
+  // Cập nhật số lượng
   const handleQuantityChange = async (newQuantity) => {
-    if (newQuantity >= 1) {
-      try {
-        await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
-      } catch (error) {
-        showError('Có lỗi xảy ra khi xóa sản phẩm');
-        showToastNotification('Có lỗi xảy ra khi cập nhật số lượng', 'danger');
-      }
-    });
+    if (newQuantity < 1) return;
+
+    const availableStock = item.stock ?? 0;
+    if (newQuantity > availableStock) {
+      showWarning(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+      return;
+    }
+
+    const maxPurchaseQuantity = item.maxPurchaseQuantity;
+    if (
+      maxPurchaseQuantity !== null &&
+      maxPurchaseQuantity !== undefined &&
+      newQuantity > maxPurchaseQuantity
+    ) {
+      showWarning(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
+      return;
+    }
+
+    try {
+      await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
+    } catch (error) {
+      const errorMessage = error?.message || 'Có lỗi xảy ra khi cập nhật số lượng';
+      showError(errorMessage);
+      showToastNotification(errorMessage, 'danger');
+    }
   };
 
+  // Mở modal xác nhận xoá
   const handleRemove = () => {
     setShowDeleteModal(true);
   };
 
+  // Xác nhận xoá
   const confirmRemove = async () => {
     try {
       await dispatch(removeFromCart(item._id)).unwrap();
@@ -79,36 +69,48 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
     }
   };
 
+  // Nhập số lượng trực tiếp
   const handleQuantityInputChange = async (e) => {
-    const value = parseInt(e.target.value) || 1;
+    const value = parseInt(e.target.value, 10) || 1;
+
     const availableStock = item.stock ?? 0;
     const maxPurchaseQuantity = item.maxPurchaseQuantity;
 
-    // Giới hạn giá trị nhập vào không vượt quá stock và maxPurchaseQuantity
-    let limitedValue = Math.min(value, availableStock);
+    let limitedValue = value;
+    if (item.stock !== undefined) limitedValue = Math.min(limitedValue, availableStock);
     if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined) {
       limitedValue = Math.min(limitedValue, maxPurchaseQuantity);
     }
 
     if (value > availableStock) {
       showWarning(`Chỉ còn ${availableStock} sản phẩm trong kho`);
-    } else if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && value > maxPurchaseQuantity) {
+    } else if (
+      maxPurchaseQuantity !== null &&
+      maxPurchaseQuantity !== undefined &&
+      value > maxPurchaseQuantity
+    ) {
       showWarning(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
     }
 
-    await handleQuantityChange(limitedValue);
+    await handleQuantityChange(limitedValue < 1 ? 1 : limitedValue);
   };
 
-  // Calculate total price for this item
-  const totalPrice = item.price * item.quantity;
+  // Tính tổng
+  const totalPrice = (item.price || 0) * (item.quantity || 0);
 
   return (
     <Card className={`mb-3 cart-item ${!isSelected ? 'opacity-50' : ''}`}>
       <Card.Body>
         <Row className="align-items-center">
           <Col md={1} className="d-flex align-items-center justify-content-center">
-            <Form.Check type="checkbox" checked={isSelected} onChange={onToggleSelect} style={{ cursor: 'pointer' }} />
+            <Form.Check
+              type="checkbox"
+              checked={isSelected}
+              onChange={onToggleSelect}
+              style={{ cursor: 'pointer' }}
+            />
           </Col>
+
           <Col md={2}>
             <div className="cart-item-image">
               {item.image || item.imageURL ? (
@@ -133,7 +135,9 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
             <div className="cart-item-details">
               <h6 className="mb-1 cart-item-title">{item.title}</h6>
               {item.sellerId?.fullName || item.seller?.fullName ? (
-                <p className="text-muted small mb-0">Người bán: {item.sellerId?.fullName || item.seller?.fullName}</p>
+                <p className="text-muted small mb-0">
+                  Người bán: {item.sellerId?.fullName || item.seller?.fullName}
+                </p>
               ) : null}
               <div className="cart-item-price">
                 <span className="text-danger fw-bold">{formatPrice(item.price)}</span>
@@ -154,8 +158,8 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
                 variant="outline-secondary"
                 size="sm"
                 className="quantity-btn"
-                onClick={() => handleQuantityChange(item.quantity - 1)}
-                disabled={item.quantity <= 1}
+                onClick={() => handleQuantityChange((item.quantity || 1) - 1)}
+                disabled={(item.quantity || 1) <= 1}
               >
                 <FiMinus size={14} />
               </Button>
@@ -178,43 +182,46 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
                 variant="outline-secondary"
                 size="sm"
                 className="quantity-btn"
-                onClick={() => handleQuantityChange(item.quantity + 1)}
+                onClick={() => handleQuantityChange((item.quantity || 0) + 1)}
                 disabled={
-                  (item.stock !== undefined && item.quantity >= item.stock) ||
+                  (item.stock !== undefined && (item.quantity || 0) >= item.stock) ||
                   (item.maxPurchaseQuantity !== null &&
                     item.maxPurchaseQuantity !== undefined &&
-                    item.quantity >= item.maxPurchaseQuantity)
+                    (item.quantity || 0) >= item.maxPurchaseQuantity)
                 }
                 title={
                   item.maxPurchaseQuantity !== null &&
                   item.maxPurchaseQuantity !== undefined &&
-                  item.quantity >= item.maxPurchaseQuantity
+                  (item.quantity || 0) >= item.maxPurchaseQuantity
                     ? `Số lượng mua tối đa: ${item.maxPurchaseQuantity} sản phẩm/đơn hàng`
-                    : item.stock !== undefined && item.quantity >= item.stock
-                    ? `Chỉ còn ${item.stock} sản phẩm`
-                    : ''
+                    : item.stock !== undefined && (item.quantity || 0) >= item.stock
+                      ? `Chỉ còn ${item.stock} sản phẩm`
+                      : ''
                 }
               >
                 <FiPlus size={14} />
               </Button>
             </div>
+
             {item.maxPurchaseQuantity !== null &&
               item.maxPurchaseQuantity !== undefined &&
-              item.quantity >= item.maxPurchaseQuantity && (
+              (item.quantity || 0) >= item.maxPurchaseQuantity && (
                 <small className="text-danger d-block mt-1">
                   Đã đạt giới hạn mua tối đa ({item.maxPurchaseQuantity} sản phẩm/đơn hàng)
                 </small>
               )}
+
             {item.stock !== undefined &&
-              item.quantity >= item.stock &&
+              (item.quantity || 0) >= item.stock &&
               (item.maxPurchaseQuantity === null ||
                 item.maxPurchaseQuantity === undefined ||
                 item.maxPurchaseQuantity > item.stock) && (
                 <small className="text-danger d-block mt-1">Đã đạt giới hạn tồn kho</small>
               )}
+
             {item.maxPurchaseQuantity !== null &&
               item.maxPurchaseQuantity !== undefined &&
-              item.quantity < item.maxPurchaseQuantity && (
+              (item.quantity || 0) < item.maxPurchaseQuantity && (
                 <small className="text-muted d-block mt-1">
                   Giới hạn mua: {item.maxPurchaseQuantity} sản phẩm/đơn hàng
                 </small>
