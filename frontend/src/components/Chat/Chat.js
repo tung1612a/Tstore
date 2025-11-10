@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Container, Card, InputGroup, Form, Button, Spinner, Alert, Modal } from 'react-bootstrap';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
 import { FiSend, FiArrowLeft, FiMessageSquare, FiHome, FiPackage, FiImage, FiX } from 'react-icons/fi';
 import './Chat.css';
 
@@ -9,6 +10,7 @@ function Chat() {
     const { conversationId } = useParams();
     const navigate = useNavigate();
     const { user, token, isAuthenticated } = useAuth();
+    const { showWarning, showError } = useToast();
     const [messages, setMessages] = useState([]);
     const [conversation, setConversation] = useState(null);
     const [message, setMessage] = useState('');
@@ -94,11 +96,11 @@ function Chat() {
         const file = e.target.files[0];
         if (file) {
             if (file.size > 5 * 1024 * 1024) {
-                alert('Ảnh không được vượt quá 5MB');
+                showWarning('Ảnh không được vượt quá 5MB');
                 return;
             }
             if (!file.type.startsWith('image/')) {
-                alert('Vui lòng chọn file ảnh');
+                showWarning('Vui lòng chọn file ảnh');
                 return;
             }
             setSelectedImage(file);

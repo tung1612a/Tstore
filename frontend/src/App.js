@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Provider } from "react-redux";
 import { store } from "./store/store";
 import { AuthProvider } from "./contexts/AuthContext";
+import { ToastProvider } from "./contexts/ToastContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Components
@@ -47,7 +48,8 @@ function App() {
   return (
     <Provider store={store}>
       <AuthProvider>
-        <BrowserRouter>
+        <ToastProvider>
+          <BrowserRouter>
 
           <Routes>
             {/* Public routes */}
@@ -111,6 +113,7 @@ function App() {
 
           </Routes>
         </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </Provider>
   );

@@ -4,9 +4,42 @@ import { FiTrash2, FiMinus, FiPlus } from 'react-icons/fi';
 import { useDispatch } from 'react-redux';
 import { updateQuantity, removeFromCart } from '../../store/cartSlice';
 import { formatPrice } from '../../utils/formatters';
+import { useToast } from '../../contexts/ToastContext';
 
 function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
   const dispatch = useDispatch();
+  const { showWarning, showError, showConfirm } = useToast();
+  
+  // Helper functions
+  const handleQuantityChange = async (newQuantity) => {
+    if (newQuantity < 1) {
+      return;
+    }
+    
+    // Kiểm tra stock
+    const availableStock = item.stock ?? 0;
+    if (newQuantity > availableStock) {
+      showWarning(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+      return;
+    }
+    
+    // Kiểm tra maxPurchaseQuantity nếu có
+    const maxPurchaseQuantity = item.maxPurchaseQuantity;
+    if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && newQuantity > maxPurchaseQuantity) {
+      showWarning(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
+      return;
+    }
+    
+    try {
+      await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
+    } catch (error) {
+      const errorMessage = error.message || 'Có lỗi xảy ra khi cập nhật số lượng';
+      showError(errorMessage);
+    }
+  };
+  
+  const handleRemove = async () => {
+    showConfirm('Bạn có chắc muốn xóa sản phẩm này?', async () => {
   const [showToast, setShowToast] = React.useState(false);
   const [toastMessage, setToastMessage] = React.useState('');
   const [toastBg, setToastBg] = React.useState('success');
@@ -24,9 +57,10 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
       try {
         await dispatch(updateQuantity({ productId: item._id, quantity: newQuantity })).unwrap();
       } catch (error) {
+        showError('Có lỗi xảy ra khi xóa sản phẩm');
         showToastNotification('Có lỗi xảy ra khi cập nhật số lượng', 'danger');
       }
-    }
+    });
   };
 
   const handleRemove = () => {
@@ -57,9 +91,9 @@ function CartItem({ item, isSelected = true, onToggleSelect, onRemove }) {
     }
 
     if (value > availableStock) {
-      alert(`Chỉ còn ${availableStock} sản phẩm trong kho`);
+      showWarning(`Chỉ còn ${availableStock} sản phẩm trong kho`);
     } else if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && value > maxPurchaseQuantity) {
-      alert(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
+      showWarning(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
     }
 
     await handleQuantityChange(limitedValue);

@@ -3,10 +3,12 @@ import axios from 'axios';
 import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
 
 function Register() {
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { showSuccess, showError } = useToast();
   const [form, setForm] = useState({
     fullname: '',
     email: '',
@@ -79,10 +81,10 @@ function Register() {
       });
 
       setVerifyingOTP(false);
-      alert(res.data.message || 'Xác nhận email thành công!');
+      showSuccess(res.data.message || 'Xác nhận email thành công!');
       setTimeout(() => {
         navigate('/login', { state: { emailVerified: true } });
-      }, 1000);
+      }, 1500);
     } catch (err) {
       setVerifyingOTP(false);
       const msg = err?.response?.data?.message || 'Mã xác nhận không đúng';
@@ -100,7 +102,7 @@ function Register() {
       const res = await axios.post('/api/auth/resend-verification-email', {
         email: registeredEmail
       });
-      alert(res.data.message || 'Mã xác nhận đã được gửi lại!');
+      showSuccess(res.data.message || 'Mã xác nhận đã được gửi lại!');
       setOtpCode(''); // Xóa mã cũ
       startCountdown(); // Bắt đầu đếm ngược 60 giây
     } catch (err) {

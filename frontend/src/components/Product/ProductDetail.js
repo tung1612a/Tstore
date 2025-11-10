@@ -23,10 +23,12 @@ import "./ProductDetail.css"
 import Footer from "../Footer"
 import ProductReviews from "../ProductReviews"
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
 
 
 function ProductDetail() {
     const { t } = useTranslation();
+    const { showSuccess, showError, showWarning, showInfo } = useToast();
     const { id } = useParams()
     const navigate = useNavigate()
     const location = useLocation()
@@ -176,16 +178,16 @@ function ProductDetail() {
                 const updatedProduct = await response.json()
                 setProduct(updatedProduct)
                 setShowEditModal(false)
-                alert('Cập nhật sản phẩm thành công!')
+                showSuccess('Cập nhật sản phẩm thành công!')
                 // Reload page để cập nhật thông tin
                 window.location.reload()
             } else {
                 const error = await response.json()
-                alert(error.message || 'Có lỗi xảy ra khi cập nhật sản phẩm')
+                showError(error.message || 'Có lỗi xảy ra khi cập nhật sản phẩm')
             }
         } catch (error) {
             console.error('Error updating product:', error)
-            alert('Có lỗi xảy ra khi cập nhật sản phẩm')
+            showError('Có lỗi xảy ra khi cập nhật sản phẩm')
         }
     }
 
@@ -200,14 +202,14 @@ function ProductDetail() {
             return;
         }
         if (newQuantity > stock) {
-            alert(`Chỉ còn ${stock} sản phẩm trong kho`);
+            showWarning(`Chỉ còn ${stock} sản phẩm trong kho`);
             setQuantity(Math.max(1, stock));
             return;
         }
         
         // Validate against maxPurchaseQuantity if set
         if (maxPurchaseQuantity !== null && maxPurchaseQuantity !== undefined && newQuantity > maxPurchaseQuantity) {
-            alert(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
+            showWarning(`Số lượng mua tối đa cho sản phẩm này là ${maxPurchaseQuantity} sản phẩm/đơn hàng`);
             setQuantity(Math.max(1, maxPurchaseQuantity));
             return;
         }
@@ -233,14 +235,14 @@ function ProductDetail() {
     const handleAddToCart = async () => {
         // Kiểm tra nếu chưa đăng nhập
         if (!isAuthenticated) {
-            alert('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
+            showInfo('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!')
             navigate('/login')
             return
         }
 
         // Kiểm tra nếu seller cố mua sản phẩm của chính mình
         if (isOwnProduct) {
-            alert('Bạn không thể mua sản phẩm của chính mình!')
+            showWarning('Bạn không thể mua sản phẩm của chính mình!')
             return
         }
 
@@ -270,10 +272,10 @@ function ProductDetail() {
                 dispatch(addToCartLocal(cartPayload))
             }
 
-            alert(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`)
+            showSuccess(`Đã thêm ${quantity} sản phẩm vào giỏ hàng!`)
         } catch (error) {
             console.error('Error adding to cart:', error)
-            alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
+            showError('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
         } finally {
             setIsAddingToCart(false)
         }
@@ -281,19 +283,19 @@ function ProductDetail() {
 
     const handleChatWithSeller = async () => {
         if (!isAuthenticated) {
-            alert('Vui lòng đăng nhập để chat với người bán!')
+            showInfo('Vui lòng đăng nhập để chat với người bán!')
             navigate('/login')
             return
         }
 
         if (user.role !== 'customer') {
-            alert('Chỉ khách hàng mới có thể chat với người bán!')
+            showWarning('Chỉ khách hàng mới có thể chat với người bán!')
             return
         }
 
         const sellerId = product.sellerId?._id || product.sellerId || product.seller?._id || product.seller
         if (!sellerId) {
-            alert('Không tìm thấy thông tin người bán!')
+            showError('Không tìm thấy thông tin người bán!')
             return
         }
 
@@ -316,11 +318,11 @@ function ProductDetail() {
                 navigate(`/chat/${conversation._id}`)
             } else {
                 const error = await response.json()
-                alert(error.message || 'Không thể tạo cuộc trò chuyện')
+                showError(error.message || 'Không thể tạo cuộc trò chuyện')
             }
         } catch (err) {
             console.error('Error starting chat:', err)
-            alert('Có lỗi xảy ra khi bắt đầu chat')
+            showError('Có lỗi xảy ra khi bắt đầu chat')
         }
     }
 
