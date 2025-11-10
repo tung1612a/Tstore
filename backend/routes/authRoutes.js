@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login, getMe, checkEmail, changePassword, becomeSeller, getSellerApplications, reviewSellerApplication, getMySellerApplication, updateAvatar, updateProfile } from "../controllers/authController.js";
+import { register, login, getMe, checkEmail, changePassword, becomeSeller, getSellerApplications, reviewSellerApplication, getMySellerApplication, updateAvatar, updateProfile, verifyOTP, resendVerificationEmail } from "../controllers/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 import multer from 'multer';
 import path from 'path';
@@ -8,6 +8,8 @@ const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/verify-otp", verifyOTP);
+router.post("/resend-verification-email", resendVerificationEmail);
 router.get("/me", protect, getMe);
 router.post("/forgot-password", async (req, res) => {
 	try {

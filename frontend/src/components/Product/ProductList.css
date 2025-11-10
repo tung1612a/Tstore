@@ -28,35 +28,3 @@
 .empty-message {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
-
-.pagination {
-  margin-top: 16px;
-  display: flex;
-  gap: 6px;
-  justify-content: center;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.page-button {
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.page-button:hover { background: #f8fafc; }
-.page-button:disabled { opacity: 0.4; cursor: not-allowed; }
-.page-button.active {
-  background: #111827;
-  color: #fff;
-  border-color: #111827;
-}
-.page-ellipsis { padding: 0 6px; color: #6b7280; }
-.pagination-info {
-  text-align: center;
-  margin-top: 6px;
-  color: #6b7280;
-  font-size: 12px;
-}

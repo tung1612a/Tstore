@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema({
   cccd: { type: String },
   // Seller store profile
   avatarUrl: { type: String },
+  // Email verification
+  emailVerified: { type: Boolean, default: false },
+  emailVerificationToken: { type: String, default: null },
+  emailVerificationCode: { type: String, default: null },
+  emailVerificationCodeExpires: { type: Date, default: null },
 
 }, { timestamps: true });
 
