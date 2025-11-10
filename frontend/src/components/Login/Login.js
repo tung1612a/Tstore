@@ -6,28 +6,28 @@ import { useTranslation } from 'react-i18next';
 
 function Login() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [form, setForm] = useState({ username: "", password: "" });
+  const [error, setError] = useState('');
+  const [form, setForm] = useState({ username: '', password: '' });
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
   const [showToast, setShowToast] = useState(false);
-  const [toastMessage, setToastMessage] = useState("");
-  const [toastVariant, setToastVariant] = useState("success");
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastVariant, setToastVariant] = useState('success');
 
   useEffect(() => {
     if (location.state?.logoutSuccess) {
-      setToastMessage("Đăng xuất thành công");
-      setToastVariant("success");
+      setToastMessage('Đăng xuất thành công');
+      setToastVariant('success');
       setShowToast(true);
     } else if (location.state?.registerSuccess) {
-      setToastMessage("Đăng ký thành công! Hãy đăng nhập để tiếp tục");
-      setToastVariant("success");
+      setToastMessage('Đăng ký thành công! Hãy đăng nhập để tiếp tục');
+      setToastVariant('success');
       setShowToast(true);
     } else if (location.state?.loginRequired) {
-      setToastMessage("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!");
-      setToastVariant("warning");
+      setToastMessage('Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng!');
+      setToastVariant('warning');
       setShowToast(true);
     }
 
@@ -45,7 +45,7 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setError('');
     setLoading(true);
 
     try {
@@ -56,35 +56,35 @@ function Login() {
         const userRole = result.user?.role;
 
         // Redirect theo role
-        if (userRole === "devadmin") {
-          navigate("/admin/dashboard", { state: { loginSuccess: true } });
-        } else if (userRole === "admin") {
-          navigate("/admin", { state: { loginSuccess: true } });
-        } else if (userRole === "seller") {
-          navigate("/seller", { state: { loginSuccess: true } });
-        } else if (userRole === "shipper") {
-          navigate("/shipper", { state: { loginSuccess: true } });
+        if (userRole === 'devadmin') {
+          navigate('/admin/dashboard', { state: { loginSuccess: true } });
+        } else if (userRole === 'admin') {
+          navigate('/admin', { state: { loginSuccess: true } });
+        } else if (userRole === 'seller') {
+          navigate('/seller', { state: { loginSuccess: true } });
+        } else if (userRole === 'shipper') {
+          navigate('/shipper', { state: { loginSuccess: true } });
         } else {
-          navigate("/", { state: { loginSuccess: true } });
+          navigate('/', { state: { loginSuccess: true } });
         }
       } else {
-        setError(result.message || "Đăng nhập thất bại");
+        setError(result.message || 'Đăng nhập thất bại');
       }
     } catch (err) {
       console.error(err);
-      setError("Có lỗi xảy ra, vui lòng thử lại");
+      setError('Có lỗi xảy ra, vui lòng thử lại');
     } finally {
       setLoading(false);
     }
   };
 
   const handleRegister = () => {
-    navigate("/register");
+    navigate('/register');
   };
 
   return (
     <>
-      <Container className="d-flex justify-content-center align-items-center" style={{ height: "100vh" }}>
+      <Container className="d-flex justify-content-center align-items-center" style={{ height: '100vh' }}>
         <Row className="w-100">
           <Col md={{ span: 4, offset: 4 }}>
             <Card className="shadow-lg border-0 rounded-4">
@@ -120,12 +120,7 @@ function Login() {
 
                   <Row className="g-2">
                     <Col xs={12}>
-                      <Button
-                        variant="primary"
-                        type="submit"
-                        className="w-100"
-                        disabled={loading}
-                      >
+                      <Button variant="primary" type="submit" className="w-100" disabled={loading}>
                         {loading ? (
                           <>
                             <Spinner animation="border" size="sm" className="me-2" /> {t('common.loading')}
@@ -137,19 +132,14 @@ function Login() {
                     </Col>
 
                     <Col xs={12}>
-                      <Button
-                        variant="outline-primary"
-                        type="button"
-                        className="w-100"
-                        onClick={handleRegister}
-                      >
+                      <Button variant="outline-primary" type="button" className="w-100" onClick={handleRegister}>
                         {t('register.title')}
                       </Button>
                     </Col>
                   </Row>
                 </Form>
 
-                <div className="text-center mt-3 text-muted" style={{ fontSize: "0.9rem" }}>
+                <div className="text-center mt-3 text-muted" style={{ fontSize: '0.9rem' }}>
                   {t('login.forgotPassword')} <a href="/forgetPass">{t('login.recoverHere')}</a>
                 </div>
               </Card.Body>
@@ -158,13 +148,7 @@ function Login() {
         </Row>
       </Container>
       <ToastContainer position="top-end" className="p-3">
-        <Toast
-          bg={toastVariant}
-          onClose={() => setShowToast(false)}
-          show={showToast}
-          delay={2000}
-          autohide
-        >
+        <Toast bg={toastVariant} onClose={() => setShowToast(false)} show={showToast} delay={2000} autohide>
           <Toast.Header>
             <strong className="me-auto">Thông báo</strong>
           </Toast.Header>

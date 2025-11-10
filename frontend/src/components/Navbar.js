@@ -1,6 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Navbar, Container, Nav, Dropdown } from 'react-bootstrap';
-import { FiUser, FiShoppingCart, FiLogOut, FiPackage, FiSettings, FiMapPin, FiBarChart, FiTruck, FiAlertTriangle, FiMessageSquare } from 'react-icons/fi';
+import {
+  FiUser,
+  FiShoppingCart,
+  FiLogOut,
+  FiPackage,
+  FiSettings,
+  FiMapPin,
+  FiBarChart,
+  FiTruck,
+  FiAlertTriangle,
+  FiMessageSquare,
+} from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchCart } from '../store/cartSlice';
 import { useCart } from '../hooks/useCart';
@@ -24,7 +35,7 @@ function SiteNavbar() {
 
   const handleLogout = () => {
     logout();
-    navigate("/", { state: { logoutSuccess: true } });
+    navigate('/', { state: { logoutSuccess: true } });
   };
 
   return (
@@ -58,10 +69,22 @@ function SiteNavbar() {
                     <FiUser className="me-2" />
                     {t('profile.title')}
                   </Dropdown.Item>
-                  <Dropdown.Item href={user?.role === 'seller' ? '/seller/orders' : user?.role === 'shipper' ? '/shipper/orders' : '/orders'}>
-                    <FiUser className="me-2" />
-                    {user?.role === 'seller' ? t('seller.manageOrders') : user?.role === 'shipper' ? t('shipper.deliveryOrders') : 'Lịch sử đơn hàng'}
+                  <Dropdown.Item href="/orders">
+                    <FiPackage className="me-2" />
+                    Lịch sử đơn hàng
                   </Dropdown.Item>
+                  {user?.role === 'seller' && (
+                    <Dropdown.Item href="/seller/orders">
+                      <FiPackage className="me-2" />
+                      {t('seller.manageOrders')}
+                    </Dropdown.Item>
+                  )}
+                  {user?.role === 'shipper' && (
+                    <Dropdown.Item href="/shipper/orders">
+                      <FiTruck className="me-2" />
+                      {t('shipper.deliveryOrders')}
+                    </Dropdown.Item>
+                  )}
                   <Dropdown.Item href="/addresses">
                     <FiMapPin className="me-2" />
                     {t('navbar.addresses')}

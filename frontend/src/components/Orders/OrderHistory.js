@@ -18,7 +18,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { selectUserRole, getRole } from '../../store/userSlice';
 import './OrderHistory.css';
-import { Button } from 'react-bootstrap';
+import { Button, Toast, ToastContainer } from 'react-bootstrap';
 import ReviewSection from './ReviewSection';
 
 const PAGE_SIZE = 10;
@@ -60,7 +60,9 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
   }
 
   // Kiểm tra status - chỉ hiển thị khi order đã hoàn thành hoặc đã giao hàng
-  const statusNormalized = String(orderStatus || '').toLowerCase().trim();
+  const statusNormalized = String(orderStatus || '')
+    .toLowerCase()
+    .trim();
   const isCompleted = statusNormalized === 'completed' || orderStatus === 'completed';
   const isDelivered = statusNormalized === 'delivered' || orderStatus === 'delivered';
 
@@ -70,14 +72,16 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
 
   if (showReview) {
     return (
-      <div style={{
-        marginTop: '20px',
-        padding: '20px',
-        background: '#ffffff',
-        borderRadius: '10px',
-        border: '2px solid #e0e0e0',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-      }}>
+      <div
+        style={{
+          marginTop: '20px',
+          padding: '20px',
+          background: '#ffffff',
+          borderRadius: '10px',
+          border: '2px solid #e0e0e0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
           <h4 style={{ margin: 0, color: '#333' }}>Đánh giá sản phẩm</h4>
           <button
@@ -88,16 +92,13 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
               borderRadius: '5px',
               padding: '5px 10px',
               cursor: 'pointer',
-              fontSize: '14px'
+              fontSize: '14px',
             }}
           >
             ✕ Đóng
           </button>
         </div>
-        <ReviewSection
-          productId={String(productId)}
-          orderId={orderId}
-        />
+        <ReviewSection productId={String(productId)} orderId={orderId} />
       </div>
     );
   }
@@ -119,10 +120,10 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
           display: 'inline-flex',
           alignItems: 'center',
           gap: '8px',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
         }}
-        onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-        onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+        onMouseOver={(e) => (e.target.style.transform = 'translateY(-2px)')}
+        onMouseOut={(e) => (e.target.style.transform = 'translateY(0)')}
       >
         ⭐ Đánh giá sản phẩm
       </button>
@@ -143,7 +144,9 @@ const ComplaintButton = ({ productId, orderId, orderStatus, role, onComplaintCli
   }
 
   // Chỉ hiển thị khi order đã hoàn thành hoặc đã giao hàng
-  const statusNormalized = String(orderStatus || '').toLowerCase().trim();
+  const statusNormalized = String(orderStatus || '')
+    .toLowerCase()
+    .trim();
   const isCompleted = statusNormalized === 'completed' || orderStatus === 'completed';
   const isDelivered = statusNormalized === 'delivered' || orderStatus === 'delivered';
 
@@ -169,10 +172,10 @@ const ComplaintButton = ({ productId, orderId, orderStatus, role, onComplaintCli
           alignItems: 'center',
           gap: '8px',
           boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          marginLeft: '10px'
+          marginLeft: '10px',
         }}
-        onMouseOver={(e) => e.target.style.transform = 'translateY(-2px)'}
-        onMouseOut={(e) => e.target.style.transform = 'translateY(0)'}
+        onMouseOver={(e) => (e.target.style.transform = 'translateY(-2px)')}
+        onMouseOut={(e) => (e.target.style.transform = 'translateY(0)')}
       >
         <FiAlertTriangle size={18} />
         Khiếu nại sản phẩm
@@ -182,147 +185,177 @@ const ComplaintButton = ({ productId, orderId, orderStatus, role, onComplaintCli
 };
 
 // Memoized OrderCard component to prevent unnecessary re-renders
-const OrderCard = React.memo(({ order, meta, expanded, details, detailsLoading, toggleDetails, handleOpenCancelModal, handleOpenConfirmReceivedModal, handleOpenComplaintModal, role }) => {
-  return (
-    <div className={`order-card ${expanded[order._id] ? 'expanded' : ''}`}>
-      <div className="card-header">
-        <div className="header-left">
-          <div className="id-area">
-            <div className="order-id">#{order._id.slice(-8)}</div>
-            <div className="order-date">{formatDate(order.createdAt)}</div>
-          </div>
-          <div className="order-meta">
-            <div className="order-total">{order.totalPrice?.toLocaleString()}đ</div>
-            <div className="order-status">
-              <span className="badge" style={{ color: meta.color, background: meta.bg }}>
-                {meta.icon}
-                <span>{meta.label}</span>
-              </span>
+const OrderCard = React.memo(
+  ({
+    order,
+    meta,
+    expanded,
+    details,
+    detailsLoading,
+    toggleDetails,
+    handleOpenCancelModal,
+    handleOpenConfirmReceivedModal,
+    handleOpenComplaintModal,
+    role,
+  }) => {
+    return (
+      <div className={`order-card ${expanded[order._id] ? 'expanded' : ''}`}>
+        <div className="card-header">
+          <div className="header-left">
+            <div className="id-area">
+              <div className="order-id">#{order._id.slice(-8)}</div>
+              <div className="order-date">{formatDate(order.createdAt)}</div>
             </div>
-            {order.paymentStatus && (
-              <div className="order-payment">
-                <span className="badge payment">{order.paymentStatus}</span>
-                <div className="pay-method">{order.paymentMethod || '—'}</div>
+            <div className="order-meta">
+              <div className="order-total">{order.totalPrice?.toLocaleString()}đ</div>
+              <div className="order-status">
+                <span className="badge" style={{ color: meta.color, background: meta.bg }}>
+                  {meta.icon}
+                  <span>{meta.label}</span>
+                </span>
               </div>
-            )}
-          </div>
-        </div>
-        <div className="header-right">
-          <button className="toggle" aria-expanded={!!expanded[order._id]} onClick={() => toggleDetails(order._id)}>
-            <div className="toggle-icon">{expanded[order._id] ? <FiChevronUp /> : <FiChevronDown />}</div>
-          </button>
-        </div>
-      </div>
-
-      <div className={`order-details ${expanded[order._id] ? 'open' : ''}`}>
-        {detailsLoading[order._id] ? (
-          <div className="loading-block">
-            <div className="spinner" />
-          </div>
-        ) : (
-          <>
-            <div className="items-section">
-              <h4 className="section-title">Chi tiết đơn hàng</h4>
-              <div className="items-cards">
-                {(details[order._id]?.items || []).map((item, idx) => (
-                  <div key={item._id || idx}>
-                    <div className="item-card" style={{ '--index': idx }}>
-                      <div className="item-left">
-                        <div className="prod-thumb">
-                          <img src={item.productId?.imageURL || item.productId?.image} alt={item.productId?.title} />
-                        </div>
-                        <div className="prod-info">
-                          <div className="prod-title">{item.productId?.title}</div>
-                          <div className="prod-sub">{item.productId?.description?.slice(0, 80)}</div>
-                        </div>
-                      </div>
-                      <div className="item-right">
-                        <div className="price">{(item.unitPrice || item.productId?.price)?.toLocaleString()}đ</div>
-                        <div className="quantity">
-                          Số lượng: <strong>{item.quantity}</strong>
-                        </div>
-                      </div>
-                    </div>
-                    {/* Nút đánh giá - Hiển thị khi order đã hoàn thành */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-start' }}>
-                      <ReviewButton
-                        productId={item.productId?._id || item.productId ||
-                          (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)}
-                        orderId={order._id}
-                        orderStatus={order.status}
-                        role={role}
-                      />
-                      <ComplaintButton
-                        productId={item.productId?._id || item.productId ||
-                          (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)}
-                        orderId={order._id}
-                        orderStatus={order.status}
-                        role={role}
-                        onComplaintClick={handleOpenComplaintModal}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            {/* Order Actions */}
-            <div className="order-actions" style={{ padding: '20px', borderTop: '1px solid #eee', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-              {/* Cancel Button - Only show for pending/awaiting_delivery orders */}
-              {['pending', 'confirmed', 'awaiting_delivery'].includes(order.status) && (
-                <button
-                  className="btn-cancel-order"
-                  onClick={() => handleOpenCancelModal(order)}
-                  style={{
-                    padding: '12px 24px',
-                    background: 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <FiXCircle size={18} />
-                  Hủy đơn hàng
-                </button>
-              )}
-
-              {/* Confirm Received Button - Only show for delivered orders */}
-              {order.status === 'delivered' && (
-                <button
-                  className="btn-confirm-received"
-                  onClick={() => handleOpenConfirmReceivedModal(order)}
-                  style={{
-                    padding: '12px 24px',
-                    background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px'
-                  }}
-                >
-                  <FiCheckCircle size={18} />
-                  Xác nhận đã nhận hàng
-                </button>
+              {order.paymentStatus && (
+                <div className="order-payment">
+                  <span className="badge payment">{order.paymentStatus}</span>
+                  <div className="pay-method">{order.paymentMethod || '—'}</div>
+                </div>
               )}
             </div>
-          </>
-        )}
+          </div>
+          <div className="header-right">
+            <button className="toggle" aria-expanded={!!expanded[order._id]} onClick={() => toggleDetails(order._id)}>
+              <div className="toggle-icon">{expanded[order._id] ? <FiChevronUp /> : <FiChevronDown />}</div>
+            </button>
+          </div>
+        </div>
+
+        <div className={`order-details ${expanded[order._id] ? 'open' : ''}`}>
+          {detailsLoading[order._id] ? (
+            <div className="loading-block">
+              <div className="spinner" />
+            </div>
+          ) : (
+            <>
+              <div className="items-section">
+                <h4 className="section-title">Chi tiết đơn hàng</h4>
+                <div className="items-cards">
+                  {(details[order._id]?.items || []).map((item, idx) => (
+                    <div key={item._id || idx}>
+                      <div className="item-card" style={{ '--index': idx }}>
+                        <div className="item-left">
+                          <div className="prod-thumb">
+                            <img src={item.productId?.imageURL || item.productId?.image} alt={item.productId?.title} />
+                          </div>
+                          <div className="prod-info">
+                            <div className="prod-title">{item.productId?.title}</div>
+                            <div className="prod-sub">{item.productId?.description?.slice(0, 80)}</div>
+                          </div>
+                        </div>
+                        <div className="item-right">
+                          <div className="price">{(item.unitPrice || item.productId?.price)?.toLocaleString()}đ</div>
+                          <div className="quantity">
+                            Số lượng: <strong>{item.quantity}</strong>
+                          </div>
+                        </div>
+                      </div>
+                      {/* Nút đánh giá - Hiển thị khi order đã hoàn thành */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', alignItems: 'flex-start' }}>
+                        <ReviewButton
+                          productId={
+                            item.productId?._id ||
+                            item.productId ||
+                            (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)
+                          }
+                          orderId={order._id}
+                          orderStatus={order.status}
+                          role={role}
+                        />
+                        <ComplaintButton
+                          productId={
+                            item.productId?._id ||
+                            item.productId ||
+                            (item.productId && typeof item.productId === 'object' ? item.productId.toString() : null)
+                          }
+                          orderId={order._id}
+                          orderStatus={order.status}
+                          role={role}
+                          onComplaintClick={handleOpenComplaintModal}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              {/* Order Actions - Only show for buyer/customer roles */}
+              {(role === 'buyer' || role === 'customer' || !role) && (
+                <div
+                  className="order-actions"
+                  style={{
+                    padding: '20px',
+                    borderTop: '1px solid #eee',
+                    display: 'flex',
+                    gap: '12px',
+                    flexWrap: 'wrap',
+                  }}
+                >
+                  {/* Cancel Button - Only show for pending/awaiting_delivery orders */}
+                  {['pending', 'confirmed', 'awaiting_delivery'].includes(order.status) && (
+                    <button
+                      className="btn-cancel-order"
+                      onClick={() => handleOpenCancelModal(order)}
+                      style={{
+                        padding: '12px 24px',
+                        background: 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <FiXCircle size={18} />
+                      Hủy đơn hàng
+                    </button>
+                  )}
+
+                  {/* Confirm Received Button - Only show for delivered orders */}
+                  {order.status === 'delivered' && (
+                    <button
+                      className="btn-confirm-received"
+                      onClick={() => handleOpenConfirmReceivedModal(order)}
+                      style={{
+                        padding: '12px 24px',
+                        background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '0.95rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s ease',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <FiCheckCircle size={18} />
+                      Xác nhận đã nhận hàng
+                    </button>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
-    </div>
-  );
-});
+    );
+  }
+);
 
 const OrderHistory = () => {
   const dispatch = useDispatch();
@@ -352,6 +385,15 @@ const OrderHistory = () => {
   const [complaintDescription, setComplaintDescription] = useState('');
   const [complaintImages, setComplaintImages] = useState([]);
   const [isSubmittingComplaint, setIsSubmittingComplaint] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [toastBg, setToastBg] = useState('success');
+
+  const showToastNotification = (message, bg = 'success') => {
+    setToastMessage(message);
+    setToastBg(bg);
+    setShowToast(true);
+  };
 
   useEffect(() => {
     dispatch(getRole());
@@ -370,7 +412,19 @@ const OrderHistory = () => {
         const token = localStorage.getItem('token');
         const params = new URLSearchParams({ page, limit: PAGE_SIZE });
         if (status) params.append('status', status);
-        const res = await fetch(`http://localhost:5000/api/orders/buyer?${params.toString()}`, {
+
+        // Chọn API endpoint dựa trên role
+        let apiUrl = '';
+        if (role === 'seller') {
+          apiUrl = `http://localhost:5000/api/orders/seller?${params.toString()}`;
+        } else if (role === 'shipper') {
+          apiUrl = `http://localhost:5000/api/shipper/orders?${params.toString()}`;
+        } else {
+          // buyer, customer, admin, hoặc các role khác dùng buyer endpoint
+          apiUrl = `http://localhost:5000/api/orders/buyer?${params.toString()}`;
+        }
+
+        const res = await fetch(apiUrl, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -439,7 +493,7 @@ const OrderHistory = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ reason: cancelReason }),
       });
@@ -476,7 +530,7 @@ const OrderHistory = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -484,14 +538,14 @@ const OrderHistory = () => {
         setOrders((prev) => prev.map((o) => (o._id === selectedOrder._id ? { ...o, status: 'completed' } : o)));
         setShowConfirmReceivedModal(false);
         setSelectedOrder(null);
-        alert('Xác nhận đã nhận hàng thành công!');
+        showToastNotification('Xác nhận đã nhận hàng thành công!', 'success');
       } else {
         const error = await response.json();
-        alert(error.message || 'Có lỗi xảy ra khi xác nhận nhận hàng');
+        showToastNotification(error.message || 'Có lỗi xảy ra khi xác nhận nhận hàng', 'danger');
       }
     } catch (error) {
       console.error('Error confirming received:', error);
-      alert('Có lỗi xảy ra khi xác nhận nhận hàng');
+      showToastNotification('Có lỗi xảy ra khi xác nhận nhận hàng', 'danger');
     } finally {
       setIsConfirmingReceived(false);
     }
@@ -505,21 +559,21 @@ const OrderHistory = () => {
 
   const handleSubmitComplaint = async () => {
     if (!complaintType || !complaintDescription.trim()) {
-      alert('Vui lòng điền đầy đủ thông tin khiếu nại');
+      showToastNotification('Vui lòng điền đầy đủ thông tin khiếu nại', 'warning');
       return;
     }
 
     setIsSubmittingComplaint(true);
     try {
       const token = localStorage.getItem('token');
-      
+
       // Create FormData for file upload
       const formData = new FormData();
       formData.append('orderId', selectedOrder._id);
       formData.append('productId', selectedProductId);
       formData.append('complaintType', complaintType);
       formData.append('description', complaintDescription);
-      
+
       // Append images
       complaintImages.forEach((file) => {
         formData.append('images', file);
@@ -528,7 +582,7 @@ const OrderHistory = () => {
       const response = await fetch('http://localhost:5000/api/complaints', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formData,
       });
@@ -540,14 +594,14 @@ const OrderHistory = () => {
         setComplaintType('');
         setComplaintDescription('');
         setComplaintImages([]);
-        alert('Gửi khiếu nại thành công! Người bán sẽ xem xét và phản hồi.');
+        showToastNotification('Gửi khiếu nại thành công! Người bán sẽ xem xét và phản hồi.', 'success');
       } else {
         const error = await response.json();
-        alert(error.message || 'Có lỗi xảy ra khi gửi khiếu nại');
+        showToastNotification(error.message || 'Có lỗi xảy ra khi gửi khiếu nại', 'danger');
       }
     } catch (error) {
       console.error('Error submitting complaint:', error);
-      alert('Có lỗi xảy ra khi gửi khiếu nại');
+      showToastNotification('Có lỗi xảy ra khi gửi khiếu nại', 'danger');
     } finally {
       setIsSubmittingComplaint(false);
     }
@@ -571,20 +625,12 @@ const OrderHistory = () => {
       <div className="history-container">
         <div className="history-header">
           <div className="header-top">
-            <button
-              className="back-btn"
-              onClick={() => navigate(-1)}
-              title="Quay lại trang trước"
-            >
+            <button className="back-btn" onClick={() => navigate(-1)} title="Quay lại trang trước">
               <FiArrowLeft size={20} />
               <span>Quay lại</span>
             </button>
             <div className="header-actions">
-              <button
-                className="refresh-btn"
-                onClick={() => window.location.reload()}
-                disabled={loading}
-              >
+              <button className="refresh-btn" onClick={() => window.location.reload()} disabled={loading}>
                 <FiRefreshCw className={loading ? 'spinning' : ''} size={18} />
                 Làm mới
               </button>
@@ -596,18 +642,20 @@ const OrderHistory = () => {
                 <h1>Lịch sử đơn hàng</h1>
                 <p>Theo dõi đơn hàng của bạn</p>
               </div>
-              <Button
-                variant="danger"
-                onClick={() => navigate('/buyer/complaints')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px'
-                }}
-              >
-                <FiAlertTriangle size={18} />
-                Xem khiếu nại
-              </Button>
+              {(role === 'buyer' || role === 'customer' || !role) && (
+                <Button
+                  variant="danger"
+                  onClick={() => navigate('/buyer/complaints')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <FiAlertTriangle size={18} />
+                  Xem khiếu nại
+                </Button>
+              )}
             </div>
           </div>
           <div className="quick-stats">
@@ -720,6 +768,17 @@ const OrderHistory = () => {
           </div>
         )}
       </div>
+
+      {/* Toast Notification */}
+      <ToastContainer position="top-end" className="p-3">
+        <Toast bg={toastBg} onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide>
+          <Toast.Header>
+            <strong className="me-auto">Thông báo</strong>
+          </Toast.Header>
+          <Toast.Body className={toastBg === 'danger' ? 'text-white' : ''}>{toastMessage}</Toast.Body>
+        </Toast>
+      </ToastContainer>
+
       {/* Cancel Order Modal */}
       {showCancelModal && (
         <div
@@ -733,7 +792,7 @@ const OrderHistory = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => !isCancelling && setShowCancelModal(false)}
         >
@@ -744,7 +803,7 @@ const OrderHistory = () => {
               padding: '32px',
               maxWidth: '500px',
               width: '90%',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -766,7 +825,7 @@ const OrderHistory = () => {
                 fontSize: '0.95rem',
                 fontFamily: 'inherit',
                 resize: 'vertical',
-                marginBottom: '24px'
+                marginBottom: '24px',
               }}
               disabled={isCancelling}
             />
@@ -788,7 +847,7 @@ const OrderHistory = () => {
                   fontSize: '0.95rem',
                   fontWeight: '600',
                   cursor: isCancelling ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
                 }}
               >
                 Hủy
@@ -798,20 +857,23 @@ const OrderHistory = () => {
                 disabled={isCancelling || !cancelReason.trim()}
                 style={{
                   padding: '12px 24px',
-                  background: isCancelling || !cancelReason.trim() ? '#ccc' : 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
+                  background:
+                    isCancelling || !cancelReason.trim() ? '#ccc' : 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '0.95rem',
                   fontWeight: '600',
-                  cursor: (isCancelling || !cancelReason.trim()) ? 'not-allowed' : 'pointer',
+                  cursor: isCancelling || !cancelReason.trim() ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '8px'
+                  gap: '8px',
                 }}
               >
-                {isCancelling ? 'Đang xử lý...' : (
+                {isCancelling ? (
+                  'Đang xử lý...'
+                ) : (
                   <>
                     <FiXCircle size={18} />
                     Xác nhận hủy
@@ -836,7 +898,7 @@ const OrderHistory = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => !isConfirmingReceived && setShowConfirmReceivedModal(false)}
         >
@@ -847,21 +909,23 @@ const OrderHistory = () => {
               padding: '32px',
               maxWidth: '500px',
               width: '90%',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px'
-              }}>
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}
+              >
                 <FiCheckCircle size={32} color="white" />
               </div>
               <h2 style={{ margin: '0 0 8px 0', color: '#2c3e50', fontSize: '1.5rem' }}>Xác nhận đã nhận hàng</h2>
@@ -870,12 +934,14 @@ const OrderHistory = () => {
               </p>
             </div>
 
-            <div style={{
-              background: '#f8f9fa',
-              borderRadius: '12px',
-              padding: '20px',
-              marginBottom: '24px'
-            }}>
+            <div
+              style={{
+                background: '#f8f9fa',
+                borderRadius: '12px',
+                padding: '20px',
+                marginBottom: '24px',
+              }}
+            >
               <p style={{ margin: '0', color: '#495057', lineHeight: '1.6' }}>
                 Bạn có chắc chắn đã nhận được hàng? Sau khi xác nhận, đơn hàng sẽ chuyển sang trạng thái hoàn thành.
               </p>
@@ -898,7 +964,7 @@ const OrderHistory = () => {
                   fontSize: '0.95rem',
                   fontWeight: '600',
                   cursor: isConfirmingReceived ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
                 }}
               >
                 Hủy
@@ -920,10 +986,12 @@ const OrderHistory = () => {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  gap: '8px',
                 }}
               >
-                {isConfirmingReceived ? 'Đang xử lý...' : (
+                {isConfirmingReceived ? (
+                  'Đang xử lý...'
+                ) : (
                   <>
                     <FiCheckCircle size={18} />
                     Xác nhận
@@ -948,7 +1016,7 @@ const OrderHistory = () => {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            zIndex: 1000
+            zIndex: 1000,
           }}
           onClick={() => !isSubmittingComplaint && setShowComplaintModal(false)}
         >
@@ -961,21 +1029,23 @@ const OrderHistory = () => {
               width: '90%',
               maxHeight: '90vh',
               overflowY: 'auto',
-              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)'
+              boxShadow: '0 10px 40px rgba(0, 0, 0, 0.2)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-              <div style={{
-                width: '64px',
-                height: '64px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '0 auto 16px'
-              }}>
+              <div
+                style={{
+                  width: '64px',
+                  height: '64px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '0 auto 16px',
+                }}
+              >
                 <FiAlertTriangle size={32} color="white" />
               </div>
               <h2 style={{ margin: '0 0 8px 0', color: '#2c3e50', fontSize: '1.5rem' }}>Khiếu nại sản phẩm</h2>
@@ -999,7 +1069,7 @@ const OrderHistory = () => {
                   borderRadius: '8px',
                   fontSize: '0.95rem',
                   fontFamily: 'inherit',
-                  background: 'white'
+                  background: 'white',
                 }}
               >
                 <option value="">Chọn loại khiếu nại</option>
@@ -1029,7 +1099,7 @@ const OrderHistory = () => {
                   borderRadius: '8px',
                   fontSize: '0.95rem',
                   fontFamily: 'inherit',
-                  resize: 'vertical'
+                  resize: 'vertical',
                 }}
               />
             </div>
@@ -1061,10 +1131,10 @@ const OrderHistory = () => {
                   border: '2px dashed #ccc',
                   borderRadius: '8px',
                   cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
                 }}
                 onMouseOver={(e) => !isSubmittingComplaint && (e.target.style.background = '#e0e0e0')}
-                onMouseOut={(e) => e.target.style.background = '#f0f0f0'}
+                onMouseOut={(e) => (e.target.style.background = '#f0f0f0')}
               >
                 <FiImage size={18} />
                 Chọn ảnh
@@ -1080,7 +1150,7 @@ const OrderHistory = () => {
                         height: '100px',
                         borderRadius: '8px',
                         overflow: 'hidden',
-                        border: '2px solid #e0e0e0'
+                        border: '2px solid #e0e0e0',
                       }}
                     >
                       <img
@@ -1109,7 +1179,7 @@ const OrderHistory = () => {
                           alignItems: 'center',
                           justifyContent: 'center',
                           cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer',
-                          fontSize: '12px'
+                          fontSize: '12px',
                         }}
                       >
                         <FiTrash2 size={12} />
@@ -1146,7 +1216,7 @@ const OrderHistory = () => {
                   fontSize: '0.95rem',
                   fontWeight: '600',
                   cursor: isSubmittingComplaint ? 'not-allowed' : 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s ease',
                 }}
               >
                 Hủy
@@ -1157,21 +1227,27 @@ const OrderHistory = () => {
                 style={{
                   flex: 1,
                   padding: '12px 24px',
-                  background: (isSubmittingComplaint || !complaintType || !complaintDescription.trim()) ? '#ccc' : 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
+                  background:
+                    isSubmittingComplaint || !complaintType || !complaintDescription.trim()
+                      ? '#ccc'
+                      : 'linear-gradient(135deg, #dc3545 0%, #e83e8c 100%)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
                   fontSize: '0.95rem',
                   fontWeight: '600',
-                  cursor: (isSubmittingComplaint || !complaintType || !complaintDescription.trim()) ? 'not-allowed' : 'pointer',
+                  cursor:
+                    isSubmittingComplaint || !complaintType || !complaintDescription.trim() ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '8px'
+                  gap: '8px',
                 }}
               >
-                {isSubmittingComplaint ? 'Đang gửi...' : (
+                {isSubmittingComplaint ? (
+                  'Đang gửi...'
+                ) : (
                   <>
                     <FiAlertTriangle size={18} />
                     Gửi khiếu nại
