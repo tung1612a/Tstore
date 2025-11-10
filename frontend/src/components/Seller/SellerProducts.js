@@ -1,8 +1,9 @@
-    import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Table, Modal, Form, Alert, Badge, Spinner, Tabs, Tab } from 'react-bootstrap';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Container, Row, Col, Card, Button, Table, Modal, Form, Alert, Badge, Spinner, Tabs, Tab, Pagination } from 'react-bootstrap';
 import { FiPlus, FiEdit, FiTrash2, FiEye, FiSearch, FiFilter, FiPackage, FiArrowLeft, FiImage, FiX } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
+
 
 const SellerProducts = () => {
   const { token } = useAuth();
@@ -18,7 +19,8 @@ const SellerProducts = () => {
   const [filterCategory, setFilterCategory] = useState('all');
   const [alert, setAlert] = useState({ show: false, message: '', variant: 'success' });
   const [activeTab, setActiveTab] = useState('products');
-
+  const PAGE_SIZE = 5;
+  const [page, setPage] = useState(1);
   // Form state
   const [formData, setFormData] = useState({
     title: '',
@@ -31,7 +33,7 @@ const SellerProducts = () => {
   });
   const [productImage, setProductImage] = useState(null); // File object
   const [imagePreview, setImagePreview] = useState(null); // Preview URL
-  
+
   // Validation errors state
   const [errors, setErrors] = useState({
     title: '',
@@ -89,6 +91,7 @@ const SellerProducts = () => {
       if (response.ok) {
         const data = await response.json();
         setProducts(data);
+        setPage(1); // reset trang khi tải lại dữ liệu
       } else {
         showAlert('Lỗi khi tải danh sách sản phẩm', 'danger');
       }
@@ -217,7 +220,7 @@ const SellerProducts = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Set all fields as touched
     setTouched({
       title: true,
@@ -235,12 +238,12 @@ const SellerProducts = () => {
     }
 
     try {
-      const url = editingProduct 
+      const url = editingProduct
         ? `http://localhost:5000/api/seller/products/${editingProduct._id}`
         : 'http://localhost:5000/api/seller/products';
-      
+
       const method = editingProduct ? 'PUT' : 'POST';
-      
+
       // Tạo FormData để gửi file
       const submitData = new FormData();
       submitData.append('title', formData.title.trim());
@@ -251,12 +254,12 @@ const SellerProducts = () => {
         submitData.append('maxPurchaseQuantity', parseInt(formData.maxPurchaseQuantity));
       }
       submitData.append('categoryId', formData.categoryId);
-      
+
       // Chỉ append file nếu có file mới được chọn
       if (productImage) {
         submitData.append('image', productImage);
       }
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -308,7 +311,7 @@ const SellerProducts = () => {
   const handleFieldChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setTouched(prev => ({ ...prev, [field]: true }));
-    
+
     // Validate field
     let error = '';
     switch (field) {
@@ -405,8 +408,8 @@ const SellerProducts = () => {
   // Filter products
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         product.description?.toLowerCase().includes(searchTerm.toLowerCase());
-    
+      product.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
     let matchesStock = true;
     if (filterStock === 'low') {
       matchesStock = product.stock <= 10;
@@ -420,15 +423,50 @@ const SellerProducts = () => {
     if (filterCategory !== 'all') {
       matchesCategory = product.categoryId === filterCategory;
     }
-    
+
     return matchesSearch && matchesStock && matchesCategory;
   });
+
+  // ✅ Reset về trang 1 khi thay đổi bộ lọc/tìm kiếm
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, filterStock, filterCategory]);
+
+  // Tính paging
+  const total = filteredProducts.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const startIdx = (currentPage - 1) * PAGE_SIZE;
+  const endIdx = startIdx + PAGE_SIZE;
+  const pagedProducts = useMemo(
+    () => filteredProducts.slice(startIdx, endIdx),
+    [filteredProducts, startIdx, endIdx]
+  );
 
   const getStockBadge = (stock) => {
     if (stock === 0) return <Badge bg="danger">Hết hàng</Badge>;
     if (stock <= 10) return <Badge bg="warning">Sắp hết</Badge>;
     return <Badge bg="success">Còn hàng</Badge>;
   };
+
+  const buildPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 7) {
+      for (let p = 1; p <= totalPages; p++) pages.push(p);
+      return pages;
+    }
+    pages.push(1);
+    const left = Math.max(2, currentPage - 2);
+    const right = Math.min(totalPages - 1, currentPage + 2);
+    if (left > 2) pages.push('ellipsis-left');
+    for (let p = left; p <= right; p++) pages.push(p);
+    if (right < totalPages - 1) pages.push('ellipsis-right');
+    pages.push(totalPages);
+    return pages;
+  };
+
+  const pageNumbers = buildPageNumbers();
+  const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
 
   if (loading) {
     return (
@@ -446,8 +484,8 @@ const SellerProducts = () => {
         <Col>
           <div className="d-flex justify-content-between align-items-center mb-4">
             <div className="d-flex align-items-center">
-              <Button 
-                variant="outline-secondary" 
+              <Button
+                variant="outline-secondary"
                 onClick={() => navigate('/seller')}
                 className="me-3"
                 title="Quay lại Dashboard"
@@ -538,80 +576,103 @@ const SellerProducts = () => {
             <Card>
               <Card.Body>
                 {filteredProducts.length > 0 ? (
-                  <div className="table-responsive">
-                    <Table hover>
-                      <thead>
-                        <tr>
-                          <th>Hình ảnh</th>
-                          <th>Tên sản phẩm</th>
-                          <th>Danh mục</th>
-                          <th>Giá</th>
-                          <th>Tồn kho</th>
-                          <th>Trạng thái</th>
-                          <th>Hành động</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredProducts.map(product => {
-                          const category = categories.find(cat => cat._id === product.categoryId);
-                          return (
-                            <tr key={product._id}>
-                              <td>
-                                <img
-                                  src={
-                                    product.image || product.imageURL
-                                      ? (product.image || product.imageURL).startsWith('http')
-                                        ? (product.image || product.imageURL)
-                                        : `http://localhost:5000${product.image || product.imageURL}`
-                                      : '/placeholder-image.jpg'
-                                  }
-                                  alt={product.title}
-                                  style={{ width: '50px', height: '50px', objectFit: 'cover' }}
-                                  className="rounded"
-                                />
-                              </td>
-                              <td>
-                                <div>
-                                  <strong>{product.title}</strong>
-                                  {product.description && (
-                                    <div className="text-muted small">{product.description.substring(0, 50)}...</div>
-                                  )}
-                                </div>
-                              </td>
-                              <td>
-                                <Badge bg="secondary">
-                                  {category ? category.name : 'Chưa phân loại'}
-                                </Badge>
-                              </td>
-                              <td>${product.price}</td>
-                              <td>{product.stock}</td>
-                              <td>{getStockBadge(product.stock)}</td>
-                              <td>
-                                <div className="d-flex gap-2">
-                                  <Button
-                                    variant="outline-primary"
-                                    size="sm"
-                                    onClick={() => handleEdit(product)}
-                                    title="Chỉnh sửa"
-                                  >
-                                    <FiEdit />
-                                  </Button>
-                                  <Button
-                                    variant="outline-danger"
-                                    size="sm"
-                                    onClick={() => handleDelete(product._id)}
-                                    title="Xóa"
-                                  >
-                                    <FiTrash2 />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          );
-                        })}
-                      </tbody>
-                    </Table>
-                  </div>
+                  <>
+                    <div className="table-responsive">
+                      <Table hover>
+                        <thead>
+                          <tr>
+                            <th>Hình ảnh</th>
+                            <th>Tên sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th>Giá</th>
+                            <th>Tồn kho</th>
+                            <th>Trạng thái</th>
+                            <th>Hành động</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pagedProducts.map(product => {
+                            const category = categories.find(cat => cat._id === product.categoryId);
+                            return (
+                              <tr key={product._id}>
+                                <td>
+                                  <img
+                                    src={
+                                      product.image || product.imageURL
+                                        ? (product.image || product.imageURL).startsWith('http')
+                                          ? (product.image || product.imageURL)
+                                          : `http://localhost:5000${product.image || product.imageURL}`
+                                        : '/placeholder-image.jpg'
+                                    }
+                                    alt={product.title}
+                                    style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                                    className="rounded"
+                                  />
+                                </td>
+                                <td>
+                                  <div>
+                                    <strong>{product.title}</strong>
+                                    {product.description && (
+                                      <div className="text-muted small">{product.description.substring(0, 50)}...</div>
+                                    )}
+                                  </div>
+                                </td>
+                                <td>
+                                  <Badge bg="secondary">
+                                    {category ? category.name : 'Chưa phân loại'}
+                                  </Badge>
+                                </td>
+                                <td>${product.price}</td>
+                                <td>{product.stock}</td>
+                                <td>{getStockBadge(product.stock)}</td>
+                                <td>
+                                  <div className="d-flex gap-2">
+                                    <Button
+                                      variant="outline-primary"
+                                      size="sm"
+                                      onClick={() => handleEdit(product)}
+                                      title="Chỉnh sửa"
+                                    >
+                                      <FiEdit />
+                                    </Button>
+                                    <Button
+                                      variant="outline-danger"
+                                      size="sm"
+                                      onClick={() => handleDelete(product._id)}
+                                      title="Xóa"
+                                    >
+                                      <FiTrash2 />
+                                    </Button>
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </Table>
+                    </div>
+                    {/* Phân trang */}
+                    <div className="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                      <div className="text-muted small">
+                        Hiển thị {Math.min(startIdx + 1, total)}–{Math.min(endIdx, total)} / {total} sản phẩm
+                      </div>
+                      <Pagination className="mb-0">
+                        <Pagination.First onClick={() => goTo(1)} disabled={currentPage === 1} />
+                        <Pagination.Prev onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1} />
+                        {pageNumbers.map((p, i) =>
+                          typeof p === 'number' ? (
+                            <Pagination.Item key={p} active={p === currentPage} onClick={() => goTo(p)}>
+                              {p}
+                            </Pagination.Item>
+                          ) : (
+                            <Pagination.Ellipsis key={`e-${i}`} disabled />
+                          )
+                        )}
+                        <Pagination.Next onClick={() => goTo(currentPage + 1)} disabled={currentPage === totalPages} />
+                        <Pagination.Last onClick={() => goTo(totalPages)} disabled={currentPage === totalPages} />
+                      </Pagination>
+                    </div>
+                  </>
                 ) : (
                   <div className="text-center py-5">
                     <FiSearch size={48} className="text-muted mb-3" />
@@ -841,8 +902,8 @@ const SellerProducts = () => {
             }}>
               Hủy
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              variant="primary"
               type="submit"
               disabled={Object.values(errors).some(error => error !== '')}
             >

@@ -8,7 +8,7 @@ function Footer() {
       <Container>
         <Row className="py-5">
           <Col md={4} className="mb-4">
-            <h5 className="text-white mb-3">WDP Shop</h5>
+            <h5 className="text-white mb-3">ALADIN</h5>
             <p className="text-light mb-3">
               Nền tảng thương mại điện tử hàng đầu Việt Nam, 
               mang đến trải nghiệm mua sắm tuyệt vời.
@@ -39,11 +39,11 @@ function Footer() {
             <h6 className="text-white mb-3">Liên hệ</h6>
             <div className="d-flex align-items-center mb-2">
               <FiMail className="me-2 text-light" />
-              <span className="text-light">support@wdp.com</span>
+              <span className="text-light">Aladin@gmail.com</span>
             </div>
             <div className="d-flex align-items-center mb-2">
               <FiPhone className="me-2 text-light" />
-              <span className="text-light">1900 1234</span>
+              <span className="text-light">1900 8888 6666</span>
             </div>
             <div className="d-flex align-items-center">
               <FiMapPin className="me-2 text-light" />
@@ -55,7 +55,7 @@ function Footer() {
         <Row className="py-3">
           <Col className="text-center">
             <p className="text-light mb-0">
-              © {new Date().getFullYear()} WDP Shop. Tất cả quyền được bảo lưu.
+              © {new Date().getFullYear()} ALADIN. Tất cả quyền được bảo lưu.
             </p>
           </Col>
         </Row>
