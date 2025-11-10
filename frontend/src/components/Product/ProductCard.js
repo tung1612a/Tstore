@@ -8,6 +8,7 @@ import { useDispatch } from "react-redux"
 import { addToCart, addToCartLocal } from "../../store/cartSlice"
 import { useAuth } from "../../contexts/AuthContext";
 import { useTranslation } from 'react-i18next';
+import { useToast } from '../../contexts/ToastContext';
 
 function ProductCard({ product, hideStoreButton = false }) {
   const price = product.price?.toLocaleString("vi-VN", { style: "currency", currency: "VND" })
@@ -17,6 +18,7 @@ function ProductCard({ product, hideStoreButton = false }) {
   const dispatch = useDispatch()
   const { user, isAuthenticated } = useAuth()
   const { t } = useTranslation();
+  const { showWarning, showError } = useToast();
 
   // Kiểm tra xem user hiện tại có phải là seller của sản phẩm này không
   const isOwnProduct = React.useMemo(() => {
@@ -43,7 +45,7 @@ function ProductCard({ product, hideStoreButton = false }) {
 
     // Kiểm tra nếu hết hàng
     if (isOutOfStock) {
-      alert('Sản phẩm đã hết hàng!')
+      showWarning('Sản phẩm đã hết hàng!')
       return
     }
 
@@ -56,7 +58,7 @@ function ProductCard({ product, hideStoreButton = false }) {
 
     // Kiểm tra nếu seller cố mua sản phẩm của chính mình
     if (isOwnProduct) {
-      alert('Bạn không thể mua sản phẩm của chính mình!')
+      showWarning('Bạn không thể mua sản phẩm của chính mình!')
       return
     }
 
@@ -85,7 +87,7 @@ function ProductCard({ product, hideStoreButton = false }) {
       }
     } catch (error) {
       console.error('Error adding to cart:', error)
-      alert('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
+      showError('Có lỗi xảy ra khi thêm sản phẩm vào giỏ hàng')
     } finally {
       setIsAddingToCart(false)
     }
