@@ -109,7 +109,7 @@ function App() {
           </div>
 
           {/* Stats Section */}
-          {stats && (
+          {/* {stats && (
             <div className="stats-section mb-5 fade-in-up" style={{ animationDelay: '0.1s' }}>
               <Row className="g-4">
                 <Col md={4}>
@@ -147,14 +147,14 @@ function App() {
                 </Col>
               </Row>
             </div>
-          )}
+          )} */}
 
           <div className="welcome-section mb-5 fade-in-up" style={{ animationDelay: stats ? '0.2s' : '0.1s' }}>
             <Row>
               <Col>
                 <div className="welcome-content text-center">
-                  <div className="welcome-badge">✨ Khám phá ngay</div>
-                  <h1 className="welcome-title mb-3">{t('toast.9')}</h1>
+                  <div className="welcome-badge">{t('toast.11')}</div>
+                  <h1 className="welcome-title mb-3">{t('toast.12')}</h1>
                   <p className="welcome-subtitle">{t('toast.10')}</p>
                 </div>
               </Col>

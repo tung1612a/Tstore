@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { Button, Modal, Form, Image, Spinner } from "react-bootstrap";
+import React, { useEffect, useState, useMemo } from "react";
+import { Button, Modal, Form, Image, Pagination, Spinner } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
 
 const ListProduct = () => {
@@ -18,6 +18,9 @@ const ListProduct = () => {
     });
     const [selectedProductId, setSelectedProductId] = useState(null);
 
+    const PAGE_SIZE = 10;               // đổi số này nếu muốn
+    const [page, setPage] = useState(1);
+
     useEffect(() => {
         fetchProducts();
     }, []);
@@ -29,6 +32,7 @@ const ListProduct = () => {
             });
             const data = await res.json();
             setProducts(data);
+            setPage(1);
         } catch (err) {
             console.error("Error fetching products:", err);
         } finally {
@@ -42,7 +46,7 @@ const ListProduct = () => {
 
     const handleAdd = () => {
         setEditMode(false);
-        setForm({ title: "",stock: "", description: "", price: "", image: "", sellerId: "" });
+        setForm({ title: "", stock: "", description: "", price: "", image: "", sellerId: "" });
         setShowModal(true);
     };
 
@@ -98,7 +102,15 @@ const ListProduct = () => {
             });
 
             if (res.ok) {
-                setProducts(products.filter((p) => p._id !== id));
+                setProducts((prev) => {
+                    const next = prev.filter((p) => p._id !== id);
+                    // nếu xóa làm trang hiện tại rỗng, lùi 1 trang
+                    const totalAfter = next.length;
+                    const totalPagesAfter = Math.max(1, Math.ceil(totalAfter / PAGE_SIZE));
+                    setPage((p) => Math.min(p, totalPagesAfter));
+                    return next;
+                });
+                // setProducts(products.filter((p) => p._id !== id));
             } else {
                 alert("Không thể xóa sản phẩm!");
             }
@@ -106,6 +118,37 @@ const ListProduct = () => {
             console.error("Error deleting product:", err);
         }
     };
+
+    // ====== TÍNH TOÁN PHÂN TRANG (trước return để không vi phạm rules-of-hooks) ======
+    const total = products.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    const currentPage = Math.min(page, totalPages);
+    const startIdx = (currentPage - 1) * PAGE_SIZE;
+    const endIdx = Math.min(startIdx + PAGE_SIZE, total);
+
+    const pagedProducts = useMemo(
+        () => products.slice(startIdx, endIdx),
+        [products, startIdx, endIdx]
+    );
+
+    const buildPageNumbers = () => {
+        const pages = [];
+        if (totalPages <= 7) {
+            for (let p = 1; p <= totalPages; p++) pages.push(p);
+            return pages;
+        }
+        pages.push(1);
+        const left = Math.max(2, currentPage - 2);
+        const right = Math.min(totalPages - 1, currentPage + 2);
+        if (left > 2) pages.push("ellipsis-left");
+        for (let p = left; p <= right; p++) pages.push(p);
+        if (right < totalPages - 1) pages.push("ellipsis-right");
+        pages.push(totalPages);
+        return pages;
+    };
+
+    const pageNumbers = buildPageNumbers();
+    const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
 
     if (loading)
         return (
@@ -133,7 +176,7 @@ const ListProduct = () => {
             </div>
 
             <div style={styles.cardGrid}>
-                {products.map((p) => (
+                {pagedProducts.map((p) => (
                     <div key={p._id} style={styles.card}>
                         <Image
                             src={p.image}
@@ -175,6 +218,30 @@ const ListProduct = () => {
                 ))}
             </div>
 
+            {/* ✅ Thanh phân trang + thông tin hiển thị */}
+            {total > 0 && (
+                <div style={{ marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                    <div className="text-muted" style={{ fontSize: 12 }}>
+                        Hiển thị {total === 0 ? 0 : startIdx + 1}–{endIdx} / {total} sản phẩm
+                    </div>
+                    <Pagination className="mb-0">
+                        <Pagination.First onClick={() => goTo(1)} disabled={currentPage === 1} />
+                        <Pagination.Prev onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1} />
+                        {pageNumbers.map((p, i) =>
+                            typeof p === "number" ? (
+                                <Pagination.Item key={p} active={p === currentPage} onClick={() => goTo(p)}>
+                                    {p}
+                                </Pagination.Item>
+                            ) : (
+                                <Pagination.Ellipsis key={`e-${i}`} disabled />
+                            )
+                        )}
+                        <Pagination.Next onClick={() => goTo(currentPage + 1)} disabled={currentPage === totalPages} />
+                        <Pagination.Last onClick={() => goTo(totalPages)} disabled={currentPage === totalPages} />
+                    </Pagination>
+                </div>
+            )}
+
             {/* Modal */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
                 <Modal.Header closeButton>
@@ -195,6 +262,7 @@ const ListProduct = () => {
                         <Form.Group className="mb-3">
                             <Form.Label>Số lượng tồn kho</Form.Label>
                             <Form.Control
+                                disabled
                                 name="stock"
                                 value={form.stock}
                                 onChange={handleChange}
@@ -213,6 +281,7 @@ const ListProduct = () => {
                         <Form.Group className="mb-3">
                             <Form.Label>Giá</Form.Label>
                             <Form.Control
+                                disabled
                                 type="number"
                                 name="price"
                                 value={form.price}
@@ -222,6 +291,7 @@ const ListProduct = () => {
                         <Form.Group className="mb-3">
                             <Form.Label>Ảnh (URL)</Form.Label>
                             <Form.Control
+                                disabled
                                 name="image"
                                 value={form.image}
                                 onChange={handleChange}

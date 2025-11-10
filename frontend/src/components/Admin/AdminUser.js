@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   Container,
   Card,
@@ -8,6 +8,7 @@ import {
   Alert,
   Modal,
   Form,
+  Pagination,            // ✅ THÊM
 } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -23,11 +24,14 @@ const AdminUser = () => {
   const [updating, setUpdating] = useState(false);
   const navigate = useNavigate();
 
+  // ✅ Phân trang
+  const PAGE_SIZE = 5;              // đổi số này nếu muốn
+  const [page, setPage] = useState(1);
+
   useEffect(() => {
     fetchUsers();
   }, []);
 
-  // ================== LẤY DANH SÁCH USER ==================
   const fetchUsers = async () => {
     setLoading(true);
     setError("");
@@ -38,6 +42,7 @@ const AdminUser = () => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       setUsers(Array.isArray(data) ? data : []);
+      setPage(1);                  // ✅ reset về trang 1 khi load mới
     } catch (err) {
       console.error("Error fetching users:", err);
       setError("Không thể tải danh sách người dùng.");
@@ -46,7 +51,6 @@ const AdminUser = () => {
     }
   };
 
-  // ================== XOÁ USER ==================
   const handleDelete = async (id) => {
     if (!window.confirm("Bạn có chắc muốn xóa người dùng này?")) return;
     try {
@@ -59,19 +63,23 @@ const AdminUser = () => {
       if (!res.ok) throw new Error(data.message || "Xóa thất bại");
 
       alert("✅ " + data.message);
-      setUsers(users.filter((u) => u._id !== id));
+      setUsers((prev) => prev.filter((u) => u._id !== id));
+      // ✅ đảm bảo không nằm ở trang vượt quá tổng sau khi xóa
+      setPage((p) => {
+        const totalAfter = Math.max(0, users.length - 1);
+        const totalPagesAfter = Math.max(1, Math.ceil(totalAfter / PAGE_SIZE));
+        return Math.min(p, totalPagesAfter);
+      });
     } catch (err) {
       alert("❌ " + err.message);
     }
   };
 
-  // ================== MỞ MODAL SỬA ==================
   const handleEdit = (user) => {
     setSelectedUser({ ...user });
     setShowModal(true);
   };
 
-  // ================== CẬP NHẬT USER ==================
   const handleUpdate = async () => {
     if (!selectedUser) return;
     setUpdating(true);
@@ -101,9 +109,7 @@ const AdminUser = () => {
       setShowModal(false);
       setUsers((prev) =>
         prev.map((u) =>
-          u._id === selectedUser._id
-            ? { ...u, ...(data.user || selectedUser) } // đảm bảo luôn có dữ liệu đầy đủ
-            : u
+          u._id === selectedUser._id ? { ...u, ...(data.user || selectedUser) } : u
         )
       );
     } catch (err) {
@@ -112,42 +118,61 @@ const AdminUser = () => {
       setUpdating(false);
     }
   };
-  // ================== CHUYỂN ĐỔI TRẠNG THÁI KÍCH HOẠT ==================
+
   const handleToggleActive = async (id, currentActive) => {
     try {
-      const response = await fetch(
-        `http://localhost:5000/api/admin/users/${id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ active: !currentActive }),
-        }
-      );
+      const response = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ active: !currentActive }),
+      });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Cập nhật thất bại");
 
       const updatedUser = data.user || { active: !currentActive };
-
-      setUsers((prev) =>
-        prev.map((u) => (u._id === id ? { ...u, ...updatedUser } : u))
-      );
+      setUsers((prev) => prev.map((u) => (u._id === id ? { ...u, ...updatedUser } : u)));
     } catch (err) {
       console.error("Error updating user:", err);
       alert("Không thể cập nhật trạng thái người dùng.");
     }
   };
 
+  // ✅ TÍNH TOÁN PHÂN TRANG
+  const total = users.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const startIdx = (currentPage - 1) * PAGE_SIZE;
+  const endIdx = Math.min(startIdx + PAGE_SIZE, total);
+
+  const pagedUsers = useMemo(() => users.slice(startIdx, endIdx), [users, startIdx, endIdx]);
+
+  const buildPageNumbers = () => {
+    const pages = [];
+    if (totalPages <= 7) {
+      for (let p = 1; p <= totalPages; p++) pages.push(p);
+      return pages;
+    }
+    pages.push(1);
+    const left = Math.max(2, currentPage - 2);
+    const right = Math.min(totalPages - 1, currentPage + 2);
+    if (left > 2) pages.push("ellipsis-left");
+    for (let p = left; p <= right; p++) pages.push(p);
+    if (right < totalPages - 1) pages.push("ellipsis-right");
+    pages.push(totalPages);
+    return pages;
+  };
+
+  const pageNumbers = buildPageNumbers();
+  const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
+
   // ================== LOADING / ERROR ==================
   if (loading) {
     return (
-      <div
-        className="d-flex justify-content-center align-items-center"
-        style={{ height: "80vh" }}
-      >
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "80vh" }}>
         <Spinner animation="border" variant="primary" />
       </div>
     );
@@ -176,21 +201,10 @@ const AdminUser = () => {
     >
       <Container>
         {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            marginBottom: "20px",
-          }}
-        >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
           <div>
-            <h2 style={{ fontWeight: "bold", color: "#1565c0" }}>
-              Quản lý người dùng
-            </h2>
-            <p style={{ color: "#555" }}>
-              Danh sách tất cả tài khoản trong hệ thống
-            </p>
+            <h2 style={{ fontWeight: "bold", color: "#1565c0" }}>Quản lý người dùng</h2>
+            <p style={{ color: "#555" }}>Danh sách tất cả tài khoản trong hệ thống</p>
           </div>
           <div>
             <Button
@@ -209,12 +223,7 @@ const AdminUser = () => {
         <Card className="shadow-lg border-0" style={{ borderRadius: "16px" }}>
           <Card.Body style={{ padding: "0" }}>
             <Table hover responsive className="mb-0">
-              <thead
-                style={{
-                  background: "linear-gradient(90deg, #42a5f5, #66bb6a)",
-                  color: "white",
-                }}
-              >
+              <thead style={{ background: "linear-gradient(90deg, #42a5f5, #66bb6a)", color: "white" }}>
                 <tr>
                   <th className="text-center p-3">#</th>
                   <th className="p-3">Tên người dùng</th>
@@ -226,10 +235,11 @@ const AdminUser = () => {
                 </tr>
               </thead>
               <tbody>
-                {users.length > 0 ? (
-                  users.map((user, index) => (
+                {pagedUsers.length > 0 ? (
+                  pagedUsers.map((user, i) => (
                     <tr key={user._id}>
-                      <td className="text-center fw-bold">{index + 1}</td>
+                      {/* ✅ số thứ tự theo toàn bộ danh sách */}
+                      <td className="text-center fw-bold">{startIdx + i + 1}</td>
                       <td>{user.fullName}</td>
                       <td>{user.email}</td>
                       <td>{user.phone || "—"}</td>
@@ -238,9 +248,7 @@ const AdminUser = () => {
                           type="switch"
                           id={`active-${user._id}`}
                           checked={!!user.active}
-                          onChange={() =>
-                            handleToggleActive(user._id, user.active)
-                          }
+                          onChange={() => handleToggleActive(user._id, user.active)}
                           label={user.active ? "Hoạt động" : "Khóa"}
                         />
                       </td>
@@ -254,9 +262,12 @@ const AdminUser = () => {
                               user.role === "admin"
                                 ? "#f44336"
                                 : user.role === "seller"
-                                  ? "#42a5f5" : user.role === "shipper"
-                                  ? "#66bb6a" : user.role === "customer"
-                                  ? "#00d612ff" : "#ff0062ff",
+                                ? "#42a5f5"
+                                : user.role === "shipper"
+                                ? "#66bb6a"
+                                : user.role === "customer"
+                                ? "#00d612ff"
+                                : "#ff0062ff",
                           }}
                         >
                           {user.role?.toUpperCase()}
@@ -285,18 +296,43 @@ const AdminUser = () => {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="text-center py-4 text-muted">
+                    {/* bảng có 7 cột → colspan 7 */}
+                    <td colSpan="7" className="text-center py-4 text-muted">
                       Không có người dùng nào.
                     </td>
                   </tr>
                 )}
               </tbody>
             </Table>
+
+            {/* ✅ Thanh phân trang + thông tin hiển thị */}
+            {total > 0 && (
+              <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2">
+                <div className="text-muted small">
+                  Hiển thị {startIdx + 1}–{endIdx} / {total} người dùng
+                </div>
+                <Pagination className="mb-0">
+                  <Pagination.First onClick={() => goTo(1)} disabled={currentPage === 1} />
+                  <Pagination.Prev onClick={() => goTo(currentPage - 1)} disabled={currentPage === 1} />
+                  {pageNumbers.map((p, i) =>
+                    typeof p === "number" ? (
+                      <Pagination.Item key={p} active={p === currentPage} onClick={() => goTo(p)}>
+                        {p}
+                      </Pagination.Item>
+                    ) : (
+                      <Pagination.Ellipsis key={`e-${i}`} disabled />
+                    )
+                  )}
+                  <Pagination.Next onClick={() => goTo(currentPage + 1)} disabled={currentPage === totalPages} />
+                  <Pagination.Last onClick={() => goTo(totalPages)} disabled={currentPage === totalPages} />
+                </Pagination>
+              </div>
+            )}
           </Card.Body>
         </Card>
       </Container>
 
-      {/* ================== MODAL SỬA USER ================== */}
+      {/* Modal sửa giữ nguyên */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton>
           <Modal.Title>Cập nhật người dùng</Modal.Title>
@@ -309,12 +345,7 @@ const AdminUser = () => {
                 <Form.Control
                   type="text"
                   value={selectedUser.fullName || ""}
-                  onChange={(e) =>
-                    setSelectedUser({
-                      ...selectedUser,
-                      fullName: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setSelectedUser({ ...selectedUser, fullName: e.target.value })}
                 />
               </Form.Group>
 
@@ -323,12 +354,7 @@ const AdminUser = () => {
                 <Form.Control
                   type="email"
                   value={selectedUser.email || ""}
-                  onChange={(e) =>
-                    setSelectedUser({
-                      ...selectedUser,
-                      email: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setSelectedUser({ ...selectedUser, email: e.target.value })}
                 />
               </Form.Group>
 
@@ -336,12 +362,7 @@ const AdminUser = () => {
                 <Form.Label>Vai trò</Form.Label>
                 <Form.Select
                   value={selectedUser.role || ""}
-                  onChange={(e) =>
-                    setSelectedUser({
-                      ...selectedUser,
-                      role: e.target.value,
-                    })
-                  }
+                  onChange={(e) => setSelectedUser({ ...selectedUser, role: e.target.value })}
                 >
                   <option value="admin">Admin</option>
                   <option value="seller">Seller</option>
