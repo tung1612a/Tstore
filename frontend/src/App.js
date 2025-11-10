@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./components/Home/Home";
 import Login from "./components/Login/Login";
 import Register from "./components/Register/Register";
+import VerifyEmail from "./components/Register/VerifyEmail";
 import ProductDetail from "./components/Product/ProductDetail";
 import ForgotPassword from "./components/Login/ForgotPassword";
 import Cart from "./components/Cart/Cart";
@@ -54,6 +55,7 @@ function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/forgetPass" element={<ForgotPassword />} />
             <Route path="/store/:sellerId" element={<StorePage />} />
 

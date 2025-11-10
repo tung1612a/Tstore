@@ -1,8 +1,14 @@
 import User from "../models/User.js";
 import SellerApplication from "../models/SellerApplication.js";
+import PendingRegistration from "../models/PendingRegistration.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
+
+// Tạo mã OTP 6 số
+function generateOTP() {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+}
 
 // Đăng ký
 export const register = async (req, res) => {
@@ -12,27 +18,94 @@ export const register = async (req, res) => {
     if (!fullName || !email || !password)
       return res.status(400).json({ message: "fullName, email and password are required" });
 
+    // Kiểm tra xem email đã được đăng ký chưa (trong User hoặc PendingRegistration)
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).json({ message: "User already exists" });
+
+    const existingPending = await PendingRegistration.findOne({ email });
+    if (existingPending) {
+      // Nếu có pending registration, xóa và tạo mới
+      await PendingRegistration.deleteOne({ email });
+    }
 
     const allowedRoles = ["customer", "seller", "admin"];
     const finalRole = allowedRoles.includes(role) ? role : "customer";
 
-    const user = await User.create({
+    // Hash password trước khi lưu
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Tạo mã OTP 6 số
+    const emailVerificationCode = generateOTP();
+    const emailVerificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // Hết hạn sau 10 phút
+
+    console.log('Creating pending registration with email:', email, 'OTP code:', emailVerificationCode);
+
+    // Lưu vào PendingRegistration thay vì User
+    const pendingRegistration = await PendingRegistration.create({
       fullName,
       email,
-      password,
+      password: hashedPassword, // Đã hash
       phone,
       role: finalRole,
-      active,
-      avatarURL,
+      avatarURL: avatarURL || "",
+      emailVerificationCode,
+      emailVerificationCodeExpires,
+      expiresAt: new Date(Date.now() + 11 * 60 * 1000), // TTL: 11 phút (10 phút OTP + 1 phút buffer)
     });
 
-    const userObj = user.toObject();
-    delete userObj.password;
+    console.log('Pending registration created:', pendingRegistration._id);
 
-    res.status(201).json(userObj);
+    // Gửi email xác nhận với mã OTP
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+
+    if (emailUser && emailPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: { user: emailUser, pass: emailPass },
+        });
+
+        const mailOptions = {
+          from: `"Tstore Support" <${emailUser}>`,
+          to: email,
+          subject: "Mã xác nhận đăng ký - Tstore",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #28a745;">Chào mừng đến với Tstore!</h2>
+              <p>Xin chào <strong>${fullName}</strong>,</p>
+              <p>Cảm ơn bạn đã đăng ký tài khoản tại Tstore. Để hoàn tất đăng ký, vui lòng nhập mã xác nhận sau:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <div style="background-color: #f8f9fa; border: 2px dashed #28a745; border-radius: 10px; padding: 20px; display: inline-block;">
+                  <p style="margin: 0; font-size: 14px; color: #666; margin-bottom: 10px;">Mã xác nhận của bạn:</p>
+                  <p style="margin: 0; font-size: 32px; font-weight: bold; color: #28a745; letter-spacing: 5px;">${emailVerificationCode}</p>
+                </div>
+              </div>
+              <p style="color: #999; font-size: 12px;">Mã này sẽ hết hạn sau 10 phút.</p>
+              <p>Nếu bạn không đăng ký tài khoản này, vui lòng bỏ qua email này.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="color: #999; font-size: 12px;">Trân trọng,<br>Đội ngũ Tstore</p>
+            </div>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('Verification email sent to:', email);
+      } catch (mailErr) {
+        console.error('Error sending verification email:', mailErr);
+        // Xóa pending registration nếu không gửi được email
+        await PendingRegistration.deleteOne({ email });
+        return res.status(500).json({ message: "Không thể gửi email xác nhận. Vui lòng thử lại sau." });
+      }
+    }
+
+    res.status(201).json({
+      message: "Đăng ký thành công! Vui lòng kiểm tra email để lấy mã xác nhận.",
+      email: email,
+      emailSent: !!(emailUser && emailPass),
+    });
   } catch (err) {
+    console.error('Register error:', err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -363,6 +436,232 @@ export const updateProfile = async (req, res) => {
     
     const sanitized = await User.findById(userId).select('-password');
     res.json({ message: 'Profile updated successfully', user: sanitized });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Xác nhận email
+export const verifyEmail = async (req, res) => {
+  try {
+    let { token } = req.query;
+
+    if (!token) {
+      return res.status(400).json({ message: "Token xác nhận không hợp lệ" });
+    }
+
+    // Decode URL encoding nếu có
+    try {
+      token = decodeURIComponent(token);
+    } catch (e) {
+      // Nếu không decode được thì dùng token gốc
+    }
+
+    // Giải mã token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret_key");
+    } catch (err) {
+      console.error('JWT verification error:', err.message);
+      return res.status(400).json({ message: "Token xác nhận đã hết hạn hoặc không hợp lệ" });
+    }
+
+    const { email } = decoded;
+    console.log('Verifying email for:', email);
+
+    // Tìm user theo email (không cần so sánh token vì JWT đã được verify)
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      console.log('User not found for email:', email);
+      return res.status(404).json({ message: "Không tìm thấy tài khoản với email này" });
+    }
+
+    console.log('User found:', user.email, 'emailVerified:', user.emailVerified, 'hasToken:', !!user.emailVerificationToken);
+
+    // Kiểm tra xem email đã được xác nhận chưa
+    if (user.emailVerified) {
+      return res.status(400).json({ message: "Email đã được xác nhận trước đó" });
+    }
+
+    // Kiểm tra xem user có token xác nhận không (để đảm bảo token này được tạo cho user này)
+    if (!user.emailVerificationToken) {
+      console.log('User has no verification token');
+      return res.status(400).json({ message: "Token xác nhận không hợp lệ hoặc đã được sử dụng" });
+    }
+
+    // Cập nhật trạng thái xác nhận email
+    user.emailVerified = true;
+    user.emailVerificationToken = null;
+    user.active = true; // Kích hoạt tài khoản sau khi xác nhận email
+    await user.save();
+
+    console.log('Email verified successfully for:', email);
+
+    const userObj = user.toObject();
+    delete userObj.password;
+    delete userObj.emailVerificationToken;
+
+    res.json({
+      message: "Email đã được xác nhận thành công! Bạn có thể đăng nhập ngay bây giờ.",
+      user: userObj,
+    });
+  } catch (err) {
+    console.error('Verify email error:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Xác nhận mã OTP
+export const verifyOTP = async (req, res) => {
+  try {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+      return res.status(400).json({ message: "Email và mã xác nhận là bắt buộc" });
+    }
+
+    // Tìm trong PendingRegistration
+    const pendingRegistration = await PendingRegistration.findOne({ email });
+
+    if (!pendingRegistration) {
+      // Kiểm tra xem có phải user đã được tạo chưa
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(400).json({ message: "Tài khoản đã được tạo. Vui lòng đăng nhập." });
+      }
+      return res.status(404).json({ message: "Không tìm thấy thông tin đăng ký. Vui lòng đăng ký lại." });
+    }
+
+    // Kiểm tra mã OTP
+    if (!pendingRegistration.emailVerificationCode) {
+      return res.status(400).json({ message: "Mã xác nhận không hợp lệ hoặc đã hết hạn" });
+    }
+
+    // Kiểm tra mã OTP có khớp không
+    if (pendingRegistration.emailVerificationCode !== code) {
+      return res.status(400).json({ message: "Mã xác nhận không đúng" });
+    }
+
+    // Kiểm tra mã OTP có hết hạn không
+    if (new Date() > pendingRegistration.emailVerificationCodeExpires) {
+      // Xóa pending registration hết hạn
+      await PendingRegistration.deleteOne({ email });
+      return res.status(400).json({ message: "Mã xác nhận đã hết hạn. Vui lòng đăng ký lại." });
+    }
+
+    // Tạo User từ PendingRegistration
+    const user = await User.create({
+      fullName: pendingRegistration.fullName,
+      email: pendingRegistration.email,
+      password: pendingRegistration.password, // Đã được hash rồi
+      phone: pendingRegistration.phone,
+      role: pendingRegistration.role,
+      active: true,
+      avatarURL: pendingRegistration.avatarURL,
+      emailVerified: true,
+    });
+
+    console.log('User created from pending registration:', user._id, 'email:', email);
+
+    // Xóa PendingRegistration sau khi tạo User thành công
+    await PendingRegistration.deleteOne({ email });
+
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.json({
+      message: "Email đã được xác nhận thành công! Bạn có thể đăng nhập ngay bây giờ.",
+      user: userObj,
+    });
+  } catch (err) {
+    console.error('Verify OTP error:', err);
+    
+    // Nếu lỗi do duplicate email (đã có user), xóa pending registration
+    if (err.code === 11000) {
+      await PendingRegistration.deleteOne({ email: req.body.email });
+      return res.status(400).json({ message: "Tài khoản đã tồn tại. Vui lòng đăng nhập." });
+    }
+    
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Gửi lại mã OTP
+export const resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: "Email là bắt buộc" });
+    }
+
+    // Kiểm tra xem user đã được tạo chưa
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "Tài khoản đã được tạo. Vui lòng đăng nhập." });
+    }
+
+    // Tìm trong PendingRegistration
+    const pendingRegistration = await PendingRegistration.findOne({ email });
+
+    if (!pendingRegistration) {
+      return res.status(404).json({ message: "Không tìm thấy thông tin đăng ký. Vui lòng đăng ký lại." });
+    }
+
+    // Tạo mã OTP mới
+    const emailVerificationCode = generateOTP();
+    const emailVerificationCodeExpires = new Date(Date.now() + 10 * 60 * 1000); // Hết hạn sau 10 phút
+
+    pendingRegistration.emailVerificationCode = emailVerificationCode;
+    pendingRegistration.emailVerificationCodeExpires = emailVerificationCodeExpires;
+    pendingRegistration.expiresAt = new Date(Date.now() + 11 * 60 * 1000); // Cập nhật TTL
+    await pendingRegistration.save();
+
+    // Gửi email
+    const emailUser = process.env.EMAIL_USER;
+    const emailPass = process.env.EMAIL_PASS;
+
+    if (emailUser && emailPass) {
+      try {
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: { user: emailUser, pass: emailPass },
+        });
+
+        const mailOptions = {
+          from: `"Tstore Support" <${emailUser}>`,
+          to: email,
+          subject: "Mã xác nhận đăng ký - Tstore",
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #28a745;">Mã xác nhận mới</h2>
+              <p>Xin chào <strong>${pendingRegistration.fullName}</strong>,</p>
+              <p>Vui lòng nhập mã xác nhận sau để hoàn tất đăng ký:</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <div style="background-color: #f8f9fa; border: 2px dashed #28a745; border-radius: 10px; padding: 20px; display: inline-block;">
+                  <p style="margin: 0; font-size: 14px; color: #666; margin-bottom: 10px;">Mã xác nhận của bạn:</p>
+                  <p style="margin: 0; font-size: 32px; font-weight: bold; color: #28a745; letter-spacing: 5px;">${emailVerificationCode}</p>
+                </div>
+              </div>
+              <p style="color: #999; font-size: 12px;">Mã này sẽ hết hạn sau 10 phút.</p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="color: #999; font-size: 12px;">Trân trọng,<br>Đội ngũ Tstore</p>
+            </div>
+          `,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('Verification code resent to:', email);
+        return res.json({ message: "Mã xác nhận đã được gửi lại. Vui lòng kiểm tra hộp thư của bạn." });
+      } catch (mailErr) {
+        console.error('Error sending verification email:', mailErr);
+        return res.status(500).json({ message: "Không thể gửi email. Vui lòng thử lại sau." });
+      }
+    }
+
+    return res.status(500).json({ message: "Hệ thống email chưa được cấu hình" });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
