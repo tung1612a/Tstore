@@ -123,6 +123,11 @@ export const login = async (req, res) => {
     });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // Kiểm tra trạng thái active của user
+    if (user.active === false) {
+      return res.status(403).json({ message: "Tài khoản đã bị khóa" });
+    }
+
     const isMatch = await user.matchPassword(password);
     if (!isMatch) return res.status(401).json({ message: "Invalid password" });
 
