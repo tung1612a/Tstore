@@ -71,6 +71,11 @@ export const AuthProvider = ({ children }) => {
             const serverUserData = await response.json();
             dispatch({ type: 'SET_USER', payload: serverUserData });
           } else {
+            // Nếu tài khoản bị khóa, xóa token và đăng xuất
+            const errorData = await response.json().catch(() => ({}));
+            if (response.status === 403 && errorData.message?.includes('khóa')) {
+              console.warn('Tài khoản đã bị khóa');
+            }
             localStorage.removeItem('token');
             localStorage.removeItem('user');
             dispatch({ type: 'LOGOUT' });

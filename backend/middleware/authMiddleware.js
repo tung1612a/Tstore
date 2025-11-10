@@ -8,6 +8,12 @@ export const protect = async (req, res, next) => {
       token = req.headers.authorization.split(" ")[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = await User.findById(decoded.id).select("-password");
+      
+      // Kiểm tra trạng thái active của user
+      if (!req.user || req.user.active === false) {
+        return res.status(403).json({ message: "Tài khoản đã bị khóa" });
+      }
+      
       next();
     } catch (err) {
       res.status(401).json({ message: "Not authorized, invalid token" });
