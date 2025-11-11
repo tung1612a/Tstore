@@ -1,6 +1,6 @@
 import express from "express";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
-import { getAllUsers, getUserById, updateUser, deleteUser, getDashboardStats, getAllSellerReports } from "../controllers/adminController.js";
+import { getAllUsers, getUserById, updateUser, deleteUser, getDashboardStats, getAllSellerReports, getAllStores, getStoreDetail, updateStoreStatus } from "../controllers/adminController.js";
 
 const router = express.Router();
 
@@ -19,5 +19,10 @@ router.delete("/users/:id", deleteUser);
 
 // Báo cáo doanh thu seller
 router.get("/seller-reports", getAllSellerReports);
+
+// Quản lý stores
+router.get("/stores", getAllStores);
+router.get("/stores/:storeId", getStoreDetail);
+router.put("/stores/:storeId/status", updateStoreStatus);
 
 export default router;

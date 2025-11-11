@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
-import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus, FiUserCheck, FiArrowLeft, FiLogOut, FiAlertTriangle } from 'react-icons/fi';
+import { FiUsers, FiPackage, FiShoppingCart, FiBarChart, FiSettings, FiPlus, FiUserCheck, FiArrowLeft, FiLogOut, FiAlertTriangle, FiShoppingBag } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -203,6 +203,20 @@ const AdminHomepage = () => {
                 <Button variant="danger" onClick={() => navigate('/admin/complaints')}>
                   <FiAlertTriangle className="me-2" />
                   Xem khiếu nại
+                </Button>
+              </Card.Body>
+            </Card>
+          </Col>
+          <Col md={6} className="mb-4">
+            <Card className="h-100 border-0 shadow-sm">
+              <Card.Header className="bg-info text-white">
+                <h5 className="mb-0">Quản lý Store</h5>
+              </Card.Header>
+              <Card.Body>
+                <p className="text-muted">Xem và quản lý các cửa hàng trong hệ thống</p>
+                <Button variant="info" onClick={() => navigate('/admin/stores')}>
+                  <FiShoppingBag className="me-2" />
+                  Quản lý Store
                 </Button>
               </Card.Body>
             </Card>

@@ -157,3 +157,133 @@ export const getAllSellerReports = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Lấy danh sách tất cả các store trong hệ thống
+export const getAllStores = async (req, res) => {
+  try {
+    const { status, page = 1, limit = 10, search = "" } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Import Store model
+    const Store = (await import("../models/Store.js")).default;
+    const Review = (await import("../models/Review.js")).default;
+
+    // Build filter
+    const filter = {};
+    if (status && status !== "all") {
+      filter.status = status;
+    }
+    if (search) {
+      filter.storeName = { $regex: search, $options: "i" };
+    }
+
+    // Get total count
+    const total = await Store.countDocuments(filter);
+
+    // Get stores with seller info
+    const stores = await Store.find(filter)
+      .populate("sellerId", "fullName email avatarUrl")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limitNum);
+
+    // Enrich stores with product count and review count
+    const storesWithStats = await Promise.all(
+      stores.map(async (store) => {
+        const [productCount, reviewCount] = await Promise.all([
+          Product.countDocuments({ sellerId: store.sellerId._id }),
+          Review.countDocuments({ sellerId: store.sellerId._id })
+        ]);
+        
+        const storeObj = store.toObject();
+        return {
+          ...storeObj,
+          productCount,
+          reviewCount,
+          seller: storeObj.sellerId
+        };
+      })
+    );
+
+    res.json({
+      stores: storesWithStats,
+      pagination: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        pages: Math.ceil(total / limitNum)
+      }
+    });
+  } catch (error) {
+    console.error("getAllStores error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Lấy chi tiết một store
+export const getStoreDetail = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const Store = (await import("../models/Store.js")).default;
+    const Review = (await import("../models/Review.js")).default;
+
+    const store = await Store.findById(storeId).populate("sellerId", "fullName email avatarUrl");
+
+    if (!store) {
+      return res.status(404).json({ message: "Store not found" });
+    }
+
+    // Get store stats
+    const [productCount, products, recentReviews] = await Promise.all([
+      Product.countDocuments({ sellerId: store.sellerId._id }),
+      Product.find({ sellerId: store.sellerId._id }).limit(10),
+      Review.find({ sellerId: store.sellerId._id }).limit(10)
+    ]);
+
+    const storeObj = store.toObject();
+    res.json({
+      ...storeObj,
+      productCount,
+      recentProducts: products,
+      recentReviews,
+      seller: storeObj.sellerId
+    });
+  } catch (error) {
+    console.error("getStoreDetail error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Cập nhật trạng thái store
+export const updateStoreStatus = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+    const { status } = req.body;
+
+    const Store = (await import("../models/Store.js")).default;
+
+    if (!["approved", "pending", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const store = await Store.findByIdAndUpdate(
+      storeId,
+      { status },
+      { new: true }
+    ).populate("sellerId", "fullName email");
+
+    if (!store) {
+      return res.status(404).json({ message: "Store not found" });
+    }
+
+    res.json({
+      message: "Store status updated successfully",
+      store
+    });
+  } catch (error) {
+    console.error("updateStoreStatus error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
