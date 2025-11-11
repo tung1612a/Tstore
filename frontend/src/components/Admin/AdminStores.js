@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Button, Table, Modal, Form, Alert, Badge, Spinner, Pagination } from 'react-bootstrap';
-import { FiSearch, FiEye, FiCheckCircle, FiXCircle, FiClock, FiArrowLeft, FiShoppingBag } from 'react-icons/fi';
+import { Container, Row, Col, Card, Button, Table, Form, Alert, Badge, Spinner } from 'react-bootstrap';
+import { FiSearch, FiEdit, FiTrash2, FiEye, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -9,8 +9,6 @@ const AdminStores = () => {
   const navigate = useNavigate();
   const [stores, setStores] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
@@ -18,23 +16,29 @@ const AdminStores = () => {
   const [newStatus, setNewStatus] = useState('');
   const [alert, setAlert] = useState({ show: false, message: '', variant: 'success' });
 
-  const LIMIT = 10;
-
   useEffect(() => {
     fetchStores();
-  }, [currentPage, statusFilter, searchTerm]);
+  }, [statusFilter, searchTerm]);
 
   const fetchStores = async () => {
     try {
       setLoading(true);
-      const query = new URLSearchParams({
-        page: currentPage,
-        limit: LIMIT,
-        status: statusFilter !== 'all' ? statusFilter : '',
-        search: searchTerm
-      });
+      const params = new URLSearchParams();
+      
+      // Only add status param if not 'all'
+      if (statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
+      
+      // Only add search param if not empty
+      if (searchTerm.trim()) {
+        params.append('search', searchTerm);
+      }
 
-      const response = await fetch(`http://localhost:5000/api/admin/stores?${query}`, {
+      const queryString = params.toString();
+      const url = `http://localhost:5000/api/admin/stores${queryString ? `?${queryString}` : ''}`;
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -42,14 +46,16 @@ const AdminStores = () => {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Stores response:', data);
         setStores(data.stores || []);
-        setTotalPages(data.pagination?.pages || 1);
       } else {
-        showAlert('Lỗi khi tải danh sách store', 'danger');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('API Error:', response.status, errorData);
+        showAlert(`Lỗi: ${errorData.message || response.statusText}`, 'danger');
       }
     } catch (error) {
       console.error('Error fetching stores:', error);
-      showAlert('Lỗi khi tải danh sách store', 'danger');
+      showAlert('Lỗi kết nối hoặc tải danh sách store', 'danger');
     } finally {
       setLoading(false);
     }
@@ -60,9 +66,16 @@ const AdminStores = () => {
     setTimeout(() => setAlert({ show: false, message: '', variant: 'success' }), 3000);
   };
 
-  const handleStatusChange = async () => {
+  const handleStatusChange = async (storeId, currentStatus) => {
+    const statusMap = {
+      'approved': 'pending',
+      'pending': 'approved'
+    };
+    
+    const newStatus = statusMap[currentStatus] || 'pending';
+
     try {
-      const response = await fetch(`http://localhost:5000/api/admin/stores/${selectedStore._id}/status`, {
+      const response = await fetch(`http://localhost:5000/api/admin/stores/${storeId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -73,8 +86,6 @@ const AdminStores = () => {
 
       if (response.ok) {
         showAlert('Cập nhật trạng thái store thành công!');
-        setShowModal(false);
-        setSelectedStore(null);
         fetchStores();
       } else {
         const error = await response.json();
@@ -86,35 +97,49 @@ const AdminStores = () => {
     }
   };
 
-  const handleOpenModal = (store) => {
-    setSelectedStore(store);
-    setNewStatus(store.status);
-    setShowModal(true);
-  };
-
-  const getStatusBadge = (status) => {
-    switch (status) {
-      case 'approved':
-        return <Badge bg="success"><FiCheckCircle className="me-1" />Được phê duyệt</Badge>;
-      case 'pending':
-        return <Badge bg="warning"><FiClock className="me-1" />Chờ xử lý</Badge>;
-      case 'rejected':
-        return <Badge bg="danger"><FiXCircle className="me-1" />Bị từ chối</Badge>;
-      default:
-        return <Badge bg="secondary">{status}</Badge>;
+  const handleDeleteStore = async (storeId, sellerId) => {
+    if (!window.confirm('Bạn có chắc chắn muốn xóa store và user này không?')) {
+      return;
     }
-  };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'approved':
-        return 'success';
-      case 'pending':
-        return 'warning';
-      case 'rejected':
-        return 'danger';
-      default:
-        return 'secondary';
+    try {
+      setLoading(true);
+      
+      // Delete store
+      const storeResponse = await fetch(`http://localhost:5000/api/admin/stores/${storeId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!storeResponse.ok) {
+        const error = await storeResponse.json();
+        showAlert(`Lỗi xóa store: ${error.message || 'Có lỗi xảy ra'}`, 'danger');
+        return;
+      }
+
+      // Delete user (seller)
+      const userResponse = await fetch(`http://localhost:5000/api/admin/users/${sellerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!userResponse.ok) {
+        const error = await userResponse.json();
+        showAlert(`Lỗi xóa user: ${error.message || 'Có lỗi xảy ra'}`, 'danger');
+        return;
+      }
+
+      showAlert('Xóa store và user thành công!');
+      fetchStores();
+    } catch (error) {
+      console.error('Error deleting store and user:', error);
+      showAlert('Có lỗi xảy ra khi xóa', 'danger');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -129,20 +154,26 @@ const AdminStores = () => {
   }
 
   return (
-    <Container fluid className="py-4">
+    <Container fluid className="py-4" style={{ backgroundColor: '#1a1a1a', minHeight: '100vh' }}>
       <Row>
         <Col>
-          <div className="d-flex justify-content-between align-items-center mb-4">
-            <div className="d-flex align-items-center">
+          {/* Header */}
+          <div className="mb-4" style={{ color: '#64B5F6' }}>
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h1 className="mb-0" style={{ color: '#64B5F6', fontSize: '2rem', fontWeight: 'bold' }}>
+                  Quản lý Store
+                </h1>
+                <p style={{ color: '#888' }}>Danh sách tất cả các cửa hàng trong hệ thống</p>
+              </div>
               <Button 
                 variant="outline-secondary" 
                 onClick={() => navigate('/admin')}
-                className="me-3"
+                style={{ color: '#64B5F6', borderColor: '#64B5F6' }}
               >
                 <FiArrowLeft className="me-2" />
-                Quay lại
+                Quay lại Dashboard
               </Button>
-              <h2 className="mb-0">Quản lý Store</h2>
             </div>
           </div>
 
@@ -153,36 +184,35 @@ const AdminStores = () => {
           )}
 
           {/* Filter Section */}
-          <Card className="mb-4">
+          <Card style={{ backgroundColor: '#2a2a2a', borderColor: '#333', marginBottom: '2rem' }}>
             <Card.Body>
               <Row>
-                <Col md={5}>
+                <Col md={6}>
                   <div className="position-relative">
                     <FiSearch className="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted" />
                     <Form.Control
                       type="text"
                       placeholder="Tìm kiếm tên cửa hàng..."
-                      value={searchTerm}
-                      onChange={(e) => {
-                        setSearchTerm(e.target.value);
-                        setCurrentPage(1);
-                      }}
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                    }}
                       className="ps-5"
+                      style={{ backgroundColor: '#1a1a1a', color: '#fff', borderColor: '#333' }}
                     />
                   </div>
                 </Col>
-                <Col md={4}>
+                <Col md={6}>
                   <Form.Select
                     value={statusFilter}
                     onChange={(e) => {
                       setStatusFilter(e.target.value);
-                      setCurrentPage(1);
                     }}
+                    style={{ backgroundColor: '#1a1a1a', color: '#fff', borderColor: '#333' }}
                   >
                     <option value="all">Tất cả trạng thái</option>
-                    <option value="approved">Đã phê duyệt</option>
+                    <option value="approved">Hoạt động</option>
                     <option value="pending">Chờ xử lý</option>
-                    <option value="rejected">Bị từ chối</option>
                   </Form.Select>
                 </Col>
               </Row>
@@ -190,69 +220,76 @@ const AdminStores = () => {
           </Card>
 
           {/* Stores Table */}
-          <Card>
-            <Card.Body>
+          <Card style={{ backgroundColor: '#2a2a2a', borderColor: '#333' }}>
+            <Card.Body style={{ padding: 0 }}>
               {stores.length > 0 ? (
                 <div className="table-responsive">
-                  <Table hover>
-                    <thead>
+                  <Table hover style={{ marginBottom: 0, color: '#fff' }}>
+                    <thead style={{ backgroundColor: '#1a1a1a' }}>
                       <tr>
-                        <th>Tên Cửa Hàng</th>
-                        <th>Chủ Cửa Hàng</th>
-                        <th>Sản phẩm</th>
-                        <th>Đánh giá</th>
-                        <th>Trạng thái</th>
-                        <th>Ngày tạo</th>
-                        <th>Hành động</th>
+                        <th style={{ color: '#64B5F6', borderColor: '#333' }}>#</th>
+                        <th style={{ color: '#64B5F6', borderColor: '#333' }}>Tên Store</th>
+                        <th style={{ color: '#64B5F6', borderColor: '#333' }}>Email</th>
+                        <th style={{ color: '#64B5F6', borderColor: '#333' }}>Trạng thái</th>
+                        
+                        <th style={{ color: '#64B5F6', borderColor: '#333' }}>Ngày tạo</th>
+                        <th style={{ color: '#64B5F6', borderColor: '#333' }}>Thao tác</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {stores.map(store => (
-                        <tr key={store._id}>
-                          <td>
-                            <strong>{store.storeName}</strong>
-                            {store.description && (
-                              <div className="text-muted small">{store.description.substring(0, 50)}...</div>
-                            )}
+                      {stores.map((store, index) => (
+                        <tr key={store._id} style={{ borderColor: '#333' }}>
+                          <td style={{ color: '#fff', borderColor: '#333' }}>
+                            {index + 1}
                           </td>
-                          <td>
-                            <div>
-                              <strong>{store.seller?.fullName}</strong>
-                              <div className="text-muted small">{store.seller?.email}</div>
+                          <td style={{ color: '#fff', borderColor: '#333' }}>
+                            <strong>{store.storeName}</strong>
+                          </td>
+                          <td style={{ color: '#999', borderColor: '#333' }}>
+                            {store.seller?.email}
+                          </td>
+                          <td style={{ borderColor: '#333' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <Form.Check 
+                                type="switch" 
+                                checked={store.status === 'approved'}
+                                onChange={() => handleStatusChange(store._id, store.status)}
+                                style={{ cursor: 'pointer' }}
+                              />
+                              <span style={{ color: '#999', fontSize: '0.9rem' }}>
+                                {store.status === 'approved' ? 'Hoạt động' : 'Chờ xử lý'}
+                              </span>
                             </div>
                           </td>
-                          <td>
-                            <Badge bg="info">{store.productCount || 0}</Badge>
-                          </td>
-                          <td>
-                            <Badge bg="secondary">{store.reviewCount || 0}</Badge>
-                          </td>
-                          <td>
-                            {getStatusBadge(store.status)}
-                          </td>
-                          <td>
+                         
+                          <td style={{ color: '#999', borderColor: '#333' }}>
                             {new Date(store.createdAt).toLocaleDateString('vi-VN')}
                           </td>
-                          <td>
+                          <td style={{ borderColor: '#333' }}>
                             <Button
                               variant="outline-primary"
                               size="sm"
-                              onClick={() => handleOpenModal(store)}
+                              onClick={() => navigate(`/admin/stores/${store._id}`)}
                               className="me-2"
+                              style={{ 
+                                color: '#64B5F6', 
+                                borderColor: '#64B5F6',
+                                backgroundColor: 'transparent'
+                              }}
                             >
-                              <FiCheckCircle className="me-1" />
-                              Phê duyệt
+                              <FiEye />
                             </Button>
                             <Button
                               variant="outline-secondary"
                               size="sm"
-                              onClick={() => {
-                                setSelectedStore(store);
-                                navigate(`/admin/stores/${store._id}`);
+                              onClick={() => handleDeleteStore(store._id, store.sellerId._id)}
+                              style={{ 
+                                color: '#999', 
+                                borderColor: '#666',
+                                backgroundColor: 'transparent'
                               }}
                             >
-                              <FiEye className="me-1" />
-                              Chi tiết
+                              <FiTrash2 />
                             </Button>
                           </td>
                         </tr>
@@ -261,99 +298,21 @@ const AdminStores = () => {
                   </Table>
                 </div>
               ) : (
-                <div className="text-center py-5">
-                  <p className="text-muted">Không tìm thấy store nào</p>
+                <div className="text-center py-5" style={{ color: '#999' }}>
+                  <p>Không tìm thấy store nào</p>
                 </div>
               )}
             </Card.Body>
           </Card>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="d-flex justify-content-center mt-4">
-              <Pagination>
-                <Pagination.First 
-                  onClick={() => setCurrentPage(1)} 
-                  disabled={currentPage === 1}
-                />
-                <Pagination.Prev 
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
-                  disabled={currentPage === 1}
-                />
-                {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <Pagination.Item
-                      key={page}
-                      active={page === currentPage}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Pagination.Item>
-                  );
-                })}
-                <Pagination.Next 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} 
-                  disabled={currentPage === totalPages}
-                />
-                <Pagination.Last 
-                  onClick={() => setCurrentPage(totalPages)} 
-                  disabled={currentPage === totalPages}
-                />
-              </Pagination>
+          {/* Total count */}
+          {stores.length > 0 && (
+            <div className="mt-3" style={{ color: '#999', textAlign: 'right' }}>
+              <span>Tổng số: <strong style={{ color: '#64B5F6' }}>{stores.length}</strong> store</span>
             </div>
           )}
         </Col>
       </Row>
-
-      {/* Status Update Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Cập nhật trạng thái Store</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {selectedStore && (
-            <>
-              <Form.Group className="mb-3">
-                <Form.Label>Tên cửa hàng</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={selectedStore.storeName}
-                  disabled
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Trạng thái hiện tại</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={selectedStore.status}
-                  disabled
-                />
-              </Form.Group>
-              <Form.Group className="mb-3">
-                <Form.Label>Trạng thái mới *</Form.Label>
-                <Form.Select
-                  value={newStatus}
-                  onChange={(e) => setNewStatus(e.target.value)}
-                >
-                  <option value="">-- Chọn trạng thái --</option>
-                  <option value="approved">Phê duyệt</option>
-                  <option value="pending">Chờ xử lý</option>
-                  <option value="rejected">Từ chối</option>
-                </Form.Select>
-              </Form.Group>
-            </>
-          )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Hủy
-          </Button>
-          <Button variant="primary" onClick={handleStatusChange} disabled={!newStatus || newStatus === selectedStore?.status}>
-            Cập nhật
-          </Button>
-        </Modal.Footer>
-      </Modal>
     </Container>
   );
 };

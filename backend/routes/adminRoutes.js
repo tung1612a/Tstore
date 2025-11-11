@@ -1,12 +1,15 @@
 import express from "express";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
-import { getAllUsers, getUserById, updateUser, deleteUser, getDashboardStats, getAllSellerReports, getAllStores, getStoreDetail, updateStoreStatus } from "../controllers/adminController.js";
+import { getAllUsers, getUserById, updateUser, deleteUser, getDashboardStats, getAllSellerReports, getAllStores, getStoreDetail, updateStoreStatus, debugInfo, deleteStore } from "../controllers/adminController.js";
 
 const router = express.Router();
 
 // Tất cả routes admin đều cần xác thực và chỉ admin mới truy cập được
 router.use(protect);
 router.use(adminOnly);
+
+// Debug endpoint
+router.get("/debug", debugInfo);
 
 // Dashboard admin
 router.get("/dashboard", getDashboardStats);
@@ -24,5 +27,6 @@ router.get("/seller-reports", getAllSellerReports);
 router.get("/stores", getAllStores);
 router.get("/stores/:storeId", getStoreDetail);
 router.put("/stores/:storeId/status", updateStoreStatus);
+router.delete("/stores/:storeId", deleteStore);
 
 export default router;

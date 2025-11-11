@@ -42,6 +42,7 @@ import ReportAdmin from "./components/DevAdmin/ReportAdmin";
 import BuyerComplaints from "./components/Orders/BuyerComplaints";
 import AdminComplaints from "./components/Admin/AdminComplaints";
 import AdminStores from "./components/Admin/AdminStores";
+import AdminStoreDetail from "./components/Admin/AdminStoreDetail";
 import ChatList from "./components/Chat/ChatList";
 import Chat from "./components/Chat/Chat";
 import ShipperMoney from "./components/Shipper/ShipperMoney";
@@ -98,6 +99,8 @@ function App() {
             <Route path="/admin/complaints" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminComplaints /></ProtectedRoute>} />
 
             <Route path="/admin/stores" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminStores /></ProtectedRoute>} />
+
+            <Route path="/admin/stores/:storeId" element={<ProtectedRoute allowedRoles={['admin', 'devadmin']}><AdminStoreDetail /></ProtectedRoute>} />
 
             {/* Seller routes */}
             <Route path="/seller" element={<ProtectedRoute requiredRole="seller"><SellerHomepage /></ProtectedRoute>}/>
