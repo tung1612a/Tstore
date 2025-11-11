@@ -315,8 +315,14 @@ export const updateStoreStatus = async (req, res) => {
     const { storeId } = req.params;
     const { status } = req.body;
 
-    if (!["approved", "pending"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status. Must be 'approved' or 'pending'" });
+    // Import Store model
+    const Store = (await import("../models/Store.js")).default;
+
+    // Validate status - cho phép 3 trạng thái: approved, pending, rejected
+    if (!["approved", "pending", "rejected"].includes(status)) {
+      return res.status(400).json({ 
+        message: "Invalid status. Must be 'approved', 'pending', or 'rejected'" 
+      });
     }
 
     const store = await Store.findByIdAndUpdate(
@@ -342,6 +348,9 @@ export const updateStoreStatus = async (req, res) => {
 // DEBUG ENDPOINT - Check database status
 export const debugInfo = async (req, res) => {
   try {
+    // Import Store model
+    const Store = (await import("../models/Store.js")).default;
+
     const sellers = await User.find({ role: 'seller' }).select('_id fullName email');
     const stores = await Store.find().populate('sellerId', 'fullName email');
     
@@ -359,23 +368,49 @@ export const debugInfo = async (req, res) => {
   }
 };
 
-// Xóa store
-export const deleteStore = async (req, res) => {
+// Bật/tắt hoạt động của store (khóa/mở khóa cửa hàng và tài khoản seller)
+export const toggleStoreActive = async (req, res) => {
   try {
     const { storeId } = req.params;
+    const { active } = req.body;
 
-    const store = await Store.findByIdAndDelete(storeId);
+    // Import Store model
+    const Store = (await import("../models/Store.js")).default;
 
+    // Validate active value
+    if (typeof active !== 'boolean') {
+      return res.status(400).json({ message: "Invalid active value. Must be boolean" });
+    }
+
+    // Tìm store và populate sellerId
+    const store = await Store.findById(storeId).populate("sellerId");
+    
     if (!store) {
       return res.status(404).json({ message: "Store not found" });
     }
 
+    // Cập nhật active status của store
+    store.active = active;
+    await store.save();
+
+    // Cập nhật active status của seller (user)
+    if (store.sellerId) {
+      store.sellerId.active = active;
+      await store.sellerId.save();
+    }
+
+    // Populate lại để trả về đầy đủ thông tin
+    const updatedStore = await Store.findById(storeId)
+      .populate("sellerId", "fullName email avatarUrl active");
+
     res.json({
-      message: "Store deleted successfully",
-      store
+      message: active 
+        ? "Cửa hàng đã được kích hoạt thành công" 
+        : "Cửa hàng đã bị khóa thành công",
+      store: updatedStore
     });
   } catch (error) {
-    console.error("deleteStore error:", error);
+    console.error("toggleStoreActive error:", error);
     res.status(500).json({ message: error.message });
   }
 };

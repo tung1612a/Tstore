@@ -1,6 +1,6 @@
 import express from "express";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
-import { getAllUsers, getUserById, updateUser, deleteUser, getDashboardStats, getAllSellerReports, getAllStores, getStoreDetail, updateStoreStatus, debugInfo, deleteStore } from "../controllers/adminController.js";
+import { getAllUsers, getUserById, updateUser, deleteUser, getDashboardStats, getAllSellerReports, getAllStores, getStoreDetail, updateStoreStatus, debugInfo, toggleStoreActive } from "../controllers/adminController.js";
 
 const router = express.Router();
 
@@ -27,6 +27,6 @@ router.get("/seller-reports", getAllSellerReports);
 router.get("/stores", getAllStores);
 router.get("/stores/:storeId", getStoreDetail);
 router.put("/stores/:storeId/status", updateStoreStatus);
-router.delete("/stores/:storeId", deleteStore);
+router.put("/stores/:storeId/active", toggleStoreActive);
 
 export default router;
