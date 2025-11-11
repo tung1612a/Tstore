@@ -62,8 +62,8 @@ const AdminHomepage = () => {
             </Col>
             <Col xs="auto">
               <div className="d-flex gap-2">
-                <Button 
-                  variant="outline-light" 
+                {/* <Button
+                  variant="outline-light"
                   onClick={() => navigate('/')}
                   className="d-flex align-items-center"
                   style={{
@@ -74,9 +74,9 @@ const AdminHomepage = () => {
                 >
                   <FiArrowLeft className="me-2" />
                   {t('admin.backHome')}
-                </Button>
-                <Button 
-                  variant="outline-light" 
+                </Button> */}
+                <Button
+                  variant="outline-light"
                   onClick={handleLogout}
                   className="d-flex align-items-center"
                   style={{
@@ -165,20 +165,20 @@ const AdminHomepage = () => {
               </Card.Body>
             </Card>
           </Col>
-          {/* <Col md={6} className="mb-4">
+          <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-info text-white">
-                <h5 className="mb-0">Quản lý sản phẩm</h5>
+                <h5 className="mb-0">{t('admin.manageProducts')}</h5>
               </Card.Header>
               <Card.Body>
-                <p className="text-muted">Kiểm duyệt và quản lý sản phẩm của sellers</p>
+                <p className="text-muted">{t('admin.viewProducts')}</p>
                 <Button variant="info" onClick={() => navigate('/admin/products')}>
                   <FiPackage className="me-2" />
-                  Quản lý Sản phẩm
+                  {t('admin.manageProductsBtn')}
                 </Button>
               </Card.Body>
             </Card>
-          </Col> */}
+          </Col>
           <Col md={6} className="mb-4">
             <Card className="h-100 border-0 shadow-sm">
               <Card.Header className="bg-warning text-white">
@@ -242,8 +242,8 @@ const AdminHomepage = () => {
           <Col>
             <div className="text-center">
               <div className="d-flex justify-content-center gap-3">
-                <Button 
-                  variant="outline-primary" 
+                {/* <Button
+                  variant="outline-primary"
                   onClick={() => navigate('/')}
                   size="lg"
                   className="d-flex align-items-center"
@@ -255,9 +255,9 @@ const AdminHomepage = () => {
                 >
                   <FiArrowLeft className="me-2" />
                   Quay lại Trang chủ
-                </Button>
-                <Button 
-                  variant="outline-secondary" 
+                </Button> */}
+                <Button
+                  variant="outline-secondary"
                   onClick={handleLogout}
                   size="lg"
                   className="d-flex align-items-center"
