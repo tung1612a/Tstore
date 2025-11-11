@@ -44,6 +44,7 @@ import AdminComplaints from "./components/Admin/AdminComplaints";
 import AdminStores from "./components/Admin/AdminStores";
 import ChatList from "./components/Chat/ChatList";
 import Chat from "./components/Chat/Chat";
+import ShipperMoney from "./components/Shipper/ShipperMoney";
 
 function App() {
   return (
@@ -113,6 +114,8 @@ function App() {
             <Route path="/shipper/dashboard" element={<ProtectedRoute requiredRole="shipper"><ShipperDashboard /></ProtectedRoute>}/>
             <Route path="/shipper/orders" element={<ProtectedRoute requiredRole="shipper"><ShipperOrders /></ProtectedRoute>}/>
             <Route path="/shipper/orders/:id" element={<ProtectedRoute requiredRole="shipper"><ShipperOrders /></ProtectedRoute>}/>
+            <Route path="/shipper/money" element={<ProtectedRoute requiredRole="shipper"><ShipperMoney /></ProtectedRoute>}/>
+
 
           </Routes>
         </BrowserRouter>

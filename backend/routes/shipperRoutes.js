@@ -9,7 +9,8 @@ import {
   getUnassignedOrders,
   assignOrderToShipper,
   getAllShippers,
-  getShippersWithStats
+  getShippersWithStats,
+  getShipperReports
 } from "../controllers/shipperController.js";
 
 const router = express.Router();
@@ -23,6 +24,7 @@ router.get("/orders", shipperOnly, getShipperOrders);
 router.get("/orders/:id", shipperOnly, getShipperOrderDetails);
 router.put("/orders/:id/ship", shipperOnly, updateOrderToShipped);
 router.put("/orders/:id/complete", shipperOnly, updateOrderToCompleted);
+router.get("/reports", shipperOnly, getShipperReports);
 
 // Routes dành cho admin (quản lý shipper và assign đơn hàng)
 router.get("/unassigned-orders", adminOnly, getUnassignedOrders);
