@@ -172,22 +172,32 @@ export const getAllStores = async (req, res) => {
 
     // Build filter
     const filter = {};
-    if (status && status !== "all") {
+    // Only filter by status if provided and not empty
+    if (status && status.trim() !== "" && status !== "all") {
       filter.status = status;
+      console.log('Filtering by status:', status);
     }
-    if (search) {
+    // Only filter by search if provided and not empty
+    if (search && search.trim() !== "") {
       filter.storeName = { $regex: search, $options: "i" };
+      console.log('Filtering by search:', search);
     }
 
     // Get total count
     const total = await Store.countDocuments(filter);
+    console.log('Total stores found with filter:', filter, 'Count:', total);
 
-    // Get stores with seller info
+    // Get all stores with seller info (no pagination)
     const stores = await Store.find(filter)
       .populate("sellerId", "fullName email avatarUrl")
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limitNum);
+      .sort({ createdAt: -1 });
+
+    console.log('Fetched stores count:', stores.length);
+    if (stores.length > 0) {
+      console.log('First store:', stores[0]);
+    } else {
+      console.log('No stores found');
+    }
 
     // Enrich stores with product count and review count
     const storesWithStats = await Promise.all(
@@ -232,16 +242,12 @@ export const getAllStores = async (req, res) => {
           seller: storeObj.sellerId
         };
       })
-    );
+    ).then(results => results.filter(r => r !== null));
 
+    console.log(`Returning ${storesWithStats.length} stores`);
     res.json({
       stores: storesWithStats,
-      pagination: {
-        total,
-        page: pageNum,
-        limit: limitNum,
-        pages: Math.ceil(total / limitNum)
-      }
+      total: storesWithStats.length
     });
   } catch (error) {
     console.error("getAllStores error:", error);
@@ -309,10 +315,8 @@ export const updateStoreStatus = async (req, res) => {
     const { storeId } = req.params;
     const { status } = req.body;
 
-    const Store = (await import("../models/Store.js")).default;
-
-    if (!["approved", "pending", "rejected"].includes(status)) {
-      return res.status(400).json({ message: "Invalid status" });
+    if (!["approved", "pending"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status. Must be 'approved' or 'pending'" });
     }
 
     const store = await Store.findByIdAndUpdate(
@@ -331,6 +335,47 @@ export const updateStoreStatus = async (req, res) => {
     });
   } catch (error) {
     console.error("updateStoreStatus error:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// DEBUG ENDPOINT - Check database status
+export const debugInfo = async (req, res) => {
+  try {
+    const sellers = await User.find({ role: 'seller' }).select('_id fullName email');
+    const stores = await Store.find().populate('sellerId', 'fullName email');
+    
+    res.json({
+      debug: {
+        sellers_count: sellers.length,
+        stores_count: stores.length,
+        sellers: sellers,
+        stores: stores
+      }
+    });
+  } catch (error) {
+    console.error('debugInfo error:', error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Xóa store
+export const deleteStore = async (req, res) => {
+  try {
+    const { storeId } = req.params;
+
+    const store = await Store.findByIdAndDelete(storeId);
+
+    if (!store) {
+      return res.status(404).json({ message: "Store not found" });
+    }
+
+    res.json({
+      message: "Store deleted successfully",
+      store
+    });
+  } catch (error) {
+    console.error("deleteStore error:", error);
     res.status(500).json({ message: error.message });
   }
 };
