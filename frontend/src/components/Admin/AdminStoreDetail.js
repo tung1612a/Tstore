@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Container, Row, Col, Spinner, Alert, Button, Card, Badge } from 'react-bootstrap';
-import { FiArrowLeft, FiPackage, FiStar, FiUser, FiMail, FiPhone } from 'react-icons/fi';
+import { Container, Row, Col, Spinner, Alert, Button, Card, Badge, Modal } from 'react-bootstrap';
+import { FiArrowLeft, FiPackage, FiStar, FiUser, FiMail, FiPhone, FiTrash2 } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
-import ProductCard from '../Product/ProductCard';
 
 const AdminStoreDetail = () => {
   const { storeId } = useParams();
@@ -13,6 +12,10 @@ const AdminStoreDetail = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [productToDelete, setProductToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [alert, setAlert] = useState({ show: false, message: '', variant: 'success' });
 
   useEffect(() => {
     fetchStoreDetail();
@@ -48,7 +51,7 @@ const AdminStoreDetail = () => {
 
   const fetchStoreProducts = async (sellerId) => {
     try {
-      const response = await fetch(`/api/products?sellerId=${sellerId}`);
+      const response = await fetch(`http://localhost:5000/api/products?sellerId=${sellerId}`);
       if (response.ok) {
         const data = await response.json();
         setProducts(data || []);
@@ -56,6 +59,149 @@ const AdminStoreDetail = () => {
     } catch (err) {
       console.error('Error fetching products:', err);
     }
+  };
+
+  const showAlert = (message, variant = 'success') => {
+    setAlert({ show: true, message, variant });
+    setTimeout(() => setAlert({ show: false }), 3000);
+  };
+
+  const handleDeleteProduct = async () => {
+    if (!productToDelete) return;
+
+    setDeleting(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/products/${productToDelete._id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        showAlert('Xóa sản phẩm thành công!', 'success');
+        setShowDeleteModal(false);
+        setProductToDelete(null);
+        // Refresh products list
+        if (store?.seller?._id) {
+          fetchStoreProducts(store.seller._id);
+        }
+        // Update product count
+        setStore(prev => ({
+          ...prev,
+          productCount: (prev.productCount || 0) - 1
+        }));
+      } else {
+        const data = await res.json();
+        showAlert(data.message || 'Không thể xóa sản phẩm', 'danger');
+      }
+    } catch (error) {
+      console.error('Error deleting product:', error);
+      showAlert('Lỗi kết nối', 'danger');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const openDeleteModal = (product) => {
+    setProductToDelete(product);
+    setShowDeleteModal(true);
+  };
+
+  // Component Admin Product Card
+  const AdminProductCard = ({ product }) => {
+    const price = product.price?.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
+    const stock = product.stock ?? product.inventoryQuantity ?? 0;
+    const isOutOfStock = stock === 0;
+
+    return (
+      <Card className="h-100 shadow-sm">
+        <div
+          className="position-relative"
+          style={{ cursor: "pointer" }}
+          onClick={() => navigate(`/product/${product._id}`)}
+        >
+          {product.image || product.imageURL ? (
+            <Card.Img
+              variant="top"
+              src={product.image || product.imageURL}
+              alt={product.title}
+              style={{ height: 220, objectFit: "cover" }}
+            />
+          ) : (
+            <div
+              style={{
+                height: 220,
+                background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#6c757d",
+                fontSize: "14px",
+              }}
+            >
+              Không có hình ảnh
+            </div>
+          )}
+          {isOutOfStock && (
+            <Badge bg="danger" className="position-absolute top-0 start-0 m-2" style={{ fontSize: "12px", fontWeight: "600" }}>
+              Hết hàng
+            </Badge>
+          )}
+        </div>
+
+        <Card.Body className="d-flex flex-column">
+          <Card.Title
+            className="h6 text-truncate mb-2"
+            title={product.title}
+            style={{
+              color: "#2c3e50",
+              fontSize: "14px",
+              lineHeight: "1.4",
+              cursor: "pointer",
+            }}
+            onClick={() => navigate(`/product/${product._id}`)}
+          >
+            {product.title}
+          </Card.Title>
+
+          <div className="d-flex align-items-center mb-2">
+            <div className="d-flex align-items-center me-2">
+              <FiStar size={14} color="#ffc107" fill="#ffc107" />
+              <FiStar size={14} color="#ffc107" fill="#ffc107" />
+              <FiStar size={14} color="#ffc107" fill="#ffc107" />
+              <FiStar size={14} color="#ffc107" fill="#ffc107" />
+              <FiStar size={14} color="#e9ecef" />
+              <span className="ms-1 text-muted" style={{ fontSize: "12px" }}>
+                (128)
+              </span>
+            </div>
+          </div>
+
+          <div className="d-flex align-items-center justify-content-between mb-3">
+            <div>
+              <div className="text-danger fw-bold fs-5">{price}</div>
+            </div>
+            {stock !== undefined && stock !== null && (
+              <div className={isOutOfStock ? "text-danger fw-bold" : "text-muted"} style={{ fontSize: "12px" }}>
+                {isOutOfStock ? "Hết hàng" : `Còn: ${stock} Sản phẩm`}
+              </div>
+            )}
+          </div>
+
+          <Button
+            variant="outline-danger"
+            size="sm"
+            className="w-100 d-flex align-items-center justify-content-center"
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteModal(product);
+            }}
+          >
+            <FiTrash2 className="me-2" size={16} />
+            Xóa sản phẩm
+          </Button>
+        </Card.Body>
+      </Card>
+    );
   };
 
   if (loading) {
@@ -93,7 +239,7 @@ const AdminStoreDetail = () => {
       case 'pending':
         return <Badge bg="warning">Chờ xử lý</Badge>;
       case 'rejected':
-        return <Badge bg="danger">Bị từ chối</Badge>;
+        return <Badge bg="danger">Không được xác minh</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -116,6 +262,18 @@ const AdminStoreDetail = () => {
       </div>
 
       <Container className="py-5">
+        {/* Alert */}
+        {alert.show && (
+          <Alert 
+            variant={alert.variant} 
+            dismissible 
+            onClose={() => setAlert({ show: false })}
+            className="mb-3"
+          >
+            {alert.message}
+          </Alert>
+        )}
+
         {/* Store Header */}
         <Card className="mb-5 border-0 shadow-sm">
           <Card.Body className="p-4">
@@ -163,19 +321,11 @@ const AdminStoreDetail = () => {
 
                     <hr />
 
-                    <div className="row text-center">
-                      <div className="col-6">
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ee4d2d' }}>
-                          {store.productCount || 0}
-                        </div>
-                        <small className="text-muted">Sản phẩm</small>
+                    <div className="text-center">
+                      <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ee4d2d' }}>
+                        {store.productCount || 0}
                       </div>
-                      <div className="col-6">
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ee4d2d' }}>
-                          {store.reviewCount || 0}
-                        </div>
-                        <small className="text-muted">Đánh giá</small>
-                      </div>
+                      <small className="text-muted">Sản phẩm</small>
                     </div>
                   </Card.Body>
                 </Card>
@@ -198,7 +348,7 @@ const AdminStoreDetail = () => {
             <Row>
               {products.map(product => (
                 <Col key={product._id} xs={12} sm={6} md={4} lg={3} className="mb-4">
-                  <ProductCard product={product} hideStoreButton={true} />
+                  <AdminProductCard product={product} />
                 </Col>
               ))}
             </Row>
@@ -209,34 +359,54 @@ const AdminStoreDetail = () => {
             </Alert>
           )}
         </div>
-
-        {/* Recent Reviews */}
-        {store.recentReviews && store.recentReviews.length > 0 && (
-          <div>
-            <h4 className="mb-3" style={{ color: '#2c3e50', fontWeight: 'bold' }}>
-              Đánh giá gần đây
-            </h4>
-            {store.recentReviews.map(review => (
-              <Card key={review._id} className="mb-3 border-0 shadow-sm">
-                <Card.Body>
-                  <div className="d-flex justify-content-between align-items-start mb-2">
-                    <div>
-                      <h6 className="mb-1">{review.buyerId?.fullName || 'Ẩn danh'}</h6>
-                      <div className="text-warning mb-2">
-                        {'⭐'.repeat(review.rating)}
-                      </div>
-                    </div>
-                    <small className="text-muted">
-                      {new Date(review.createdAt).toLocaleDateString('vi-VN')}
-                    </small>
-                  </div>
-                  <p className="text-muted mb-0">{review.comment}</p>
-                </Card.Body>
-              </Card>
-            ))}
-          </div>
-        )}
       </Container>
+
+      {/* Delete Product Confirmation Modal */}
+      <Modal 
+        show={showDeleteModal} 
+        onHide={() => !deleting && setShowDeleteModal(false)} 
+        centered
+      >
+        <Modal.Header closeButton={!deleting}>
+          <Modal.Title>Xác nhận xóa sản phẩm</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {productToDelete && (
+            <>
+              <p>Bạn có chắc chắn muốn xóa sản phẩm <strong>"{productToDelete.title}"</strong>?</p>
+              <Alert variant="warning" className="mb-0">
+                <strong>Lưu ý:</strong> Hành động này không thể hoàn tác. Sản phẩm sẽ bị xóa vĩnh viễn khỏi hệ thống.
+              </Alert>
+            </>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button 
+            variant="secondary" 
+            onClick={() => setShowDeleteModal(false)}
+            disabled={deleting}
+          >
+            Hủy
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={handleDeleteProduct}
+            disabled={deleting}
+          >
+            {deleting ? (
+              <>
+                <Spinner size="sm" animation="border" className="me-2" />
+                Đang xóa...
+              </>
+            ) : (
+              <>
+                <FiTrash2 className="me-2" />
+                Xóa sản phẩm
+              </>
+            )}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </>
   );
 };

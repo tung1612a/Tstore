@@ -14,6 +14,9 @@ const storeSchema = new mongoose.Schema({
 
   // Workflow status for moderation/approval
   status: { type: String, enum: ["approved", "pending", "rejected"], default: "pending" },
+  
+  // Active status - khi false thì cửa hàng bị khóa
+  active: { type: Boolean, default: true },
 }, { timestamps: true });
 
 export default mongoose.model("Store", storeSchema);
