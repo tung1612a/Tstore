@@ -28,6 +28,7 @@ function Register() {
   const [resendingOTP, setResendingOTP] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const countdownIntervalRef = useRef(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Hàm bắt đầu đếm ngược
   const startCountdown = () => {
@@ -60,7 +61,16 @@ function Register() {
   }, []);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    
+    // Clear validation error when user starts typing
+    if (validationErrors[name]) {
+      setValidationErrors({ ...validationErrors, [name]: '' });
+    }
+    if (error) {
+      setError('');
+    }
   };
 
   const handleVerifyOTP = async (e) => {
@@ -113,13 +123,67 @@ function Register() {
     }
   };
 
+  // Validate fullName
+  const validateFullName = (fullname) => {
+    const trimmed = fullname.trim();
+    if (trimmed.length < 2) {
+      return 'Họ tên phải có ít nhất 2 ký tự';
+    }
+    if (trimmed.length > 50) {
+      return 'Họ tên không được vượt quá 50 ký tự';
+    }
+    const fullNameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s]+$/;
+    if (!fullNameRegex.test(trimmed)) {
+      return 'Họ tên chỉ được chứa chữ cái và khoảng trắng';
+    }
+    return '';
+  };
+
+  // Validate password
+  const validatePassword = (password) => {
+    if (password.length < 6) {
+      return 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+    if (password.length > 50) {
+      return 'Mật khẩu không được vượt quá 50 ký tự';
+    }
+    if (/\s/.test(password)) {
+      return 'Mật khẩu không được chứa khoảng trắng';
+    }
+    if (!/[a-zA-Z]/.test(password)) {
+      return 'Mật khẩu phải chứa ít nhất một chữ cái';
+    }
+    if (!/[0-9]/.test(password)) {
+      return 'Mật khẩu phải chứa ít nhất một số';
+    }
+    return '';
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
     setSuccess(false);
+    setValidationErrors({});
+
+    // Validate fullName
+    const fullNameError = validateFullName(form.fullname);
+    if (fullNameError) {
+      setValidationErrors({ fullname: fullNameError });
+      setError(fullNameError);
+      return;
+    }
 
     // Validate password
+    const passwordError = validatePassword(form.password);
+    if (passwordError) {
+      setValidationErrors({ password: passwordError });
+      setError(passwordError);
+      return;
+    }
+
+    // Validate password confirmation
     if (form.password !== form.confirmPassword) {
+      setValidationErrors({ confirmPassword: t('register.passwordMismatch') });
       setError(t('register.passwordMismatch'));
       return;
     }
@@ -128,7 +192,7 @@ function Register() {
 
     // Call backend register endpoint
     axios.post('/api/auth/register', {
-      fullName: form.fullname,
+      fullName: form.fullname.trim(), // Trim fullName trước khi gửi
       email: form.email,
       password: form.password,
       phone: form.phone,
@@ -191,8 +255,17 @@ function Register() {
                       name="fullname"
                       value={form.fullname}
                       onChange={handleChange}
+                      isInvalid={!!validationErrors.fullname}
                       required
                     />
+                    {validationErrors.fullname && (
+                      <Form.Control.Feedback type="invalid">
+                        {validationErrors.fullname}
+                      </Form.Control.Feedback>
+                    )}
+                    <Form.Text className="text-muted">
+                      Họ tên phải có từ 2-50 ký tự, chỉ chứa chữ cái và khoảng trắng
+                    </Form.Text>
                   </Form.Group>
 
                   <Form.Group className="mb-3" controlId="formEmail">
@@ -227,8 +300,17 @@ function Register() {
                       name="password"
                       value={form.password}
                       onChange={handleChange}
+                      isInvalid={!!validationErrors.password}
                       required
                     />
+                    {validationErrors.password && (
+                      <Form.Control.Feedback type="invalid">
+                        {validationErrors.password}
+                      </Form.Control.Feedback>
+                    )}
+                    <Form.Text className="text-muted">
+                      Mật khẩu phải có ít nhất 6 ký tự, chứa ít nhất một chữ cái và một số, không chứa khoảng trắng
+                    </Form.Text>
                   </Form.Group>
 
                   <Form.Group className="mb-3" controlId="formConfirmPassword">
@@ -239,8 +321,14 @@ function Register() {
                       name="confirmPassword"
                       value={form.confirmPassword}
                       onChange={handleChange}
+                      isInvalid={!!validationErrors.confirmPassword}
                       required
                     />
+                    {validationErrors.confirmPassword && (
+                      <Form.Control.Feedback type="invalid">
+                        {validationErrors.confirmPassword}
+                      </Form.Control.Feedback>
+                    )}
                   </Form.Group>
 
                   <div className="d-grid">

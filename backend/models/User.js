@@ -24,6 +24,13 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
+  
+  // Kiểm tra xem password đã được hash chưa (bcrypt hash bắt đầu bằng $2a$, $2b$, hoặc $2y$)
+  // Nếu đã hash rồi thì không hash lại
+  if (this.password && /^\$2[ayb]\$\d+\$/.test(this.password)) {
+    return next();
+  }
+  
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });

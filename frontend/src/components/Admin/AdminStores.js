@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Row, Col, Card, Button, Table, Modal, Form, Alert, Badge, Spinner, Pagination } from 'react-bootstrap';
-import { FiSearch, FiEye, FiCheckCircle, FiXCircle, FiClock, FiArrowLeft, FiShoppingBag } from 'react-icons/fi';
+import { FiSearch, FiEye, FiCheckCircle, FiXCircle, FiClock, FiArrowLeft, FiShoppingBag, FiUser, FiMail, FiPackage, FiStar, FiCalendar } from 'react-icons/fi';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -14,17 +14,16 @@ const AdminStores = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedStore, setSelectedStore] = useState(null);
+  const [storeDetail, setStoreDetail] = useState(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [alert, setAlert] = useState({ show: false, message: '', variant: 'success' });
 
   const LIMIT = 10;
 
-  useEffect(() => {
-    fetchStores();
-  }, [currentPage, statusFilter, searchTerm]);
-
-  const fetchStores = async () => {
+  const fetchStores = useCallback(async () => {
     try {
       setLoading(true);
       const query = new URLSearchParams({
@@ -53,7 +52,16 @@ const AdminStores = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, currentPage, statusFilter, searchTerm, LIMIT]);
+
+  useEffect(() => {
+    // Debounce search to avoid too many API calls, but fetch immediately for page/status changes
+    const timeoutId = setTimeout(() => {
+      fetchStores();
+    }, searchTerm ? 500 : 0); // Wait 500ms after user stops typing, but fetch immediately for other changes
+
+    return () => clearTimeout(timeoutId);
+  }, [fetchStores]);
 
   const showAlert = (message, variant = 'success') => {
     setAlert({ show: true, message, variant });
@@ -75,6 +83,7 @@ const AdminStores = () => {
         showAlert('Cập nhật trạng thái store thành công!');
         setShowModal(false);
         setSelectedStore(null);
+        setNewStatus('');
         fetchStores();
       } else {
         const error = await response.json();
@@ -88,18 +97,48 @@ const AdminStores = () => {
 
   const handleOpenModal = (store) => {
     setSelectedStore(store);
-    setNewStatus(store.status);
+    setNewStatus(''); // Reset to empty so user must select a new status
     setShowModal(true);
+  };
+
+  const handleShowDetail = async (store) => {
+    setSelectedStore(store);
+    setShowDetailModal(true);
+    setLoadingDetail(true);
+    setStoreDetail(null);
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/stores/${store._id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setStoreDetail(data);
+      } else {
+        const error = await response.json();
+        showAlert(error.message || 'Không thể tải chi tiết cửa hàng', 'danger');
+        setShowDetailModal(false);
+      }
+    } catch (error) {
+      console.error('Error fetching store detail:', error);
+      showAlert('Lỗi khi tải chi tiết cửa hàng', 'danger');
+      setShowDetailModal(false);
+    } finally {
+      setLoadingDetail(false);
+    }
   };
 
   const getStatusBadge = (status) => {
     switch (status) {
       case 'approved':
-        return <Badge bg="success"><FiCheckCircle className="me-1" />Được phê duyệt</Badge>;
+        return <Badge bg="success"><FiCheckCircle className="me-1" />ĐÃ XÁC MINH</Badge>;
       case 'pending':
-        return <Badge bg="warning"><FiClock className="me-1" />Chờ xử lý</Badge>;
+        return <Badge bg="warning"><FiClock className="me-1" />ĐANG CHỜ XÁC MINH</Badge>;
       case 'rejected':
-        return <Badge bg="danger"><FiXCircle className="me-1" />Bị từ chối</Badge>;
+        return <Badge bg="danger"><FiXCircle className="me-1" />Không Được Xác Minh</Badge>;
       default:
         return <Badge bg="secondary">{status}</Badge>;
     }
@@ -115,6 +154,19 @@ const AdminStores = () => {
         return 'danger';
       default:
         return 'secondary';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'approved':
+        return 'ĐÃ XÁC MINH';
+      case 'pending':
+        return 'ĐANG CHỜ XÁC MINH';
+      case 'rejected':
+        return 'BỊ TỪ CHỐI';
+      default:
+        return status;
     }
   };
 
@@ -180,8 +232,8 @@ const AdminStores = () => {
                     }}
                   >
                     <option value="all">Tất cả trạng thái</option>
-                    <option value="approved">Đã phê duyệt</option>
-                    <option value="pending">Chờ xử lý</option>
+                    <option value="approved">Đã xác minh</option>
+                    <option value="pending">Đang chờ xác minh</option>
                     <option value="rejected">Bị từ chối</option>
                   </Form.Select>
                 </Col>
@@ -246,10 +298,7 @@ const AdminStores = () => {
                             <Button
                               variant="outline-secondary"
                               size="sm"
-                              onClick={() => {
-                                setSelectedStore(store);
-                                navigate(`/admin/stores/${store._id}`);
-                              }}
+                              onClick={() => handleShowDetail(store)}
                             >
                               <FiEye className="me-1" />
                               Chi tiết
@@ -307,7 +356,7 @@ const AdminStores = () => {
       </Row>
 
       {/* Status Update Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
+      <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Modal.Header closeButton>
           <Modal.Title>Cập nhật trạng thái Store</Modal.Title>
         </Modal.Header>
@@ -326,7 +375,7 @@ const AdminStores = () => {
                 <Form.Label>Trạng thái hiện tại</Form.Label>
                 <Form.Control
                   type="text"
-                  value={selectedStore.status}
+                  value={getStatusText(selectedStore.status)}
                   disabled
                 />
               </Form.Group>
@@ -337,8 +386,8 @@ const AdminStores = () => {
                   onChange={(e) => setNewStatus(e.target.value)}
                 >
                   <option value="">-- Chọn trạng thái --</option>
-                  <option value="approved">Phê duyệt</option>
-                  <option value="pending">Chờ xử lý</option>
+                  <option value="approved">Đã xác minh</option>
+                  <option value="pending">Đang chờ xác minh</option>
                   <option value="rejected">Từ chối</option>
                 </Form.Select>
               </Form.Group>
@@ -346,12 +395,223 @@ const AdminStores = () => {
           )}
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
+          <Button variant="secondary" onClick={() => {
+            setShowModal(false);
+            setSelectedStore(null);
+            setNewStatus('');
+          }}>
             Hủy
           </Button>
           <Button variant="primary" onClick={handleStatusChange} disabled={!newStatus || newStatus === selectedStore?.status}>
             Cập nhật
           </Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Store Detail Modal */}
+      <Modal show={showDetailModal} onHide={() => setShowDetailModal(false)} size="lg">
+        <Modal.Header closeButton>
+          <Modal.Title>Chi tiết cửa hàng</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {loadingDetail ? (
+            <div className="text-center py-4">
+              <Spinner animation="border" role="status">
+                <span className="visually-hidden">Đang tải...</span>
+              </Spinner>
+            </div>
+          ) : storeDetail ? (
+            <>
+              <Row className="mb-4">
+                <Col md={12}>
+                  <Card className="border-0 bg-light">
+                    <Card.Body>
+                      <h4 className="mb-3">{storeDetail.storeName}</h4>
+                      {storeDetail.bannerImageURL && (
+                        <div className="mb-3">
+                          <img 
+                            src={storeDetail.bannerImageURL} 
+                            alt="Banner" 
+                            className="img-fluid rounded"
+                            style={{ maxHeight: '200px', width: '100%', objectFit: 'cover' }}
+                          />
+                        </div>
+                      )}
+                      {storeDetail.description && (
+                        <p className="text-muted mb-0">{storeDetail.description}</p>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Row>
+
+              <Row className="mb-4">
+                <Col md={6}>
+                  <Card>
+                    <Card.Body>
+                      <h5 className="mb-3">
+                        <FiUser className="me-2" />
+                        Thông tin chủ cửa hàng
+                      </h5>
+                      {storeDetail.seller ? (
+                        <>
+                          <p className="mb-2">
+                            <strong>Tên:</strong> {storeDetail.seller.fullName}
+                          </p>
+                          <p className="mb-2">
+                            <FiMail className="me-2" />
+                            <strong>Email:</strong> {storeDetail.seller.email}
+                          </p>
+                          {storeDetail.seller.avatarUrl && (
+                            <div className="mt-3">
+                              <img 
+                                src={storeDetail.seller.avatarUrl} 
+                                alt="Avatar" 
+                                className="rounded-circle"
+                                style={{ width: '80px', height: '80px', objectFit: 'cover' }}
+                              />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <p className="text-muted">Không có thông tin chủ cửa hàng</p>
+                      )}
+                    </Card.Body>
+                  </Card>
+                </Col>
+                <Col md={6}>
+                  <Card>
+                    <Card.Body>
+                      <h5 className="mb-3">
+                        <FiShoppingBag className="me-2" />
+                        Thống kê
+                      </h5>
+                      <div className="d-flex align-items-center mb-3">
+                        <FiPackage className="me-2 text-primary" size={20} />
+                        <div>
+                          <strong>Sản phẩm:</strong> {storeDetail.productCount || 0}
+                        </div>
+                      </div>
+                      <div className="d-flex align-items-center mb-3">
+                        <FiStar className="me-2 text-warning" size={20} />
+                        <div>
+                          <strong>Đánh giá:</strong> {storeDetail.recentReviews?.length || 0}
+                        </div>
+                      </div>
+                      <div className="d-flex align-items-center mb-3">
+                        <div className="me-2">
+                          {getStatusBadge(storeDetail.status)}
+                        </div>
+                      </div>
+                      <div className="d-flex align-items-center">
+                        <FiCalendar className="me-2 text-secondary" size={20} />
+                        <div>
+                          <strong>Ngày tạo:</strong> {new Date(storeDetail.createdAt).toLocaleDateString('vi-VN')}
+                        </div>
+                      </div>
+                    </Card.Body>
+                  </Card>
+                </Col>
+              </Row>
+
+              {storeDetail.recentProducts && storeDetail.recentProducts.length > 0 && (
+                <Row className="mb-4">
+                  <Col md={12}>
+                    <Card>
+                      <Card.Body>
+                        <h5 className="mb-3">
+                          <FiPackage className="me-2" />
+                          Sản phẩm gần đây ({storeDetail.recentProducts.length})
+                        </h5>
+                        <div className="table-responsive">
+                          <Table striped hover size="sm">
+                            <thead>
+                              <tr>
+                                <th>Tên sản phẩm</th>
+                                <th>Giá</th>
+                                <th>Tồn kho</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {storeDetail.recentProducts.map((product) => (
+                                <tr key={product._id}>
+                                  <td>{product.title}</td>
+                                  <td>{product.price?.toLocaleString('vi-VN')} đ</td>
+                                  <td>{product.stock || 0}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              )}
+
+              {storeDetail.recentReviews && storeDetail.recentReviews.length > 0 && (
+                <Row>
+                  <Col md={12}>
+                    <Card>
+                      <Card.Body>
+                        <h5 className="mb-3">
+                          <FiStar className="me-2" />
+                          Đánh giá gần đây ({storeDetail.recentReviews.length})
+                        </h5>
+                        <div className="table-responsive">
+                          <Table striped hover size="sm">
+                            <thead>
+                              <tr>
+                                <th>Sản phẩm</th>
+                                <th>Đánh giá</th>
+                                <th>Bình luận</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {storeDetail.recentReviews.map((review) => (
+                                <tr key={review._id}>
+                                  <td>{review.productId?.title || 'N/A'}</td>
+                                  <td>
+                                    <Badge bg="warning">
+                                      {review.rating} <FiStar size={12} />
+                                    </Badge>
+                                  </td>
+                                  <td>{review.comment || 'Không có bình luận'}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </Table>
+                        </div>
+                      </Card.Body>
+                    </Card>
+                  </Col>
+                </Row>
+              )}
+            </>
+          ) : (
+            <Alert variant="danger">Không thể tải chi tiết cửa hàng</Alert>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => {
+            setShowDetailModal(false);
+            setStoreDetail(null);
+            setSelectedStore(null);
+          }}>
+            Đóng
+          </Button>
+          {storeDetail && (
+            <Button 
+              variant="primary" 
+              onClick={() => {
+                setShowDetailModal(false);
+                handleOpenModal(storeDetail);
+              }}
+            >
+              <FiCheckCircle className="me-1" />
+              Phê duyệt
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
     </Container>

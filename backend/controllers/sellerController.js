@@ -520,12 +520,14 @@ export const getMyStore = async (req, res) => {
 
     let store = await Store.findOne({ sellerId: userId });
     if (!store) {
+      // Tạo Store với status 'pending' (đang chờ xác minh)
+      // Store sẽ được admin xác minh trước khi được approved
       store = await Store.create({
         sellerId: userId,
         storeName: user.businessName || user.fullName || 'Store',
         description: '',
         bannerImageURL: '',
-        status: 'approved'
+        status: 'pending' // Trạng thái đang chờ xác minh
       });
     }
     res.json(store);
