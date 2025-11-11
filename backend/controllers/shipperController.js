@@ -389,3 +389,71 @@ export const getShippersWithStats = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
+
+// Báo cáo doanh thu cho shipper: tổng doanh thu, tổng đơn, giá trị TB đơn, tổng theo tháng
+export const getShipperReports = async (req, res) => {
+  try {
+    const shipperId = req.user._id;
+    // Chỉ tính các đơn đã giao thành công
+    const deliveredStatuses = ["delivered", "completed"];
+    const orders = await Order.find({
+      shipperId,
+      status: { $in: deliveredStatuses },
+    }).select("totalPrice createdAt");
+
+    const totalOrders = orders.length;
+    const totalRevenue = orders.reduce((sum, o) => sum + (o.totalPrice || 0), 0);
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    // Tổng theo tháng: doanh thu và số đơn
+    const monthlyMap = {};
+    orders.forEach((o) => {
+      const date = new Date(o.createdAt);
+      const month = date.getMonth() + 1; // 1..12
+      const key = `Tháng ${month}`;
+      if (!monthlyMap[key]) {
+        monthlyMap[key] = { month: key, revenue: 0, orders: 0 };
+      }
+      monthlyMap[key].revenue += o.totalPrice || 0;
+      monthlyMap[key].orders += 1;
+    });
+
+    const monthly = Object.values(monthlyMap).sort((a, b) => {
+      const ma = parseInt(a.month.replace("Tháng ", ""), 10);
+      const mb = parseInt(b.month.replace("Tháng ", ""), 10);
+      return ma - mb;
+    });
+
+    // Tổng theo ngày (30 ngày gần nhất): doanh thu và số đơn
+    const today = new Date();
+    const last30Days = new Date();
+    last30Days.setDate(today.getDate() - 29);
+
+    const dailyMap = {};
+    orders.forEach((o) => {
+      const date = new Date(o.createdAt);
+      if (date >= last30Days) {
+        const key = date.toISOString().split("T")[0]; // yyyy-mm-dd
+        if (!dailyMap[key]) {
+          dailyMap[key] = { date: key, revenue: 0, orders: 0 };
+        }
+        dailyMap[key].revenue += o.totalPrice || 0;
+        dailyMap[key].orders += 1;
+      }
+    });
+
+    const daily = Object.values(dailyMap).sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    res.json({
+      totalRevenue,
+      totalOrders,
+      averageOrderValue,
+      monthlyRevenue: monthly.map((m) => ({ month: m.month, revenue: m.revenue })),
+      monthlyOrders: monthly.map((m) => ({ month: m.month, orders: m.orders })),
+      dailyRevenue: daily.map((d) => ({ date: d.date, revenue: d.revenue })),
+      dailyOrders: daily.map((d) => ({ date: d.date, orders: d.orders })),
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
