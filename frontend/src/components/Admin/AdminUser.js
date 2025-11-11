@@ -8,7 +8,7 @@ import {
   Alert,
   Modal,
   Form,
-  Pagination,            // ✅ THÊM
+  Pagination,
 } from "react-bootstrap";
 import { useAuth } from "../../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -25,7 +25,7 @@ const AdminUser = () => {
   const navigate = useNavigate();
 
   // ✅ Phân trang
-  const PAGE_SIZE = 5;              // đổi số này nếu muốn
+  const PAGE_SIZE = 5;
   const [page, setPage] = useState(1);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ const AdminUser = () => {
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const data = await response.json();
       setUsers(Array.isArray(data) ? data : []);
-      setPage(1);                  // ✅ reset về trang 1 khi load mới
+      setPage(1);
     } catch (err) {
       console.error("Error fetching users:", err);
       setError("Không thể tải danh sách người dùng.");
@@ -64,7 +64,6 @@ const AdminUser = () => {
 
       alert("✅ " + data.message);
       setUsers((prev) => prev.filter((u) => u._id !== id));
-      // ✅ đảm bảo không nằm ở trang vượt quá tổng sau khi xóa
       setPage((p) => {
         const totalAfter = Math.max(0, users.length - 1);
         const totalPagesAfter = Math.max(1, Math.ceil(totalAfter / PAGE_SIZE));
@@ -119,7 +118,17 @@ const AdminUser = () => {
     }
   };
 
-  const handleToggleActive = async (id, currentActive) => {
+  // 🔒 KHÓA thay đổi active cho admin/devadmin
+  const isProtectedRole = (role) =>
+    role === "admin" || role === "devadmin";
+
+  const handleToggleActive = async (id, currentActive, role) => {
+    // ✅ Chặn ngay từ client nếu là admin/devadmin
+    if (isProtectedRole(role)) {
+      alert("❌ Không thể thay đổi trạng thái hoạt động của tài khoản ADMIN hoặc DEVADMIN.");
+      return;
+    }
+
     try {
       const response = await fetch(`http://localhost:5000/api/admin/users/${id}`, {
         method: "PUT",
@@ -169,7 +178,6 @@ const AdminUser = () => {
   const pageNumbers = buildPageNumbers();
   const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
 
-  // ================== LOADING / ERROR ==================
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: "80vh" }}>
@@ -189,7 +197,6 @@ const AdminUser = () => {
     );
   }
 
-  // ================== UI CHÍNH ==================
   return (
     <div
       style={{
@@ -236,67 +243,76 @@ const AdminUser = () => {
               </thead>
               <tbody>
                 {pagedUsers.length > 0 ? (
-                  pagedUsers.map((user, i) => (
-                    <tr key={user._id}>
-                      {/* ✅ số thứ tự theo toàn bộ danh sách */}
-                      <td className="text-center fw-bold">{startIdx + i + 1}</td>
-                      <td>{user.fullName}</td>
-                      <td>{user.email}</td>
-                      <td>{user.phone || "—"}</td>
-                      <td className="text-center">
-                        <Form.Check
-                          type="switch"
-                          id={`active-${user._id}`}
-                          checked={!!user.active}
-                          onChange={() => handleToggleActive(user._id, user.active)}
-                          label={user.active ? "Hoạt động" : "Khóa"}
-                        />
-                      </td>
-                      <td className="text-center">
-                        <span
-                          style={{
-                            padding: "4px 10px",
-                            borderRadius: "8px",
-                            color: "white",
-                            background:
-                              user.role === "admin"
-                                ? "#f44336"
-                                : user.role === "seller"
-                                ? "#42a5f5"
-                                : user.role === "shipper"
-                                ? "#66bb6a"
-                                : user.role === "customer"
-                                ? "#00d612ff"
-                                : "#ff0062ff",
-                          }}
-                        >
-                          {user.role?.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="text-center">
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          className="me-2"
-                          style={{ borderRadius: "8px" }}
-                          onClick={() => handleEdit(user)}
-                        >
-                          <FiEdit />
-                        </Button>
-                        <Button
-                          variant="outline-danger"
-                          size="sm"
-                          style={{ borderRadius: "8px" }}
-                          onClick={() => handleDelete(user._id)}
-                        >
-                          <FiTrash2 />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
+                  pagedUsers.map((user, i) => {
+                    const protectedRole = isProtectedRole(user.role);
+                    return (
+                      <tr key={user._id}>
+                        <td className="text-center fw-bold">{startIdx + i + 1}</td>
+                        <td>{user.fullName}</td>
+                        <td>{user.email}</td>
+                        <td>{user.phone || "—"}</td>
+                        <td className="text-center">
+                          <Form.Check
+                            type="switch"
+                            id={`active-${user._id}`}
+                            checked={!!user.active}
+                            // 🔒 Vô hiệu hóa switch cho admin/devadmin
+                            disabled={protectedRole}
+                            onChange={() => handleToggleActive(user._id, user.active, user.role)} // ✅ truyền role
+                            label={
+                              protectedRole
+                                ? `${user.active ? "Hoạt động" : "Khóa"} • (bị khóa chỉnh sửa)`
+                                : user.active
+                                ? "Hoạt động"
+                                : "Khóa"
+                            }
+                          />
+                        </td>
+                        <td className="text-center">
+                          <span
+                            style={{
+                              padding: "4px 10px",
+                              borderRadius: "8px",
+                              color: "white",
+                              background:
+                                user.role === "admin"
+                                  ? "#f44336"
+                                  : user.role === "seller"
+                                  ? "#42a5f5"
+                                  : user.role === "shipper"
+                                  ? "#66bb6a"
+                                  : user.role === "customer"
+                                  ? "#00d612ff"
+                                  : "#ff0062ff",
+                            }}
+                          >
+                            {user.role?.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="text-center">
+                          <Button
+                            variant="outline-primary"
+                            size="sm"
+                            className="me-2"
+                            style={{ borderRadius: "8px" }}
+                            onClick={() => handleEdit(user)}
+                          >
+                            <FiEdit />
+                          </Button>
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            style={{ borderRadius: "8px" }}
+                            onClick={() => handleDelete(user._id)}
+                          >
+                            <FiTrash2 />
+                          </Button>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
-                    {/* bảng có 7 cột → colspan 7 */}
                     <td colSpan="7" className="text-center py-4 text-muted">
                       Không có người dùng nào.
                     </td>
@@ -305,7 +321,6 @@ const AdminUser = () => {
               </tbody>
             </Table>
 
-            {/* ✅ Thanh phân trang + thông tin hiển thị */}
             {total > 0 && (
               <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 px-3 py-2">
                 <div className="text-muted small">
