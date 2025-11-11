@@ -69,14 +69,44 @@ const BecomeSellerButton = ({ compact = false }) => {
     setLoading(true);
     setMessage('');
 
-    if (!formData.phone.trim()) {
+    // Validation cho số điện thoại
+    const trimmedPhone = formData.phone.trim();
+    if (!trimmedPhone) {
       setMessage('Vui lòng nhập số điện thoại');
       setLoading(false);
       return;
     }
+    if (trimmedPhone.length < 10) {
+      setMessage('Số điện thoại phải có ít nhất 10 ký tự');
+      setLoading(false);
+      return;
+    }
+    if (trimmedPhone.length > 20) {
+      setMessage('Số điện thoại không được vượt quá 20 ký tự');
+      setLoading(false);
+      return;
+    }
+    // Kiểm tra số điện thoại chỉ chứa số, dấu +, dấu cách, dấu gạch ngang
+    if (!/^[\d\s\+\-\(\)]+$/.test(trimmedPhone)) {
+      setMessage('Số điện thoại chỉ được chứa số và các ký tự: +, -, (, ), khoảng trắng');
+      setLoading(false);
+      return;
+    }
 
-    if (!formData.businessName.trim()) {
+    // Validation cho tên cửa hàng
+    const trimmedBusinessName = formData.businessName.trim();
+    if (!trimmedBusinessName) {
       setMessage('Vui lòng nhập tên cửa hàng');
+      setLoading(false);
+      return;
+    }
+    if (trimmedBusinessName.length < 2) {
+      setMessage('Tên cửa hàng phải có ít nhất 2 ký tự');
+      setLoading(false);
+      return;
+    }
+    if (trimmedBusinessName.length > 100) {
+      setMessage('Tên cửa hàng không được vượt quá 100 ký tự');
       setLoading(false);
       return;
     }
@@ -102,8 +132,8 @@ const BecomeSellerButton = ({ compact = false }) => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          phone: formData.phone,
-          businessName: formData.businessName,
+          phone: trimmedPhone,
+          businessName: trimmedBusinessName,
           businessDescription: formData.businessDescription,
           cccd: formData.cccd
         })
@@ -253,8 +283,12 @@ const BecomeSellerButton = ({ compact = false }) => {
                   value={formData.phone}
                   onChange={handleInputChange}
                   required
+                  maxLength={20}
                   placeholder="Nhập số điện thoại liên hệ"
                 />
+                <Form.Text className="text-muted">
+                  Số điện thoại phải có từ 10-20 ký tự
+                </Form.Text>
               </Form.Group>
 
               <Form.Group className="mb-3">
@@ -265,8 +299,12 @@ const BecomeSellerButton = ({ compact = false }) => {
                   value={formData.businessName}
                   onChange={handleInputChange}
                   required
+                  maxLength={100}
                   placeholder="Nhập tên cửa hàng của bạn"
                 />
+                <Form.Text className="text-muted">
+                  Tên cửa hàng phải có từ 2-100 ký tự
+                </Form.Text>
               </Form.Group>
 
               <Form.Group className="mb-3">
@@ -419,8 +457,12 @@ const BecomeSellerButton = ({ compact = false }) => {
                 value={formData.phone}
                 onChange={handleInputChange}
                 required
+                maxLength={11}
                 placeholder="Nhập số điện thoại liên hệ"
               />
+              <Form.Text className="text-muted">
+                Số điện thoại phải có từ 10-11 ký tự
+              </Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">
@@ -431,8 +473,12 @@ const BecomeSellerButton = ({ compact = false }) => {
                 value={formData.businessName}
                 onChange={handleInputChange}
                 required
+                maxLength={25}
                 placeholder="Nhập tên cửa hàng của bạn"
               />
+              <Form.Text className="text-muted">
+                Tên cửa hàng phải có từ 2-25 ký tự
+              </Form.Text>
             </Form.Group>
 
             <Form.Group className="mb-3">

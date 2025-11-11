@@ -2,7 +2,6 @@ import User from "../models/User.js";
 import Product from "../models/Product.js";
 import Order from "../models/Order.js";
 import OrderItem from "../models/OrderItem.js";
-import Store from "../models/Store.js";
 import Review from "../models/Review.js";
 
 // Dashboard stats cho admin
@@ -163,8 +162,13 @@ export const getAllSellerReports = async (req, res) => {
 // Lấy danh sách tất cả các store trong hệ thống
 export const getAllStores = async (req, res) => {
   try {
-    const { status, search = "" } = req.query;
-    console.log('getAllStores query:', { status, search });
+    const { status, page = 1, limit = 10, search = "" } = req.query;
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    // Import Store model
+    const Store = (await import("../models/Store.js")).default;
 
     // Build filter
     const filter = {};
@@ -198,15 +202,37 @@ export const getAllStores = async (req, res) => {
     // Enrich stores with product count and review count
     const storesWithStats = await Promise.all(
       stores.map(async (store) => {
-        if (!store.sellerId) {
-          console.warn('Store has no sellerId:', store._id);
-          return null;
+        // Check if sellerId exists and is populated
+        if (!store.sellerId || !store.sellerId._id) {
+          const storeObj = store.toObject();
+          return {
+            ...storeObj,
+            productCount: 0,
+            reviewCount: 0,
+            seller: storeObj.sellerId || null
+          };
+        }
+
+        const sellerId = store.sellerId._id;
+        
+        // Get all products of this seller
+        const products = await Product.find({ sellerId }).select('_id');
+        const productIds = products.map(p => p._id);
+        
+        // Count products and reviews
+        let reviewCount = 0;
+        if (productIds.length > 0) {
+          try {
+            reviewCount = await Review.countDocuments({ 
+              productId: { $in: productIds } 
+            });
+          } catch (reviewError) {
+            console.error(`Error counting reviews for store ${store._id}:`, reviewError);
+            reviewCount = 0;
+          }
         }
         
-        const [productCount, reviewCount] = await Promise.all([
-          Product.countDocuments({ sellerId: store.sellerId._id }),
-          Review.countDocuments({ sellerId: store.sellerId._id })
-        ]);
+        const productCount = products.length;
         
         const storeObj = store.toObject();
         return {
@@ -233,6 +259,7 @@ export const getAllStores = async (req, res) => {
 export const getStoreDetail = async (req, res) => {
   try {
     const { storeId } = req.params;
+    const Store = (await import("../models/Store.js")).default;
 
     const store = await Store.findById(storeId).populate("sellerId", "fullName email avatarUrl");
 
@@ -240,11 +267,32 @@ export const getStoreDetail = async (req, res) => {
       return res.status(404).json({ message: "Store not found" });
     }
 
+    // Check if sellerId exists
+    if (!store.sellerId || !store.sellerId._id) {
+      const storeObj = store.toObject();
+      return res.json({
+        ...storeObj,
+        productCount: 0,
+        recentProducts: [],
+        recentReviews: [],
+        seller: storeObj.sellerId || null
+      });
+    }
+
+    const sellerId = store.sellerId._id;
+    
+    // Get all products of this seller
+    const products = await Product.find({ sellerId }).limit(10);
+    const productIds = products.map(p => p._id);
+    
     // Get store stats
-    const [productCount, products, recentReviews] = await Promise.all([
-      Product.countDocuments({ sellerId: store.sellerId._id }),
-      Product.find({ sellerId: store.sellerId._id }).limit(10),
-      Review.find({ sellerId: store.sellerId._id }).limit(10)
+    const [productCount, recentReviews] = await Promise.all([
+      Product.countDocuments({ sellerId }),
+      productIds.length > 0 
+        ? Review.find({ productId: { $in: productIds } })
+            .populate('productId', 'title')
+            .limit(10)
+        : []
     ]);
 
     const storeObj = store.toObject();

@@ -174,11 +174,15 @@ function StorePage() {
                 <div className="d-flex align-items-center mb-2">
                   <h3 className="store-name mb-0 me-3">{header.storeName}</h3>
                   <Badge 
-                    bg={header.status === 'approved' ? 'success' : 'warning'}
+                    bg={
+                      header.status === 'approved' ? 'success' : 
+                      header.status === 'pending' ? 'warning' : 
+                      'danger'
+                    }
                     className="d-flex align-items-center"
                   >
                     <FiShield className="me-1" size={12} />
-                    {header.status === 'approved' ? 'Đã xác thực' : 'Chờ xác thực'}
+                    {header.status === 'approved' ? 'Đã xác minh' : header.status === 'pending' ? 'Đang chờ xác minh' : 'Bị từ chối'}
                   </Badge>
                 </div>
                 <div className="d-flex align-items-center text-muted mb-2">

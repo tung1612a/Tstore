@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import SellerApplication from "../models/SellerApplication.js";
 import PendingRegistration from "../models/PendingRegistration.js";
+import Store from "../models/Store.js";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
 import bcrypt from "bcryptjs";
@@ -17,6 +18,38 @@ export const register = async (req, res) => {
 
     if (!fullName || !email || !password)
       return res.status(400).json({ message: "fullName, email and password are required" });
+
+    // Validate fullName (họ tên)
+    const trimmedFullName = fullName.trim();
+    if (trimmedFullName.length < 2) {
+      return res.status(400).json({ message: "Họ tên phải có ít nhất 2 ký tự" });
+    }
+    if (trimmedFullName.length > 50) {
+      return res.status(400).json({ message: "Họ tên không được vượt quá 50 ký tự" });
+    }
+    // Chỉ cho phép chữ cái, khoảng trắng và các ký tự tiếng Việt
+    const fullNameRegex = /^[a-zA-ZÀÁÂÃÈÉÊÌÍÒÓÔÕÙÚĂĐĨŨƠàáâãèéêìíòóôõùúăđĩũơƯĂẠẢẤẦẨẪẬẮẰẲẴẶẸẺẼỀỀỂưăạảấầẩẫậắằẳẵặẹẻẽềềểỄỆỈỊỌỎỐỒỔỖỘỚỜỞỠỢỤỦỨỪễệỉịọỏốồổỗộớờởỡợụủứừỬỮỰỲỴÝỶỸửữựỳỵýỷỹ\s]+$/;
+    if (!fullNameRegex.test(trimmedFullName)) {
+      return res.status(400).json({ message: "Họ tên chỉ được chứa chữ cái và khoảng trắng" });
+    }
+
+    // Validate password (mật khẩu)
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Mật khẩu phải có ít nhất 6 ký tự" });
+    }
+    if (password.length > 50) {
+      return res.status(400).json({ message: "Mật khẩu không được vượt quá 50 ký tự" });
+    }
+    if (/\s/.test(password)) {
+      return res.status(400).json({ message: "Mật khẩu không được chứa khoảng trắng" });
+    }
+    // Mật khẩu phải chứa ít nhất một chữ cái và một số
+    if (!/[a-zA-Z]/.test(password)) {
+      return res.status(400).json({ message: "Mật khẩu phải chứa ít nhất một chữ cái" });
+    }
+    if (!/[0-9]/.test(password)) {
+      return res.status(400).json({ message: "Mật khẩu phải chứa ít nhất một số" });
+    }
 
     // Kiểm tra xem email đã được đăng ký chưa (trong User hoặc PendingRegistration)
     const existingUser = await User.findOne({ email });
@@ -42,7 +75,7 @@ export const register = async (req, res) => {
 
     // Lưu vào PendingRegistration thay vì User
     const pendingRegistration = await PendingRegistration.create({
-      fullName,
+      fullName: trimmedFullName, // Sử dụng fullName đã được trim và validate
       email,
       password: hashedPassword, // Đã hash
       phone,
@@ -73,7 +106,7 @@ export const register = async (req, res) => {
           html: `
             <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
               <h2 style="color: #28a745;">Chào mừng đến với Tstore!</h2>
-              <p>Xin chào <strong>${fullName}</strong>,</p>
+              <p>Xin chào <strong>${trimmedFullName}</strong>,</p>
               <p>Cảm ơn bạn đã đăng ký tài khoản tại Tstore. Để hoàn tất đăng ký, vui lòng nhập mã xác nhận sau:</p>
               <div style="text-align: center; margin: 30px 0;">
                 <div style="background-color: #f8f9fa; border: 2px dashed #28a745; border-radius: 10px; padding: 20px; display: inline-block;">
@@ -229,6 +262,28 @@ export const becomeSeller = async (req, res) => {
       return res.status(400).json({ message: "Phone, business name and CCCD are required" });
     }
 
+    // Validation cho số điện thoại
+    const trimmedPhone = phone.trim();
+    if (trimmedPhone.length < 10) {
+      return res.status(400).json({ message: "Số điện thoại phải có ít nhất 10 ký tự" });
+    }
+    if (trimmedPhone.length > 20) {
+      return res.status(400).json({ message: "Số điện thoại không được vượt quá 20 ký tự" });
+    }
+    // Kiểm tra số điện thoại chỉ chứa số, dấu +, dấu cách, dấu gạch ngang
+    if (!/^[\d\s\+\-\(\)]+$/.test(trimmedPhone)) {
+      return res.status(400).json({ message: "Số điện thoại chỉ được chứa số và các ký tự: +, -, (, ), khoảng trắng" });
+    }
+
+    // Validation cho tên cửa hàng
+    const trimmedBusinessName = businessName.trim();
+    if (trimmedBusinessName.length < 2) {
+      return res.status(400).json({ message: "Tên cửa hàng phải có ít nhất 2 ký tự" });
+    }
+    if (trimmedBusinessName.length > 100) {
+      return res.status(400).json({ message: "Tên cửa hàng không được vượt quá 100 ký tự" });
+    }
+
     // Validation cho CCCD (12 số)
     if (!/^\d{12}$/.test(cccd)) {
       return res.status(400).json({ message: "CCCD must be exactly 12 digits" });
@@ -251,13 +306,46 @@ export const becomeSeller = async (req, res) => {
       return res.status(400).json({ message: "You already have a pending seller application" });
     }
 
+    // Kiểm tra tên cửa hàng có trùng không (case-insensitive)
+    // trimmedBusinessName đã được validate ở trên
+    
+    // Escape các ký tự đặc biệt trong regex để tránh lỗi
+    const escapeRegex = (str) => {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    };
+    
+    const escapedBusinessName = escapeRegex(trimmedBusinessName);
+    
+    // Kiểm tra trong Store (các cửa hàng đã được tạo)
+    const existingStore = await Store.findOne({ 
+      storeName: { $regex: new RegExp(`^${escapedBusinessName}$`, 'i') } 
+    });
+    
+    if (existingStore) {
+      return res.status(400).json({ 
+        message: "Tên cửa hàng đã tồn tại. Vui lòng chọn tên khác." 
+      });
+    }
+
+    // Kiểm tra trong SellerApplication (các đơn đang pending hoặc đã approved)
+    const existingApplication = await SellerApplication.findOne({
+      businessName: { $regex: new RegExp(`^${escapedBusinessName}$`, 'i') },
+      status: { $in: ['pending', 'approved'] }
+    });
+    
+    if (existingApplication) {
+      return res.status(400).json({ 
+        message: "Tên cửa hàng đã được sử dụng. Vui lòng chọn tên khác." 
+      });
+    }
+
     // Tạo đơn đăng ký seller
     const application = await SellerApplication.create({
       userId: userId,
       fullName: user.fullName,
       email: user.email,
-      phone: phone,
-      businessName: businessName,
+      phone: trimmedPhone, // Sử dụng số điện thoại đã được trim và validate
+      businessName: trimmedBusinessName, // Sử dụng tên đã được trim
       businessDescription: businessDescription || '',
       cccd: cccd,
       status: 'pending'
@@ -324,8 +412,9 @@ export const reviewSellerApplication = async (req, res) => {
 
     await application.save();
 
-    // Nếu approve, cập nhật role của user thành seller
+    // Nếu approve, cập nhật role của user thành seller và tạo Store với status pending
     if (action === 'approve') {
+      // Cập nhật role của user thành seller
       await User.findByIdAndUpdate(application.userId, {
         role: 'seller',
         phone: application.phone,
@@ -333,6 +422,25 @@ export const reviewSellerApplication = async (req, res) => {
         businessDescription: application.businessDescription,
         cccd: application.cccd
       });
+
+      // Tạo Store với status "pending" (đang chờ xác minh)
+      // Kiểm tra xem Store đã tồn tại chưa (tránh duplicate)
+      const existingStore = await Store.findOne({ sellerId: application.userId });
+      if (!existingStore) {
+        await Store.create({
+          sellerId: application.userId,
+          storeName: application.businessName,
+          description: application.businessDescription || '',
+          bannerImageURL: '',
+          status: 'pending' // Trạng thái đang chờ xác minh
+        });
+      } else {
+        // Nếu Store đã tồn tại, cập nhật status về pending
+        existingStore.status = 'pending';
+        existingStore.storeName = application.businessName;
+        existingStore.description = application.businessDescription || '';
+        await existingStore.save();
+      }
     }
 
     res.json({
@@ -557,6 +665,7 @@ export const verifyOTP = async (req, res) => {
     }
 
     // Tạo User từ PendingRegistration
+    // Password đã được hash rồi, pre-save hook sẽ tự động phát hiện và không hash lại
     const user = await User.create({
       fullName: pendingRegistration.fullName,
       email: pendingRegistration.email,
