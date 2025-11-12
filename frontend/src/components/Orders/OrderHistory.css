@@ -480,7 +480,7 @@
   transform: translateY(-6px);
 }
 
-.card-header {
+.order-card .card-header {
   padding: 24px 30px;
   display: flex;
   justify-content: space-between;
@@ -818,7 +818,7 @@
     border-radius: 12px;
   }
 
-  .card-header {
+  .order-card .card-header {
     padding: 20px;
     flex-direction: column;
     gap: 16px;

@@ -217,7 +217,7 @@ const AdminUser = () => {
             <Button
               variant="outline-secondary"
               className="me-2"
-              onClick={() => navigate("/admin/dashboard")}
+              onClick={() => navigate("/admin")}
               style={{ borderRadius: "10px", fontWeight: "500" }}
             >
               <FiArrowLeft className="me-2" />
