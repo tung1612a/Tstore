@@ -175,7 +175,7 @@ function ProductCard({ product, hideStoreButton = false }) {
           </div>
         ))}
 
-        <div className="d-flex align-items-center mb-2">
+        {/* <div className="d-flex align-items-center mb-2">
           <div className="d-flex align-items-center me-2">
             <FiStar size={14} color="#ffc107" fill="#ffc107" />
             <FiStar size={14} color="#ffc107" fill="#ffc107" />
@@ -186,7 +186,7 @@ function ProductCard({ product, hideStoreButton = false }) {
               (128)
             </span>
           </div>
-        </div>
+        </div> */}
 
         <div className="d-flex align-items-center justify-content-between mb-3">
           <div>
