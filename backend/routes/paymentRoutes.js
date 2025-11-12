@@ -11,3 +11,8 @@ router.get('/', getUserPayments);
 router.get('/:id', getPaymentDetails);
 
 export default router;
+
+
+
+
+
