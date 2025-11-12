@@ -43,7 +43,7 @@ const ShipperHomepage = () => {
         <Col>
           <div className="text-center">
             <FiTruck size={48} className="text-primary mb-3" />
-            <h2 className="mb-3">Shipper Dashboard</h2>
+            <h2 className="mb-3">Shipping Company Dashboard</h2>
             <p className="text-muted">
               Quản lý đơn hàng giao và theo dõi tình hình công việc
             </p>

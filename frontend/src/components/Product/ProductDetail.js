@@ -497,9 +497,9 @@ function ProductDetail() {
                                         <span>{t('productDetail.11')}</span>
                                     </div>
                                 )}
-                                <Badge bg="danger" className="discount-badge">
+                                {/* <Badge bg="danger" className="discount-badge">
                                     -20%
-                                </Badge>
+                                </Badge> */}
                             </div>
 
                             {images.length > 1 && (
@@ -546,10 +546,10 @@ function ProductDetail() {
                             <div className="price-section mb-4">
                                 <div className="d-flex align-items-center">
                                     <span className="current-price">{price}</span>
-                                    <span className="original-price ms-3">{originalPrice}</span>
-                                    <Badge bg="danger" className="ms-3">
+                                    {/* <span className="original-price ms-3">{originalPrice}</span> */}
+                                    {/* <Badge bg="danger" className="ms-3">
                                         {t('productDetail.14')}
-                                    </Badge>
+                                    </Badge> */}
                                     {typeof product.inventoryQuantity === 'number' && (
                                         <span className="ms-3 text-muted" style={{ fontSize: '14px' }}>
                                             {t('productDetail.15')} {product.stock} {t('productDetail.16')}
