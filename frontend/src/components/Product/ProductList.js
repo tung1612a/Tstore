@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import ProductCard from './ProductCard';
 import './ProductList.css';
 
-const ProductList = ({ keyword = '', categoryId = '' }) => {
+const ProductList = ({ keyword = '', categoryId = '', priceRange = { min: '', max: '' } }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -13,7 +13,7 @@ const ProductList = ({ keyword = '', categoryId = '' }) => {
   // Reset trang khi đổi bộ lọc
   useEffect(() => {
     setPage(1);
-  }, [keyword, categoryId]);
+  }, [keyword, categoryId, priceRange.min, priceRange.max]);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -39,15 +39,38 @@ const ProductList = ({ keyword = '', categoryId = '' }) => {
   }, [keyword, categoryId]);
 
   // ✅ Tính toán phân trang (trước khi return)
-  const total = products.length;
+  const filteredProducts = useMemo(() => {
+    const min = priceRange.min === '' ? null : Number(priceRange.min);
+    const max = priceRange.max === '' ? null : Number(priceRange.max);
+
+    if (Number.isNaN(min) || Number.isNaN(max)) {
+      return products;
+    }
+
+    if (min !== null && max !== null && min > max) {
+      return [];
+    }
+
+    return products.filter((product) => {
+      const priceValue = Number(product.price);
+      if (Number.isNaN(priceValue)) return true;
+
+      if (min !== null && priceValue < min) return false;
+      if (max !== null && priceValue > max) return false;
+
+      return true;
+    });
+  }, [products, priceRange.min, priceRange.max]);
+
+  const total = filteredProducts.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const currentPage = Math.min(Math.max(1, page), totalPages);
   const startIndex = (currentPage - 1) * PAGE_SIZE;
   const endIndex = startIndex + PAGE_SIZE;
 
   const pageItems = useMemo(
-    () => products.slice(startIndex, endIndex),
-    [products, startIndex, endIndex]
+    () => filteredProducts.slice(startIndex, endIndex),
+    [filteredProducts, startIndex, endIndex]
   );
 
   const goTo = (p) => setPage(Math.min(Math.max(1, p), totalPages));
@@ -75,6 +98,14 @@ const ProductList = ({ keyword = '', categoryId = '' }) => {
   if (error) return <div className="error-message">Không thể tải sản phẩm: {error}</div>;
   if (products.length === 0)
     return <div className="empty-message">Không có sản phẩm nào để hiển thị.</div>;
+
+  if (filteredProducts.length === 0) {
+    return (
+      <div className="empty-message">
+        Không tìm thấy sản phẩm phù hợp với mức giá bạn chọn.
+      </div>
+    );
+  }
 
   return (
     <>

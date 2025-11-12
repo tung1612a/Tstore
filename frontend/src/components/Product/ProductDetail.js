@@ -715,7 +715,7 @@ function ProductDetail() {
                 </Row>
 
                 {/* Product Details Section */}
-                <Row className="mt-5">
+                {/* <Row className="mt-5">
                     <Col>
                         <div className="product-details-section">
                             <h3 className="mb-4">{t('productDetail.31')}</h3>
@@ -741,7 +741,7 @@ function ProductDetail() {
                             </div>
                         </div>
                     </Col>
-                </Row>
+                </Row> */}
 
                 {/* Reviews Section */}
                 <Row className="mt-5">
