@@ -280,7 +280,7 @@ function Register() {
                     />
                   </Form.Group>
 
-                  <Form.Group className="mb-3" controlId="formPhone">
+                  {/* <Form.Group className="mb-3" controlId="formPhone">
                     <Form.Label>{t('register.phone')}</Form.Label>
                     <Form.Control
                       type="text"
@@ -290,7 +290,7 @@ function Register() {
                       onChange={handleChange}
                       required
                     />
-                  </Form.Group>
+                  </Form.Group> */}
 
                   <Form.Group className="mb-3" controlId="formPassword">
                     <Form.Label>{t('register.password')}</Form.Label>
