@@ -169,7 +169,7 @@ const ListProduct = () => {
                 <Button
                     variant="secondary"
                     style={styles.backButton}
-                    onClick={() => window.location.replace("/admin/dashboard")}
+                    onClick={() => window.location.replace("/admin")}
                 >
                     Quay lại Dashboard
                 </Button>

@@ -81,7 +81,7 @@ const ReportAdmin = () => {
 
             <Row>
                 <Col>
-                    <Button variant="secondary" href="/admin/dashboard">
+                    <Button variant="secondary" href="/admin">
                         {t('common.back')}
                     </Button>
                 </Col>
