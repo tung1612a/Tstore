@@ -322,6 +322,9 @@
   position: sticky;
   top: 120px;
   z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
 /* Search Container Ultra Modern */
@@ -400,6 +403,79 @@
   font-size: 0.95rem;
   position: relative;
   overflow: hidden;
+}
+
+.price-filter-bar {
+  background: white;
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.price-filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.price-filter-group {
+  flex: 1 1 180px;
+  min-width: 160px;
+}
+
+.price-filter-group label {
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 0.5rem;
+}
+
+.price-filter-form .form-control {
+  border-radius: 12px;
+  border: 2px solid #e9ecef;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.price-filter-form .form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px rgba(238, 77, 45, 0.1);
+  background: white;
+}
+
+.price-filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.price-filter-actions .btn {
+  border-radius: 12px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+}
+
+.price-filter-error {
+  color: #dc3545;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 576px) {
+  .price-filter-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .price-filter-actions {
+    justify-content: flex-end;
+  }
 }
 
 .search-container-modern .btn-primary::before {

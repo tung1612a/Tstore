@@ -10,6 +10,10 @@ import {
   Alert,
   Toast,
   ToastContainer,
+  Form,
+  Button,
+  OverlayTrigger,
+  Tooltip,
 } from "react-bootstrap";
 import { useLocation } from "react-router-dom";
 
@@ -56,6 +60,8 @@ function App() {
   const { data, loading, error } = useHomeData();
   const [keyword, setKeyword] = useState("");
   const [categoryId, setCategoryId] = useState("");
+  const [priceRange, setPriceRange] = useState({ min: "", max: "" });
+  const [priceError, setPriceError] = useState("");
 
   // 🔔 Nhận thông báo từ trang đăng nhập
   const location = useLocation();
@@ -76,6 +82,36 @@ function App() {
       window.history.replaceState({}, document.title);
     }
   }, [location, t]);
+
+  const handlePriceChange = (field) => (event) => {
+    const rawValue = event.target.value;
+    if (rawValue === "") {
+      setPriceRange((prev) => ({ ...prev, [field]: "" }));
+      return;
+    }
+
+    const numericValue = Math.max(0, Number(rawValue));
+    setPriceRange((prev) => ({
+      ...prev,
+      [field]: Number.isNaN(numericValue) ? "" : numericValue,
+    }));
+  };
+
+  useEffect(() => {
+    const min = priceRange.min === "" ? null : Number(priceRange.min);
+    const max = priceRange.max === "" ? null : Number(priceRange.max);
+
+    if (min !== null && max !== null && min > max) {
+      setPriceError("Giá tối thiểu không được lớn hơn giá tối đa");
+    } else {
+      setPriceError("");
+    }
+  }, [priceRange.min, priceRange.max]);
+
+  const handleClearPrice = () => {
+    setPriceRange({ min: "", max: "" });
+    setPriceError("");
+  };
 
   if (loading)
     return (
@@ -149,7 +185,7 @@ function App() {
             </div>
           )} */}
 
-          <div className="welcome-section mb-5 fade-in-up" style={{ animationDelay: stats ? '0.2s' : '0.1s' }}>
+          {/* <div className="welcome-section mb-5 fade-in-up" style={{ animationDelay: stats ? '0.2s' : '0.1s' }}>
             <Row>
               <Col>
                 <div className="welcome-content text-center">
@@ -159,7 +195,7 @@ function App() {
                 </div>
               </Col>
             </Row>
-          </div>
+          </div> */}
 
           <Row className="g-4">
             <Col lg={3} className="mb-4">
@@ -168,6 +204,48 @@ function App() {
                   selectedCategoryId={categoryId}
                   onSelectCategory={setCategoryId}
                 />
+                <div className="price-filter-bar mt-4">
+                  <Form className="price-filter-form">
+                  <Form.Group controlId="min-price" className="price-filter-group">
+                    <Form.Label>Giá tối thiểu</Form.Label>
+                    <Form.Control
+                      type="number"
+                      min="0"
+                      placeholder="0"
+                      value={priceRange.min}
+                      onChange={handlePriceChange("min")}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="max-price" className="price-filter-group">
+                    <Form.Label>Giá tối đa</Form.Label>
+                    <Form.Control
+                      type="number"
+                      min="0"
+                      placeholder="Không giới hạn"
+                      value={priceRange.max}
+                      onChange={handlePriceChange("max")}
+                    />
+                  </Form.Group>
+                  <div className="price-filter-actions">
+                    <OverlayTrigger
+                      placement="top"
+                      overlay={<Tooltip id="tooltip-clear-price">Xóa bộ lọc giá</Tooltip>}
+                    >
+                      <span>
+                        <Button
+                          type="button"
+                          variant="outline-secondary"
+                          onClick={handleClearPrice}
+                          disabled={!priceRange.min && !priceRange.max}
+                        >
+                          Xóa lọc
+                        </Button>
+                      </span>
+                    </OverlayTrigger>
+                  </div>
+                </Form>
+                {priceError && <div className="price-filter-error">{priceError}</div>}
+              </div>
               </div>
             </Col>
             <Col lg={9}>
@@ -183,7 +261,7 @@ function App() {
                 </div>
               </div>
 
-              <div className="section-header-modern fade-in-up mb-5" style={{ animationDelay: stats ? '0.5s' : '0.4s' }}>
+              <div className="section-header-modern fade-in-up mb-3" style={{ animationDelay: stats ? '0.5s' : '0.4s' }}>
                 <div className="section-title-wrapper">
                   <h2 className="section-title-modern">{t('toast.4')}</h2>
                 </div>
@@ -193,7 +271,11 @@ function App() {
               </div>
 
               <div className="fade-in-up" style={{ animationDelay: stats ? '0.6s' : '0.5s' }}>
-                <ProductList keyword={keyword} categoryId={categoryId} />
+                <ProductList
+                  keyword={keyword}
+                  categoryId={categoryId}
+                  priceRange={priceRange}
+                />
               </div>
 
               {featuredProducts && featuredProducts.length > 0 && (
