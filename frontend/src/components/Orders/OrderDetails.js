@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useUser } from '../../hooks/useUser';
+import { useAuth } from '../../contexts/AuthContext';
+import { Container, Card, Button, Badge, Spinner, Alert } from 'react-bootstrap';
 import {
   FiArrowLeft,
   FiPackage,
@@ -9,57 +11,215 @@ import {
   FiXCircle,
   FiUser,
   FiMapPin,
-  FiCreditCard,
-  FiEdit3,
-  FiSave,
+  FiDollarSign,
+  FiMessageSquare,
+  FiCheck,
   FiX
 } from 'react-icons/fi';
-import './OrderDetails.css';
 import ReviewSection from "./ReviewSection";
 
 const OrderDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { role } = useUser();
+  const { user } = useAuth();
   const [order, setOrder] = useState(null);
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [trackingNumber, setTrackingNumber] = useState('');
-  const [isEditingTracking, setIsEditingTracking] = useState(false);
-  const [tempTrackingNumber, setTempTrackingNumber] = useState('');
+  const [confirming, setConfirming] = useState(false);
+  const [sellerInfo, setSellerInfo] = useState(null);
+  const [isOrderSeller, setIsOrderSeller] = useState(false);
+
+  // Lấy trang trước đó từ location state hoặc mặc định là /orders
+  const getBackPath = () => {
+    if (location.state?.from) {
+      return location.state.from;
+    }
+    // Nếu không có from, thử quay lại history
+    return null; // null sẽ dùng navigate(-1)
+  };
+
+  const handleGoBack = () => {
+    const backPath = getBackPath();
+    if (backPath) {
+      navigate(backPath);
+    } else {
+      navigate(-1); // Quay lại trang trước trong history
+    }
+  };
 
   useEffect(() => {
-    fetchOrderDetails();
+    if (id) {
+      fetchOrderDetails();
+    }
   }, [id]);
 
   const fetchOrderDetails = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const token = localStorage.getItem('token');
+      
+      if (!token) {
+        setError('Vui lòng đăng nhập để xem chi tiết đơn hàng');
+        setLoading(false);
+        return;
+      }
+
+      if (!id) {
+        setError('Không tìm thấy mã đơn hàng');
+        setLoading(false);
+        return;
+      }
+
       const response = await fetch(`http://localhost:5000/api/orders/${id}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Order data:', data.order);
-        console.log('Order status:', data.order.status);
-        console.log('Payment status:', data.order.paymentStatus);
-        console.log('Items:', data.items);
-        setOrder(data.order);
-        setItems(data.items);
-        setTrackingNumber(data.order.trackingNumber || '');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }));
+        setError(errorData.message || `Lỗi ${response.status}: Không thể tải chi tiết đơn hàng`);
+        setLoading(false);
+        return;
       }
+
+      const data = await response.json();
+      console.log('Order data received:', data);
+      
+      if (!data || !data.order) {
+        setError('Không tìm thấy thông tin đơn hàng');
+        setLoading(false);
+        return;
+      }
+
+      // Normalize order data
+      const orderData = {
+        ...data.order,
+        _id: data.order._id?.toString() || String(data.order._id || ''),
+        buyerId: data.order.buyerId || {},
+        addressId: data.order.addressId || {}
+      };
+
+      // Normalize items
+      const normalizedItems = (data.items || []).map((item, index) => {
+        const product = item.productId || {};
+        return {
+          ...item,
+          _id: item._id?.toString() || item._id || `item-${index}`,
+          productId: {
+            ...product,
+            _id: product._id?.toString() || product._id || product,
+            sellerId: product.sellerId || null
+          },
+          orderId: item.orderId?.toString() || item.orderId || orderData._id
+        };
+      });
+
+      // Lấy thông tin seller từ item đầu tiên (giả sử tất cả items từ cùng một seller)
+      const firstItem = normalizedItems[0];
+      const seller = firstItem?.productId?.sellerId || null;
+
+      // Kiểm tra xem user hiện tại có phải là seller của đơn hàng này không
+      // Kiểm tra tất cả items để đảm bảo chính xác
+      const currentUserId = user?._id || user?.id;
+      const isSeller = currentUserId && normalizedItems.some(item => {
+        const itemSellerId = item?.productId?.sellerId?._id || item?.productId?.sellerId;
+        return itemSellerId && String(currentUserId) === String(itemSellerId);
+      });
+
+      setOrder(orderData);
+      setItems(normalizedItems);
+      setTrackingNumber(orderData.trackingNumber || '');
+      setSellerInfo(seller);
+      setIsOrderSeller(isSeller);
     } catch (error) {
       console.error('Error fetching order details:', error);
+      setError('Không thể kết nối đến server. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
   };
 
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-warning';
+      case 'confirmed':
+        return 'bg-info';
+      case 'awaiting_delivery':
+        return 'bg-info';
+      case 'shipping':
+        return 'bg-warning';
+      case 'delivered':
+        return 'bg-success';
+      case 'completed':
+        return 'bg-success';
+      case 'cancelled':
+        return 'bg-danger';
+      default:
+        return 'bg-secondary';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'pending':
+        return 'CHỜ XÁC NHẬN';
+      case 'confirmed':
+        return 'ĐÃ XÁC NHẬN';
+      case 'awaiting_delivery':
+        return 'CHỜ GIAO HÀNG';
+      case 'shipping':
+        return 'ĐANG GIAO HÀNG';
+      case 'delivered':
+        return 'ĐÃ GIAO HÀNG';
+      case 'completed':
+        return 'HOÀN THÀNH';
+      case 'cancelled':
+        return 'ĐÃ HỦY';
+      default:
+        return status?.toUpperCase() || '';
+    }
+  };
+
+  const getPaymentMethodText = (method) => {
+    switch (method) {
+      case 'cod':
+        return 'COD';
+      case 'bank_transfer':
+        return 'Chuyển khoản';
+      case 'momo':
+        return 'MoMo';
+      case 'zalopay':
+        return 'ZaloPay';
+      default:
+        return method || 'N/A';
+    }
+  };
+
+  const getPaymentMethodBadgeClass = (method) => {
+    switch (method) {
+      case 'cod':
+        return 'bg-info';
+      case 'bank_transfer':
+        return 'bg-primary';
+      case 'momo':
+        return 'bg-danger';
+      case 'zalopay':
+        return 'bg-success';
+      default:
+        return 'bg-secondary';
+    }
+  };
+
   const updateOrderStatus = async (newStatus) => {
     try {
+      setConfirming(true);
       const token = localStorage.getItem('token');
       const response = await fetch(`http://localhost:5000/api/orders/${id}/status`, {
         method: 'PUT',
@@ -74,10 +234,16 @@ const OrderDetails = () => {
       });
 
       if (response.ok) {
-        fetchOrderDetails();
+        await fetchOrderDetails();
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }));
+        alert(errorData.message || 'Không thể cập nhật trạng thái đơn hàng');
       }
     } catch (error) {
       console.error('Error updating order status:', error);
+      alert('Có lỗi xảy ra khi cập nhật trạng thái');
+    } finally {
+      setConfirming(false);
     }
   };
 
@@ -97,411 +263,377 @@ const OrderDetails = () => {
       });
 
       if (response.ok) {
-        fetchOrderDetails();
+        await fetchOrderDetails();
+      } else {
+        const errorData = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }));
+        alert(errorData.message || 'Không thể hủy đơn hàng');
       }
     } catch (error) {
       console.error('Error cancelling order:', error);
+      alert('Có lỗi xảy ra khi hủy đơn hàng');
     }
-  };
-
-  const handleTrackingEdit = () => {
-    setTempTrackingNumber(trackingNumber);
-    setIsEditingTracking(true);
-  };
-
-  const handleTrackingSave = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/orders/${id}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          status: order.status,
-          trackingNumber: tempTrackingNumber
-        })
-      });
-
-      if (response.ok) {
-        setTrackingNumber(tempTrackingNumber);
-        setIsEditingTracking(false);
-        fetchOrderDetails();
-      }
-    } catch (error) {
-      console.error('Error updating tracking number:', error);
-    }
-  };
-
-  const handleTrackingCancel = () => {
-    setTempTrackingNumber(trackingNumber);
-    setIsEditingTracking(false);
-  };
-
-  const getStatusConfig = (status) => {
-    const configs = {
-      pending: {
-        text: 'Chờ xác nhận',
-        color: '#ffc107',
-        bgColor: '#fff3cd',
-        icon: <FiPackage />
-      },
-      confirmed: {
-        text: 'Đã xác nhận',
-        color: '#17a2b8',
-        bgColor: '#d1ecf1',
-        icon: <FiCheckCircle />
-      },
-      awaiting_delivery: {
-        text: 'Chờ giao hàng',
-        color: '#17a2b8',
-        bgColor: '#d1ecf1',
-        icon: <FiPackage />
-      },
-      shipping: {
-        text: 'Đang giao hàng',
-        color: '#ffc107',
-        bgColor: '#fff3cd',
-        icon: <FiTruck />
-      },
-      delivered: {
-        text: 'Đã giao hàng',
-        color: '#28a745',
-        bgColor: '#d4edda',
-        icon: <FiTruck />
-      },
-      completed: {
-        text: 'Hoàn thành',
-        color: '#28a745',
-        bgColor: '#d4edda',
-        icon: <FiCheckCircle />
-      },
-      cancelled: {
-        text: 'Đã hủy',
-        color: '#dc3545',
-        bgColor: '#f8d7da',
-        icon: <FiXCircle />
-      },
-      refunded: {
-        text: 'Đã hoàn tiền',
-        color: '#6c757d',
-        bgColor: '#e2e3e5',
-        icon: <FiXCircle />
-      }
-    };
-    return configs[status] || configs.pending;
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('vi-VN', {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
   };
 
   if (loading) {
     return (
-      <div className="order-details">
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Đang tải chi tiết đơn hàng...</p>
+      <Container className="py-5">
+        <div className="text-center">
+          <Spinner animation="border" variant="primary" />
+          <p className="mt-3">Đang tải chi tiết đơn hàng...</p>
         </div>
-      </div>
+      </Container>
+    );
+  }
+
+  if (error) {
+    return (
+      <Container className="py-5">
+        <Alert variant="danger">{error}</Alert>
+        <div className="d-flex gap-2 justify-content-center mt-3">
+          <Button variant="secondary" onClick={handleGoBack}>
+            Quay lại
+          </Button>
+          <Button variant="primary" onClick={fetchOrderDetails}>
+            Thử lại
+          </Button>
+        </div>
+      </Container>
     );
   }
 
   if (!order) {
     return (
-      <div className="order-details">
-        <div className="error-container">
-          <h2>Không tìm thấy đơn hàng</h2>
-          <button onClick={() => navigate('/orders')} className="btn-primary">
-            Quay lại danh sách
-          </button>
-        </div>
-      </div>
+      <Container className="py-5">
+        <Alert variant="warning">Không tìm thấy đơn hàng</Alert>
+        <Button variant="primary" onClick={handleGoBack} className="mt-3">
+          Quay lại
+        </Button>
+      </Container>
     );
   }
 
-  const statusConfig = getStatusConfig(order.status);
+  const orderIdStr = order._id?.toString() || String(order._id || '');
 
   return (
-    <div className="order-details">
-      <div className="order-details-container">
-        {/* Header */}
-        <div className="order-header">
-          <button onClick={() => navigate('/orders')} className="back-btn">
-            <FiArrowLeft size={20} />
-            Quay lại
-          </button>
-          <div className="header-content">
-            <h1>Chi tiết đơn hàng #{order._id.slice(-8)}</h1>
-            <div
-              className="order-status"
-              style={{
-                color: statusConfig.color,
-                backgroundColor: statusConfig.bgColor
-              }}
-            >
-              {statusConfig.icon}
-              <span>{statusConfig.text}</span>
+    <Container className="py-4">
+      <div className="mb-3">
+        <Button variant="outline-secondary" onClick={handleGoBack}>
+          <FiArrowLeft className="me-2" />
+          Quay lại
+        </Button>
+      </div>
+
+      <Card className="border-0 shadow-lg mb-4">
+        <Card.Header className="bg-primary text-white">
+          <div className="d-flex align-items-center">
+            <div className="bg-white bg-opacity-20 rounded-circle p-2 me-3">
+              <FiPackage size={20} />
+            </div>
+            <div>
+              <h5 className="mb-0">Chi tiết đơn hàng #{orderIdStr.slice(-8)}</h5>
+              <small className="opacity-75">
+                Đặt lúc {new Date(order.createdAt).toLocaleString('vi-VN')}
+              </small>
             </div>
           </div>
-        </div>
+        </Card.Header>
 
-        <div className="order-content">
-          <div className="info-section">
-            <h2>
-              <FiPackage className="section-icon" />
-              Thông tin đơn hàng
-            </h2>
-            <div className="info-grid">
-              <div className="info-card">
-                <div className="info-item">
-                  <span className="label">Ngày đặt hàng:</span>
-                  <span className="value">{formatDate(order.createdAt)}</span>
+        <Card.Body className="p-0">
+          {/* Customer Info & Address */}
+          <div className="row g-0">
+            <div className="col-md-6 p-4 border-end">
+              <div className="d-flex align-items-center mb-3">
+                <div className="bg-info bg-opacity-10 rounded-circle p-2 me-3">
+                  <FiUser className="text-info" size={20} />
                 </div>
-                <div className="info-item">
-                  <span className="label">Tổng tiền:</span>
-                  <span className="value price">{order.totalPrice?.toLocaleString()}đ</span>
+                <h6 className="mb-0 fw-semibold">Thông tin khách hàng</h6>
+              </div>
+              <div className="ps-5">
+                <div className="mb-2">
+                  <strong>Tên:</strong> {order.buyerId?.fullName || 'N/A'}
                 </div>
-                <div className="info-item">
-                  <span className="label">Phí vận chuyển:</span>
-                  <span className="value">{order.shippingFee?.toLocaleString()}đ</span>
+                <div className="mb-2">
+                  <strong>Email:</strong> {order.buyerId?.email || 'N/A'}
                 </div>
-                <div className="info-item">
-                  <span className="label">Trạng thái thanh toán:</span>
-                  <span className={`payment-status ${order.paymentStatus}`}>
-                    {order.paymentStatus === 'paid' ? 'Đã thanh toán' : 'Chưa thanh toán'}
-                  </span>
+                <div className="mb-2">
+                  <strong>SĐT:</strong> {order.buyerId?.phone || 'Chưa cập nhật'}
                 </div>
               </div>
+            </div>
 
-              <div className="info-card">
-                <div className="info-item">
-                  <span className="label">Mã vận đơn:</span>
-                  <div className="tracking-container">
-                    {isEditingTracking ? (
-                      <div className="tracking-edit">
-                        <input
-                          type="text"
-                          value={tempTrackingNumber}
-                          onChange={(e) => setTempTrackingNumber(e.target.value)}
-                          placeholder="Nhập mã vận đơn"
-                          className="tracking-input"
-                        />
-                        <button onClick={handleTrackingSave} className="btn-save">
-                          <FiSave size={16} />
-                        </button>
-                        <button onClick={handleTrackingCancel} className="btn-cancel">
-                          <FiX size={16} />
-                        </button>
+            <div className="col-md-6 p-4">
+              <div className="d-flex align-items-center mb-3">
+                <div className="bg-warning bg-opacity-10 rounded-circle p-2 me-3">
+                  <FiMapPin className="text-warning" size={20} />
+                </div>
+                <h6 className="mb-0 fw-semibold">Địa chỉ giao hàng</h6>
+              </div>
+              <div className="ps-5">
+                <div className="mb-2">
+                  <strong>Tên người nhận:</strong> {order.addressId?.fullName || 'N/A'}
+                </div>
+                <div className="mb-2">
+                  <strong>SĐT:</strong> {order.addressId?.phone || 'N/A'}
+                </div>
+                <div className="mb-2">
+                  <strong>Địa chỉ:</strong> {order.addressId?.street || 'N/A'}
+                </div>
+                <div className="mb-2">
+                  <strong>Thành phố:</strong> {order.addressId?.city || 'N/A'}, {order.addressId?.state || ''}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr className="my-0" />
+
+          {/* Seller Info */}
+          {sellerInfo && (
+            <>
+              <div className="p-4">
+                <div className="d-flex align-items-center mb-3">
+                  <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                    <FiUser className="text-primary" size={20} />
+                  </div>
+                  <h6 className="mb-0 fw-semibold">Thông tin người bán</h6>
+                </div>
+                <div className="ps-5">
+                  <div className="mb-2">
+                    <strong>Tên:</strong> {sellerInfo.fullName || 'N/A'}
+                  </div>
+                  <div className="mb-2">
+                    <strong>Email:</strong> {sellerInfo.email || 'N/A'}
+                  </div>
+                  {sellerInfo.phone && (
+                    <div className="mb-2">
+                      <strong>SĐT:</strong> {sellerInfo.phone}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <hr className="my-0" />
+            </>
+          )}
+
+          {/* Products */}
+          <div className="p-4">
+            <div className="d-flex align-items-center mb-3">
+              <div className="bg-success bg-opacity-10 rounded-circle p-2 me-3">
+                <FiPackage className="text-success" size={20} />
+              </div>
+              <h6 className="mb-0 fw-semibold">Sản phẩm đã đặt</h6>
+            </div>
+            <div className="table-responsive">
+              <table className="table table-hover">
+                <thead className="table-light">
+                  <tr>
+                    <th className="border-0">Sản phẩm</th>
+                    <th className="border-0 text-center">Số lượng</th>
+                    <th className="border-0 text-end">Đơn giá</th>
+                    <th className="border-0 text-end">Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {items && items.length > 0 ? (
+                    items.map((item, index) => {
+                      const product = item.productId || {};
+                      const productId = product._id || product;
+                      const productTitle = product.title || 'Sản phẩm không xác định';
+                      const productImage = product.image || product.imageURL || '/placeholder.jpg';
+                      const productDescription = product.description || '';
+                      const quantity = item.quantity || 0;
+                      const unitPrice = item.unitPrice || product.price || 0;
+
+                      return (
+                        <tr key={item._id || index}>
+                          <td>
+                            <div className="d-flex align-items-center">
+                              <img
+                                src={productImage}
+                                alt={productTitle}
+                                style={{ width: '60px', height: '60px', objectFit: 'cover' }}
+                                className="me-3 rounded"
+                                onError={(e) => {
+                                  e.target.src = '/placeholder.jpg';
+                                }}
+                              />
+                              <div>
+                                <strong className="d-block">{productTitle}</strong>
+                                {productDescription && (
+                                  <small className="text-muted">{productDescription}</small>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="text-center">
+                            <span className="badge bg-primary">{quantity}</span>
+                          </td>
+                          <td className="text-end fw-semibold">{unitPrice?.toLocaleString()}đ</td>
+                          <td className="text-end fw-bold text-success">
+                            {(unitPrice * quantity)?.toLocaleString()}đ
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan="4" className="text-center text-muted py-4">
+                        Chưa có sản phẩm nào trong đơn hàng này
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <hr className="my-0" />
+
+          {/* Payment Info & Notes */}
+          <div className="p-4 bg-light">
+            <div className="row">
+              <div className="col-md-6">
+                <div className="d-flex align-items-center mb-3">
+                  <div className="bg-primary bg-opacity-10 rounded-circle p-2 me-3">
+                    <FiDollarSign className="text-primary" size={20} />
+                  </div>
+                  <h6 className="mb-0 fw-semibold">Thông tin thanh toán</h6>
+                </div>
+                <div className="ps-5">
+                  <div className="mb-2">
+                    <strong>Phương thức:</strong>
+                    <span className={`badge ${getPaymentMethodBadgeClass(order.paymentMethod)} ms-2`}>
+                      {getPaymentMethodText(order.paymentMethod)}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <strong>Trạng thái:</strong>
+                    <span className={`badge ${getStatusBadgeClass(order.status)} ms-2`}>
+                      {getStatusText(order.status)}
+                    </span>
+                  </div>
+                  <div className="mb-2">
+                    <strong>Tổng tiền:</strong>
+                    <span className="fw-bold text-success fs-5 ms-2">
+                      {order.totalPrice?.toLocaleString()}đ
+                    </span>
+                  </div>
+                  {order.shippingFee && (
+                    <div className="mb-2">
+                      <strong>Phí vận chuyển:</strong>
+                      <span className="ms-2">{order.shippingFee?.toLocaleString()}đ</span>
+                    </div>
+                  )}
+                  {trackingNumber && (
+                    <div className="mb-2">
+                      <strong>Mã vận đơn:</strong>
+                      <span className="ms-2 font-monospace">{trackingNumber}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="col-md-6">
+                <div className="d-flex align-items-center mb-3">
+                  <div className="bg-secondary bg-opacity-10 rounded-circle p-2 me-3">
+                    <FiMessageSquare className="text-secondary" size={20} />
+                  </div>
+                  <h6 className="mb-0 fw-semibold">
+                    {order.status === 'cancelled' ? 'Lý do hủy đơn' : 'Ghi chú'}
+                  </h6>
+                </div>
+                <div className="ps-5">
+                  <div className={`bg-white p-3 rounded border ${order.status === 'cancelled' ? 'border-danger' : ''}`}>
+                    {(order.status === 'cancelled' && order.cancellationReason) ? (
+                      <div>
+                        <span className="badge bg-danger mb-2">Lý do hủy</span>
+                        <p className="mb-0">{order.cancellationReason}</p>
                       </div>
+                    ) : order.notes ? (
+                      <span>{order.notes}</span>
                     ) : (
-                      <div className="tracking-display">
-                        <span className="tracking-number">
-                          {trackingNumber || 'Chưa có mã vận đơn'}
-                        </span>
-                        {role === 'seller' && (
-                          <button onClick={handleTrackingEdit} className="btn-edit">
-                            <FiEdit3 size={16} />
-                          </button>
-                        )}
-                      </div>
+                      <span className="text-muted fst-italic">
+                        {order.status === 'cancelled' ? 'Không có lý do' : 'Không có ghi chú'}
+                      </span>
                     )}
                   </div>
                 </div>
-                {order.notes && (
-                  <div className="info-item full-width">
-                    <span className="label">Ghi chú:</span>
-                    <span className="value">{order.notes}</span>
+              </div>
+            </div>
+          </div>
+        </Card.Body>
+
+        {/* Footer Actions */}
+        <Card.Footer className="bg-light border-0">
+          <div className="d-flex justify-content-between align-items-center">
+            <Button variant="secondary" onClick={handleGoBack}>
+              <FiX className="me-1" />
+              Đóng
+            </Button>
+            <div className="d-flex gap-2">
+              {isOrderSeller && order.status === 'pending' && (
+                <Button
+                  variant="success"
+                  onClick={() => updateOrderStatus('confirmed')}
+                  disabled={confirming}
+                >
+                  {confirming ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-1" />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheck className="me-1" />
+                      Xác nhận đơn hàng
+                    </>
+                  )}
+                </Button>
+              )}
+              {role === 'buyer' && ['pending', 'confirmed'].includes(order.status) && (
+                <Button variant="danger" onClick={cancelOrder}>
+                  <FiXCircle className="me-1" />
+                  Hủy đơn hàng
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card.Footer>
+      </Card>
+
+      {/* Review Section for Buyer */}
+      {role === 'buyer' && items && items.length > 0 && (
+        <Card className="border-0 shadow-sm">
+          <Card.Body>
+            <h5 className="mb-4">Đánh giá sản phẩm</h5>
+            {items.map((item, index) => {
+              const product = item.productId || {};
+              const productId = product._id || product;
+              const shouldShowReview = ['delivered', 'completed'].includes(order.status) || order.paymentStatus === 'paid';
+
+              return shouldShowReview && productId ? (
+                <div key={item._id || index} className="mb-4 pb-4 border-bottom">
+                  <div className="d-flex align-items-center mb-3">
+                    <img
+                      src={product.image || product.imageURL || '/placeholder.jpg'}
+                      alt={product.title}
+                      style={{ width: '50px', height: '50px', objectFit: 'cover' }}
+                      className="me-3 rounded"
+                    />
+                    <div>
+                      <strong>{product.title || 'Sản phẩm'}</strong>
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="info-section">
-            <h2>
-              <FiMapPin className="section-icon" />
-              Thông tin người nhận
-            </h2>
-            <div className="address-card">
-              <div className="address-header">
-                <h3>{order.addressId?.fullName}</h3>
-                <span className="phone">{order.addressId?.phone}</span>
-              </div>
-              <div className="address-details">
-                <p>{order.addressId?.street}</p>
-                <p>{order.addressId?.city}, {order.addressId?.state}, {order.addressId?.country}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="info-section">
-            <h2>
-              <FiUser className="section-icon" />
-              Thông tin người bán
-            </h2>
-            <div className="seller-card">
-              <div className="seller-info">
-                <h3>{order.sellerId?.name}</h3>
-                <p>{order.sellerId?.email}</p>
-                <p><strong>Cửa hàng:</strong> {order.storeId?.storeName}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="info-section">
-            <h2>
-              <FiPackage className="section-icon" />
-              Sản phẩm đã đặt
-            </h2>
-            <div className="items-container">
-              {items.map((item, index) => (
-                <div key={index} className="item-card">
-                  <img
-                    src={item.productId?.image || item.productId?.imageURL || '/placeholder.jpg'}
-                    alt={item.productId?.title}
-                    className="item-image"
+                  <ReviewSection
+                    productId={typeof productId === 'object' ? String(productId) : String(productId)}
+                    orderId={orderIdStr}
                   />
-                  <div className="item-details">
-                    <h4>{item.productId?.title}</h4>
-                    <p className="item-description">{item.productId?.description}</p>
-                    <div className="item-quantity">
-                      <span>Số lượng: {item.quantity}</span>
-                      <span className="item-price">{item.unitPrice?.toLocaleString()}đ</span>
-                    </div>
-                    <div className="item-total">
-                      Tổng: {(item.unitPrice * item.quantity)?.toLocaleString()}đ
-                    </div>
-                    {(() => {
-                      const shouldShowReview = role === 'buyer' &&
-                        (['delivered', 'completed'].includes(order.status) || order.paymentStatus === 'paid');
-                      const productIdValue = item.productId?._id || item.productId;
-
-                      if (shouldShowReview) {
-                        console.log('Should show review - Role:', role, 'Status:', order.status, 'PaymentStatus:', order.paymentStatus);
-                        console.log('ProductId:', productIdValue);
-                      }
-
-                      return shouldShowReview && productIdValue ? (
-                        <div className="review-section-wrapper" style={{ marginTop: '15px' }}>
-                          <ReviewSection
-                            productId={productIdValue}
-                            orderId={order._id}
-                          />
-                        </div>
-                      ) : null;
-                    })()}
-                  </div>
                 </div>
-              ))}
-            </div>
-          </div>
-
-          {role === 'seller' && (
-            <div className="actions-section">
-              <h2>
-                <FiCreditCard className="section-icon" />
-                Quản lý đơn hàng
-              </h2>
-
-              <div className="action-cards">
-                {order.status === 'pending' && (
-                  <div className="action-card">
-                    <h3>Xác nhận đơn hàng</h3>
-                    <p>Xác nhận đơn hàng để bắt đầu xử lý</p>
-                    <div className="action-buttons">
-                      <button
-                        className="btn-confirm"
-                        onClick={() => updateOrderStatus('confirmed')}
-                      >
-                        <FiCheckCircle size={16} />
-                        Xác nhận đơn hàng
-                      </button>
-                      <button
-                        className="btn-cancel"
-                        onClick={() => updateOrderStatus('cancelled')}
-                      >
-                        <FiXCircle size={16} />
-                        Từ chối đơn hàng
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {order.status === 'confirmed' && (
-                  <div className="action-card">
-                    <h3>Giao hàng</h3>
-                    <p>Đánh dấu đơn hàng đã được giao cho đơn vị vận chuyển</p>
-                    <div className="action-buttons">
-                      <button
-                        className="btn-ship"
-                        onClick={() => {
-                          const trackingNumber = prompt('Nhập mã vận đơn:');
-                          if (trackingNumber) {
-                            setTrackingNumber(trackingNumber);
-                            updateOrderStatus('shipped');
-                          }
-                        }}
-                      >
-                        <FiTruck size={16} />
-                        Giao hàng
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {order.status === 'shipped' && (
-                  <div className="action-card">
-                    <h3>Hoàn thành giao hàng</h3>
-                    <p>Xác nhận khách hàng đã nhận được hàng</p>
-                    <div className="action-buttons">
-                      <button
-                        className="btn-deliver"
-                        onClick={() => updateOrderStatus('delivered')}
-                      >
-                        <FiCheckCircle size={16} />
-                        Hoàn thành giao hàng
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {role === 'buyer' && ['pending', 'confirmed'].includes(order.status) && (
-            <div className="actions-section">
-              <h2>
-                <FiCreditCard className="section-icon" />
-                Thao tác
-              </h2>
-              <div className="action-cards">
-                <div className="action-card">
-                  <h3>Hủy đơn hàng</h3>
-                  <p>Hủy đơn hàng nếu bạn không muốn tiếp tục</p>
-                  <div className="action-buttons">
-                    <button
-                      className="btn-cancel"
-                      onClick={cancelOrder}
-                    >
-                      <FiXCircle size={16} />
-                      Hủy đơn hàng
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+              ) : null;
+            })}
+          </Card.Body>
+        </Card>
+      )}
+    </Container>
   );
 };
 

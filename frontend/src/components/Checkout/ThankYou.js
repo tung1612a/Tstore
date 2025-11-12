@@ -148,8 +148,15 @@ const ThankYou = () => {
               <p className="lead text-muted mb-4">
                 Đơn hàng của bạn đã được tiếp nhận và đang được xử lý
               </p>
-              <div className="order-id-badge">
-                <strong>Mã đơn hàng:</strong> <code>{order._id.slice(-8).toUpperCase()}</code>
+              <div 
+                className="order-id-badge" 
+                onClick={() => {
+                  const orderId = order._id?.toString() || order._id;
+                  navigate(`/orders/${orderId}`, { state: { from: '/thank-you' } });
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <strong>Mã đơn hàng:</strong> <code>{(order._id?.toString() || order._id || '').slice(-8).toUpperCase()}</code>
               </div>
             </Card.Body>
           </Card>
@@ -292,11 +299,14 @@ const ThankYou = () => {
                   <div className="mt-4 d-grid gap-2">
                     <Button
                       variant="primary"
-                      onClick={() => navigate(`/orders/${order._id}`)}
+                      onClick={() => {
+                        const orderId = order._id?.toString() || order._id;
+                        navigate(`/orders/${orderId}`, { state: { from: '/thank-you' } });
+                      }}
                       className="w-100"
                     >
                       <FiShoppingBag className="me-2" />
-                      Xem chi tiết đơn hàng
+                      XEM CHI TIẾT ĐƠN HÀNG
                     </Button>
                     <Button
                       variant="outline-secondary"
