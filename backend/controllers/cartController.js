@@ -298,3 +298,11 @@ export const clearCart = async (req, res) => {
     res.status(500).json({ message: 'Lỗi server khi xóa giỏ hàng' });
   }
 };
+
+
+
+
+
+
+
+
