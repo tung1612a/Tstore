@@ -13,6 +13,7 @@ import {
   FiAlertTriangle,
   FiImage,
   FiTrash2,
+  FiEye,
 } from 'react-icons/fi';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -197,10 +198,24 @@ const OrderCard = React.memo(
     handleOpenConfirmReceivedModal,
     handleOpenComplaintModal,
     role,
+    navigate,
   }) => {
+    const handleViewDetails = (e) => {
+      e.stopPropagation();
+      navigate(`/orders/${order._id}`, { state: { from: '/orders' } });
+    };
+
+    const handleHeaderClick = (e) => {
+      // Don't navigate if clicking on the toggle button
+      if (e.target.closest('.toggle')) {
+        return;
+      }
+      navigate(`/orders/${order._id}`, { state: { from: '/orders' } });
+    };
+
     return (
       <div className={`order-card ${expanded[order._id] ? 'expanded' : ''}`}>
-        <div className="card-header">
+        <div className="card-header" onClick={handleHeaderClick} style={{ cursor: 'pointer' }}>
           <div className="header-left">
             <div className="id-area">
               <div className="order-id">#{order._id.slice(-8)}</div>
@@ -223,7 +238,10 @@ const OrderCard = React.memo(
             </div>
           </div>
           <div className="header-right">
-            <button className="toggle" aria-expanded={!!expanded[order._id]} onClick={() => toggleDetails(order._id)}>
+            <button className="toggle" aria-expanded={!!expanded[order._id]} onClick={(e) => {
+              e.stopPropagation();
+              toggleDetails(order._id);
+            }}>
               <div className="toggle-icon">{expanded[order._id] ? <FiChevronUp /> : <FiChevronDown />}</div>
             </button>
           </div>
@@ -286,6 +304,34 @@ const OrderCard = React.memo(
                   ))}
                 </div>
               </div>
+              {/* View Details Button */}
+              <div style={{ padding: '15px 20px', borderTop: '1px solid #eee' }}>
+                <button
+                  onClick={handleViewDetails}
+                  style={{
+                    padding: '12px 24px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    fontSize: '0.95rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    justifyContent: 'center',
+                  }}
+                  onMouseOver={(e) => (e.target.style.transform = 'translateY(-2px)')}
+                  onMouseOut={(e) => (e.target.style.transform = 'translateY(0)')}
+                >
+                  <FiEye size={18} />
+                  Xem chi tiết đơn hàng
+                </button>
+              </div>
+
               {/* Order Actions - Only show for buyer/customer roles */}
               {(role === 'buyer' || role === 'customer' || !role) && (
                 <div
@@ -625,7 +671,7 @@ const OrderHistory = () => {
       <div className="history-container">
         <div className="history-header">
           <div className="header-top">
-            <button className="back-btn" onClick={() => navigate(-1)} title="Quay lại trang trước">
+            <button className="back-btn" onClick={() => navigate('/')} title="Quay lại trang chủ">
               <FiArrowLeft size={20} />
               <span>Quay lại</span>
             </button>
@@ -714,6 +760,7 @@ const OrderHistory = () => {
                 handleOpenConfirmReceivedModal={handleOpenConfirmReceivedModal}
                 handleOpenComplaintModal={handleOpenComplaintModal}
                 role={role}
+                navigate={navigate}
                 toggleDetails={async (orderId) => {
                   // First, determine if we're opening or closing
                   const isCurrentlyOpen = expanded[orderId];

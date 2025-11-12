@@ -271,10 +271,14 @@ export const getOrderDetails = async (req, res) => {
     // Ưu tiên kiểm tra buyer trước (seller có thể mua hàng từ seller khác)
     if (isBuyer) {
       // Nếu là buyer và là chủ đơn hàng, lấy tất cả items (bất kể role là gì)
-      orderItems = await OrderItem.find({ orderId: id }).populate(
-        'productId',
-        '_id title price image imageURL description'
-      );
+      orderItems = await OrderItem.find({ orderId: id }).populate({
+        path: 'productId',
+        select: '_id title price image imageURL description',
+        populate: {
+          path: 'sellerId',
+          select: 'fullName email phone'
+        }
+      });
     } else if (role === 'seller') {
       // Nếu là seller và KHÔNG phải buyer, chỉ lấy các items có product thuộc về seller
       orderItems = await OrderItem.aggregate([
@@ -296,6 +300,20 @@ export const getOrderDetails = async (req, res) => {
           },
         },
         {
+          $lookup: {
+            from: 'users',
+            localField: 'product.sellerId',
+            foreignField: '_id',
+            as: 'seller',
+          },
+        },
+        {
+          $unwind: {
+            path: '$seller',
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $project: {
             _id: 1,
             quantity: 1,
@@ -306,6 +324,12 @@ export const getOrderDetails = async (req, res) => {
             'productId.image': '$product.image',
             'productId.imageURL': '$product.imageURL',
             'productId.description': '$product.description',
+            'productId.sellerId': {
+              _id: '$seller._id',
+              fullName: '$seller.fullName',
+              email: '$seller.email',
+              phone: '$seller.phone',
+            },
           },
         },
       ]);
