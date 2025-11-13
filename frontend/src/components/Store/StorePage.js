@@ -182,7 +182,7 @@ function StorePage() {
                     className="d-flex align-items-center"
                   >
                     <FiShield className="me-1" size={12} />
-                    {header.status === 'approved' ? 'Đã xác minh' : header.status === 'pending' ? 'Đang chờ xác minh' : 'Bị từ chối'}
+                    {header.status === 'approved' ? 'Đã xác minh' : header.status === 'pending' ? 'Đang chờ xác minh' : 'Không Được Xác Minh'}
                   </Badge>
                 </div>
                 <div className="d-flex align-items-center text-muted mb-2">
