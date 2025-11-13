@@ -131,8 +131,8 @@ const SellerProducts = () => {
     if (trimmed.length < 2) {
       return 'Tên sản phẩm phải có ít nhất 2 ký tự';
     }
-    if (trimmed.length > 20) {
-      return 'Tên sản phẩm không được vượt quá 20 ký tự';
+    if (trimmed.length > 30) {
+      return 'Tên sản phẩm không được vượt quá 30 ký tự';
     }
     return '';
   };
@@ -624,7 +624,7 @@ const SellerProducts = () => {
                                     {category ? category.name : 'Chưa phân loại'}
                                   </Badge>
                                 </td>
-                                <td>${product.price}</td>
+                                <td>{product.price}-VND</td>
                                 <td>{product.stock}</td>
                                 <td>{getStockBadge(product.stock)}</td>
                                 <td>
@@ -708,7 +708,7 @@ const SellerProducts = () => {
                     onChange={(e) => handleFieldChange('title', e.target.value)}
                     onBlur={() => setTouched(prev => ({ ...prev, title: true }))}
                     isInvalid={touched.title && !!errors.title}
-                    maxLength={20}
+                    maxLength={30}
                   />
                   {touched.title && errors.title && (
                     <Form.Control.Feedback type="invalid">
@@ -716,7 +716,7 @@ const SellerProducts = () => {
                     </Form.Control.Feedback>
                   )}
                   <Form.Text className="text-muted">
-                    Tên sản phẩm từ 2-20 ký tự
+                    Tên sản phẩm từ 2-30 ký tự
                   </Form.Text>
                 </Form.Group>
               </Col>
