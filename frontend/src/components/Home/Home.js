@@ -21,7 +21,6 @@ import SiteNavbar from "../Navbar";
 import HeroCarousel from "../HeroCarousel";
 import Footer from "../Footer";
 import CategoriesRow from "../CategoriesRow";
-import SearchBar from "../SearchBar";
 import ProductCard from "../Product/ProductCard";
 import ProductList from "../Product/ProductList";
 import { useTranslation } from 'react-i18next';
@@ -82,6 +81,12 @@ function App() {
       window.history.replaceState({}, document.title);
     }
   }, [location, t]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const searchKeyword = params.get('keyword') || '';
+    setKeyword(searchKeyword);
+  }, [location.search]);
 
   const handlePriceChange = (field) => (event) => {
     const rawValue = event.target.value;
@@ -200,11 +205,7 @@ function App() {
           <Row className="g-4">
             <Col lg={3} className="mb-4">
               <div className="category-wrapper fade-in-up" style={{ animationDelay: stats ? '0.3s' : '0.2s' }}>
-                <CategoriesRow
-                  selectedCategoryId={categoryId}
-                  onSelectCategory={setCategoryId}
-                />
-                <div className="price-filter-bar mt-4">
+                <div className="price-filter-bar">
                   <Form className="price-filter-form">
                   <Form.Group controlId="min-price" className="price-filter-group">
                     <Form.Label>Giá tối thiểu</Form.Label>
@@ -249,16 +250,11 @@ function App() {
               </div>
             </Col>
             <Col lg={9}>
-              <div className="search-wrapper fade-in-up mb-4" style={{ animationDelay: stats ? '0.4s' : '0.3s' }}>
-                <div className="search-container-modern">
-                  <div className="search-icon-wrapper">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="11" cy="11" r="8"></circle>
-                      <path d="m21 21-4.35-4.35"></path>
-                    </svg>
-                  </div>
-                  <SearchBar onSearch={setKeyword} />
-                </div>
+              <div className="category-horizontal-wrapper fade-in-up mb-4" style={{ animationDelay: stats ? '0.4s' : '0.3s' }}>
+                <CategoriesRow
+                  selectedCategoryId={categoryId}
+                  onSelectCategory={setCategoryId}
+                />
               </div>
 
               <div className="section-header-modern fade-in-up mb-3" style={{ animationDelay: stats ? '0.5s' : '0.4s' }}>

@@ -1,153 +1,162 @@
 import React from 'react';
 import { Carousel, Button } from 'react-bootstrap';
 import './HeroCarousel.css';
-import { useTranslation } from 'react-i18next';
 
+const slides = [
+  {
+    id: 'mega-sale',
+    background: 'linear-gradient(135deg, #1d2671 0%, #c33764 100%)',
+    badge: 'Flash Sale 11.11',
+    title: 'Điện tử giảm đến 50%',
+    subtitle: 'Laptop, điện thoại, phụ kiện chính hãng. Freeship 63 tỉnh thành.',
+    tags: ['Trả góp 0%', 'Voucher độc quyền', 'Bảo hành 24 tháng'],
+    stats: [
+      { label: 'Sản phẩm tham gia', value: '12K+' },
+      { label: 'Ưu đãi hoàn tiền', value: '1.2 Triệu' }
+    ],
+    ctaText: 'Mua ngay',
+    ctaHref: '/products?category=electronics',
+    image: {
+      src: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=900&h=900&fit=crop',
+      alt: 'Điện thoại & phụ kiện'
+    },
+    notes: [
+      { text: 'Freeship toàn quốc', top: '20%', left: '12%' },
+      { text: 'Đổi trả 15 ngày', top: '68%', left: '18%' }
+    ]
+  },
+  {
+    id: 'fashion-week',
+    background: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+    badge: 'New Season',
+    title: 'Bộ sưu tập thời trang hè 2025',
+    subtitle: 'Cập nhật outfit mỗi tuần. Hàng nghìn item từ local brand & quốc tế.',
+    tags: ['AI stylist gợi ý', 'Đổi trả miễn phí', '200+ thương hiệu'],
+    stats: [
+      { label: 'Voucher giảm thêm', value: '300K' },
+      { label: 'Khách hàng thân thiết', value: '4.8/5★' }
+    ],
+    ctaText: 'Khám phá lookbook',
+    ctaHref: '/products?category=fashion',
+    image: {
+      src: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=900&h=900&fit=crop',
+      alt: 'Thời trang nữ'
+    },
+    notes: [
+      { text: 'Giao nhanh 2h', top: '24%', left: '20%' },
+      { text: 'Mix & match chỉ 1 chạm', top: '72%', left: '10%' }
+    ]
+  },
+  {
+    id: 'home-living',
+    background: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)',
+    badge: 'Home Living',
+    title: 'Combo gia dụng chuẩn xịn cho mọi nhà',
+    subtitle: 'Robot hút bụi, máy lọc không khí, dụng cụ bếp chuẩn Michelin.',
+    tags: ['Combo tiết kiệm 1.5 triệu', 'Bảo hành tại nhà', 'Thu cũ đổi mới'],
+    stats: [
+      { label: 'Điểm hài lòng', value: '98%' },
+      { label: 'Giao nhanh', value: '2h nội thành' }
+    ],
+    ctaText: 'Xem ưu đãi xanh',
+    ctaHref: '/products?category=home-living',
+    image: {
+      src: 'https://www.bing.com/images/search?view=detailV2&ccid=POcQ3CYm&id=16A9C348B9B5120ABDE2F1F2222381A0D68F66F9&thid=OIP.POcQ3CYmLC_ndM1h48HlugHaHa&mediaurl=https%3a%2f%2fwww.commerce.co.fk%2fwp-content%2fuploads%2f2021%2f09%2fFIC-Home-Living-Logo-scaled.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.3ce710dc26262c2fe774cd61e3c1e5ba%3frik%3d%252bWaP1qCBIyLy8Q%26pid%3dImgRaw%26r%3d0&exph=2560&expw=2560&q=Home+Living+Handbook+Logo&FORM=IRPRST&ck=6C8A089FB314CBAABDBCF02B07232CE9&selectedIndex=0&itb=0',
+      alt: 'Thiết bị gia dụng'
+    },
+    notes: [
+      { text: 'Tiết kiệm năng lượng', top: '18%', left: '16%' },
+      { text: 'Tư vấn setup miễn phí', top: '70%', left: '22%' }
+    ]
+  },
+  {
+    id: 'become-seller',
+    background: 'linear-gradient(135deg, #f7971e 0%, #ffd200 100%)',
+    badge: 'Aladin Seller Hub',
+    title: 'Bán hàng cùng Aladin, nhân đôi doanh thu',
+    subtitle: 'Quản trị kho tập trung, hỗ trợ quảng cáo, giải pháp logistics toàn diện.',
+    tags: ['Phí 0đ', 'Hỗ trợ 24/7', 'Công cụ phân tích'],
+    stats: [
+      { label: 'Thời gian đăng ký', value: '5 phút' },
+      { label: 'Gian hàng hoạt động', value: '45K+' }
+    ],
+    ctaText: 'Đăng ký bán hàng',
+    ctaHref: '/seller/apply',
+    image: {
+      src: 'https://images.unsplash.com/photo-1521791136064-7986c2920216?w=900&h=900&fit=crop',
+      alt: 'Quản lý đơn hàng'
+    },
+    notes: [
+      { text: 'Kênh marketing đa nền tảng', top: '26%', left: '18%' },
+      { text: 'Đối soát minh bạch', top: '68%', left: '12%' }
+    ]
+  }
+];
 
 function HeroCarousel() {
-  const { t } = useTranslation();
+  const handleCta = (href) => {
+    if (!href) return;
+    window.location.assign(href);
+  };
+
   return (
-    <Carousel className="mb-5 hero-carousel" fade interval={5000}>
-      <Carousel.Item>
-        <div className="hero-slide" style={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          height: '550px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3" style={{ fontSize: '3.5rem', fontWeight: 800 }}>{t('HeroCarousel.0')}</h1>
-            <p className="lead mb-4" style={{ fontSize: '1.3rem', opacity: 0.95 }}>{t('HeroCarousel.1')}</p>
-            <Button variant="light" size="lg" className="hero-btn">
-              {t('HeroCarousel.2')}
-            </Button>
+    <Carousel className="mb-5 hero-carousel" fade interval={6000} pause="hover">
+      {slides.map((slide) => (
+        <Carousel.Item key={slide.id}>
+          <div className="hero-slide" style={{ background: slide.background }}>
+            <div className="hero-pattern" />
+
+            <div className="hero-info">
+              <div className="hero-badge">
+                <span />
+                {slide.badge}
+              </div>
+              <h1 className="hero-title">{slide.title}</h1>
+              <p className="hero-subtitle">{slide.subtitle}</p>
+
+              <div className="hero-tags">
+                {slide.tags.map((tag) => (
+                  <span key={tag} className="hero-tag">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="hero-stats">
+                {slide.stats.map((stat) => (
+                  <div key={stat.label} className="hero-stat">
+                    <span className="hero-stat-value">{stat.value}</span>
+                    <span className="hero-stat-label">{stat.label}</span>
+                  </div>
+                ))}
+              </div>
+
+              <Button
+                variant="light"
+                size="lg"
+                className="hero-btn"
+                onClick={() => handleCta(slide.ctaHref)}
+              >
+                {slide.ctaText}
+              </Button>
+            </div>
+
+            <div className="hero-visual">
+              <div className="hero-visual-backdrop" />
+              <img src={slide.image.src} alt={slide.image.alt} loading="lazy" />
+
+              {slide.notes.map((note, index) => (
+                <div key={index} className="hero-note" style={{ top: note.top, left: note.left }}>
+                  <span />
+                  {note.text}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className="hero-image" style={{
-            position: 'absolute',
-            right: '50px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 1,
-            opacity: 0.3
-          }}>
-            <img
-              src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=300&h=300&fit=crop&crop=center"
-              alt="Smartphone"
-              style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
-            />
-          </div>
-        </div>
-      </Carousel.Item>
-      <Carousel.Item>
-        <div className="hero-slide" style={{
-          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-          height: '550px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3" style={{ fontSize: '3.5rem', fontWeight: 800 }}>{t('HeroCarousel.3')}</h1>
-            <p className="lead mb-4" style={{ fontSize: '1.3rem', opacity: 0.95 }}>{t('HeroCarousel.4')}</p>
-            <Button variant="light" size="lg" className="hero-btn">
-              {t('HeroCarousel.5')}
-            </Button>
-          </div>
-          <div className="hero-image" style={{
-            position: 'absolute',
-            right: '50px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 1,
-            opacity: 0.3
-          }}>
-            <img
-              src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop&crop=center"
-              alt="Headphones"
-              style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
-            />
-          </div>
-        </div>
-      </Carousel.Item>
-      <Carousel.Item>
-        <div className="hero-slide" style={{
-          background: 'linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)',
-          height: '550px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3" style={{ fontSize: '3.5rem', fontWeight: 800 }}>{t('HeroCarousel.6')}</h1>
-            <p className="lead mb-4" style={{ fontSize: '1.3rem', opacity: 0.95 }}>{t('HeroCarousel.7')}</p>
-            <Button variant="light" size="lg" className="hero-btn">
-              {t('HeroCarousel.8')}
-            </Button>
-          </div>
-          <div className="hero-image" style={{
-            position: 'absolute',
-            right: '50px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 1,
-            opacity: 0.3
-          }}>
-            <img
-              src="https://images.unsplash.com/photo-1496181133206-80ce9b88a853?w=300&h=300&fit=crop&crop=center"
-              alt="Laptop"
-              style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
-            />
-          </div>
-        </div>
-      </Carousel.Item>
-      <Carousel.Item>
-        <div className="hero-slide" style={{
-          background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-          height: '550px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <div className="hero-content text-center" style={{ zIndex: 2 }}>
-            <h1 className="display-4 fw-bold mb-3" style={{ fontSize: '3.5rem', fontWeight: 800 }}>{t('HeroCarousel.9')}</h1>
-            <p className="lead mb-4" style={{ fontSize: '1.3rem', opacity: 0.95 }}>{t('HeroCarousel.10')}</p>
-            <Button variant="light" size="lg" className="hero-btn">
-              {t('HeroCarousel.11')}
-            </Button>
-          </div>
-          <div className="hero-image" style={{
-            position: 'absolute',
-            right: '50px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            zIndex: 1,
-            opacity: 0.3
-          }}>
-            <img
-              src="https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=300&h=300&fit=crop&crop=center"
-              alt="Tablet"
-              style={{ width: '200px', height: '200px', objectFit: 'cover', borderRadius: '20px' }}
-            />
-          </div>
-        </div>
-      </Carousel.Item>
+        </Carousel.Item>
+      ))}
     </Carousel>
   );
 }
 
 export default HeroCarousel;
-
-
