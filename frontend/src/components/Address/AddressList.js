@@ -86,13 +86,11 @@ const AddressList = ({ refreshTrigger, onEdit }) => {
                                         <Card.Text>
                                             <strong>Số điện thoại:</strong> {address.phone}
                                             <br />
-                                            <strong>Địa chỉ:</strong> {address.street}
+                                            <strong>Địa chỉ cụ thể:</strong> {address.street}
                                             <br />
-                                            <strong>Thành phố:</strong> {address.city}
+                                            <strong>Thành phố / Tỉnh:</strong> {address.state}
                                             <br />
-                                            <strong>Tỉnh/Bang:</strong> {address.state}
-                                            <br />
-                                            <strong>Quốc gia:</strong> {address.country}
+                                            <strong>Xã / Phường:</strong> {address.city}
                                         </Card.Text>
                                         {address.isDefault && <span className="badge bg-success">Địa chỉ mặc định</span>}
                                     </div>
