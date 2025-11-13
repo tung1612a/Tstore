@@ -548,13 +548,43 @@ export const updateMyStore = async (req, res) => {
     const { description, bannerImageURL, storeName } = req.body;
 
     let store = await Store.findOne({ sellerId: userId });
-    if (!store) {
+    
+    // Validate storeName nếu có thay đổi
+    if (typeof storeName === 'string' && storeName.trim()) {
+      const trimmedStoreName = storeName.trim();
+      
+      // Escape special regex characters để tránh lỗi
+      const escapedName = trimmedStoreName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      
+      // Kiểm tra tên cửa hàng trùng (case-insensitive, loại trừ chính store hiện tại nếu có)
+      const query = {
+        storeName: { $regex: new RegExp(`^${escapedName}$`, 'i') }
+      };
+      
+      // Nếu store đã tồn tại, loại trừ chính nó khỏi kết quả tìm kiếm
+      if (store && store._id) {
+        query._id = { $ne: store._id };
+      }
+      
+      const existingStore = await Store.findOne(query);
+      
+      if (existingStore) {
+        return res.status(400).json({ message: 'Tên cửa hàng đã tồn tại. Vui lòng chọn tên khác.' });
+      }
+      
+      // Nếu store chưa tồn tại, tạo mới
+      if (!store) {
+        store = new Store({ sellerId: userId, storeName: trimmedStoreName });
+      } else {
+        store.storeName = trimmedStoreName;
+      }
+    } else if (!store) {
+      // Nếu không có storeName và store chưa tồn tại, tạo mới với tên mặc định
       store = new Store({ sellerId: userId, storeName: storeName || 'Store' });
     }
 
     if (typeof description === 'string') store.description = description;
     if (typeof bannerImageURL === 'string') store.bannerImageURL = bannerImageURL;
-    if (typeof storeName === 'string' && storeName.trim()) store.storeName = storeName.trim();
 
     await store.save();
     res.json({ message: 'Store updated', store });

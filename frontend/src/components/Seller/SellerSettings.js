@@ -172,7 +172,17 @@ const SellerSettings = () => {
         })
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Cập nhật cửa hàng thất bại');
+      if (!res.ok) {
+        // Nếu lỗi liên quan đến tên cửa hàng trùng, hiển thị ở field tên cửa hàng
+        if (data.message && data.message.includes('Tên cửa hàng đã tồn tại')) {
+          setStoreNameError(data.message);
+          setMessage('');
+        } else {
+          throw new Error(data.message || 'Cập nhật cửa hàng thất bại');
+        }
+        setLoading(false);
+        return;
+      }
 
       setMessage('Cập nhật thành công!');
       // Clear error khi thành công
