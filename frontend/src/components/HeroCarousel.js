@@ -61,7 +61,7 @@ const slides = [
     ctaText: 'Xem ưu đãi xanh',
     ctaHref: '/products?category=home-living',
     image: {
-      src: 'https://www.bing.com/images/search?view=detailV2&ccid=POcQ3CYm&id=16A9C348B9B5120ABDE2F1F2222381A0D68F66F9&thid=OIP.POcQ3CYmLC_ndM1h48HlugHaHa&mediaurl=https%3a%2f%2fwww.commerce.co.fk%2fwp-content%2fuploads%2f2021%2f09%2fFIC-Home-Living-Logo-scaled.jpg&cdnurl=https%3a%2f%2fth.bing.com%2fth%2fid%2fR.3ce710dc26262c2fe774cd61e3c1e5ba%3frik%3d%252bWaP1qCBIyLy8Q%26pid%3dImgRaw%26r%3d0&exph=2560&expw=2560&q=Home+Living+Handbook+Logo&FORM=IRPRST&ck=6C8A089FB314CBAABDBCF02B07232CE9&selectedIndex=0&itb=0',
+      src: 'https://nhabepmart.com/wp-content/uploads/2022/02/do-gia-dung-la-gi.jpg',
       alt: 'Thiết bị gia dụng'
     },
     notes: [

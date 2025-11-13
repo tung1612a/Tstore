@@ -241,7 +241,11 @@
     "9": "Welcome to the store",
     "10": "Discover the latest products today",
     "11": "✨ Explore Now",
-    "12": "Welcome to the shopping hub"
+    "12": "Welcome to the shopping hub",
+    "13": "Minimum Price",
+    "14": "Maximum Price",
+    "15": "No Limit",
+    "16": "Delete Filter"
   },
   "categories": {
     "1": "List of Categories",

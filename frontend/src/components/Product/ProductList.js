@@ -7,7 +7,7 @@ const ProductList = ({ keyword = '', categoryId = '', priceRange = { min: '', ma
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const PAGE_SIZE = 6;
+  const PAGE_SIZE = 12;
   const [page, setPage] = useState(1);
 
   // Reset trang khi đổi bộ lọc
