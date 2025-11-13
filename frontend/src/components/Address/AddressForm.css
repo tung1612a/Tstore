@@ -36,3 +36,51 @@
 .address-form-container .btn-primary:hover {
   background-color: #0056b3;
 }
+
+.address-search-container {
+  position: relative;
+}
+
+.address-search-container .form-control[disabled] {
+  background-color: #f1f3f5;
+  cursor: not-allowed;
+}
+
+.address-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 1050;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.address-dropdown-item {
+  padding: 0.65rem 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 1px solid #f1f3f5;
+  font-size: 0.95rem;
+}
+
+.address-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.address-dropdown-item:hover {
+  background-color: #f8f9fa;
+  color: #007bff;
+  padding-left: 1rem;
+}
+
+.address-dropdown-item.disabled {
+  cursor: default;
+  color: #6c757d;
+  background-color: #fff;
+}
