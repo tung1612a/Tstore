@@ -473,8 +473,34 @@
     align-items: stretch;
   }
 
+  .filters-row {
+    row-gap: 1.5rem;
+  }
+
   .price-filter-actions {
     justify-content: flex-end;
+  }
+}
+
+.filters-row .category-horizontal-wrapper {
+  background: white;
+  border-radius: 20px;
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+}
+
+.price-filter-wrapper {
+  height: 100%;
+  display: flex;
+}
+
+.price-filter-wrapper .price-filter-bar {
+  width: 100%;
+}
+
+@media (max-width: 992px) {
+  .filters-row .category-horizontal-wrapper {
+    padding: 1.25rem;
   }
 }
 
@@ -986,3 +1012,5 @@ footer::before {
 .empty-message {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
 }
+
+

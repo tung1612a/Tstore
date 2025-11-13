@@ -202,70 +202,73 @@ function App() {
             </Row>
           </div> */}
 
-          <Row className="g-4">
-            <Col lg={3} className="mb-4">
-              <div className="category-wrapper fade-in-up" style={{ animationDelay: stats ? '0.3s' : '0.2s' }}>
-                <div className="price-filter-bar">
-                  <Form className="price-filter-form">
-                  <Form.Group controlId="min-price" className="price-filter-group">
-                    <Form.Label>Giá tối thiểu</Form.Label>
-                    <Form.Control
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={priceRange.min}
-                      onChange={handlePriceChange("min")}
-                    />
-                  </Form.Group>
-                  <Form.Group controlId="max-price" className="price-filter-group">
-                    <Form.Label>Giá tối đa</Form.Label>
-                    <Form.Control
-                      type="number"
-                      min="0"
-                      placeholder="Không giới hạn"
-                      value={priceRange.max}
-                      onChange={handlePriceChange("max")}
-                    />
-                  </Form.Group>
-                  <div className="price-filter-actions">
-                    <OverlayTrigger
-                      placement="top"
-                      overlay={<Tooltip id="tooltip-clear-price">Xóa bộ lọc giá</Tooltip>}
-                    >
-                      <span>
-                        <Button
-                          type="button"
-                          variant="outline-secondary"
-                          onClick={handleClearPrice}
-                          disabled={!priceRange.min && !priceRange.max}
-                        >
-                          Xóa lọc
-                        </Button>
-                      </span>
-                    </OverlayTrigger>
-                  </div>
-                </Form>
-                {priceError && <div className="price-filter-error">{priceError}</div>}
-              </div>
-              </div>
-            </Col>
-            <Col lg={9}>
-              <div className="category-horizontal-wrapper fade-in-up mb-4" style={{ animationDelay: stats ? '0.4s' : '0.3s' }}>
+          <Row className="g-4 align-items-stretch filters-row">
+            <Col xs={12} lg={9}>
+              <div className="category-horizontal-wrapper fade-in-up h-100" style={{ animationDelay: stats ? '0.3s' : '0.2s' }}>
                 <CategoriesRow
                   selectedCategoryId={categoryId}
                   onSelectCategory={setCategoryId}
                 />
               </div>
-
-              <div className="section-header-modern fade-in-up mb-3" style={{ animationDelay: stats ? '0.5s' : '0.4s' }}>
-                <div className="section-title-wrapper">
-                  <h2 className="section-title-modern">{t('toast.4')}</h2>
+            </Col>
+            <Col xs={12} lg={3}>
+              <div className="price-filter-wrapper fade-in-up" style={{ animationDelay: stats ? '0.4s' : '0.3s' }}>
+                <div className="price-filter-bar">
+                  <Form className="price-filter-form">
+                    <Form.Group controlId="min-price" className="price-filter-group">
+                      <Form.Label>{t('toast.13')}</Form.Label>
+                      <Form.Control
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={priceRange.min}
+                        onChange={handlePriceChange("min")}
+                      />
+                    </Form.Group>
+                    <Form.Group controlId="max-price" className="price-filter-group">
+                      <Form.Label>{t('toast.14')}</Form.Label>
+                      <Form.Control
+                        type="number"
+                        min="0"
+                        placeholder={t('toast.15')}
+                        value={priceRange.max}
+                        onChange={handlePriceChange("max")}
+                      />
+                    </Form.Group>
+                    <div className="price-filter-actions">
+                      <OverlayTrigger
+                        placement="top"
+                        overlay={<Tooltip id="tooltip-clear-price">Xóa bộ lọc giá</Tooltip>}
+                      >
+                        <span>
+                          <Button
+                            type="button"
+                            variant="outline-secondary"
+                            onClick={handleClearPrice}
+                            disabled={!priceRange.min && !priceRange.max}
+                          >
+                            {t('toast.16')}
+                          </Button>
+                        </span>
+                      </OverlayTrigger>
+                    </div>
+                  </Form>
+                  {priceError && <div className="price-filter-error">{priceError}</div>}
                 </div>
+              </div>
+            </Col>
+          </Row>
+
+          <Row className="g-4 mt-2">
+            <Col xs={12}>
+              <div className="section-header-modern fade-in-up mb-3" style={{ animationDelay: stats ? '0.5s' : '0.4s' }}>
+                  <h2 className="section-title-modern">{t('toast.4')}</h2>
                 <p className="section-subtitle-modern">
                   {t('toast.5')}
                 </p>
               </div>
-
+            </Col>
+            <Col xs={12}>
               <div className="fade-in-up" style={{ animationDelay: stats ? '0.6s' : '0.5s' }}>
                 <ProductList
                   keyword={keyword}
@@ -273,26 +276,6 @@ function App() {
                   priceRange={priceRange}
                 />
               </div>
-
-              {featuredProducts && featuredProducts.length > 0 && (
-                <>
-                  <div className="section-header-modern mt-5 mb-5 fade-in-up" style={{ animationDelay: stats ? '0.7s' : '0.6s' }}>
-                    <div className="section-title-wrapper">
-                      <h2 className="section-title-modern">{t('toast.6')}</h2>
-                    </div>
-                    <p className="section-subtitle-modern">
-                      {t('toast.7')}
-                    </p>
-                  </div>
-                  <div className="products-grid-modern mb-5 fade-in-up" style={{ animationDelay: stats ? '0.8s' : '0.7s' }}>
-                    {(featuredProducts || []).map((p, index) => (
-                      <div key={p._id} className="product-card-wrapper" style={{ animationDelay: `${(stats ? 0.9 : 0.8) + index * 0.1}s` }}>
-                        <ProductCard product={p} />
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
             </Col>
           </Row>
         </Container>
