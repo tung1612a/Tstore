@@ -15,9 +15,9 @@ export const createOrder = async (req, res) => {
       return res.status(404).json({ message: 'Không tìm thấy địa chỉ hoặc không có quyền truy cập' });
     }
 
-    let totalPrice = 0;
-    const orderItems = [];
-
+    // Nhóm sản phẩm theo sellerId
+    const itemsBySeller = {};
+    
     for (const item of items) {
       const product = await Product.findById(item.productId);
       if (!product) {
@@ -31,50 +31,80 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      const itemTotal = product.price * item.quantity;
-      totalPrice += itemTotal;
+      const sellerId = product.sellerId.toString();
+      if (!itemsBySeller[sellerId]) {
+        itemsBySeller[sellerId] = [];
+      }
 
-      orderItems.push({
+      itemsBySeller[sellerId].push({
         productId: item.productId,
         quantity: item.quantity,
         unitPrice: product.price,
+        product: product,
       });
     }
 
     // Xác định status dựa trên payment method
     const orderStatus = paymentMethod === 'cod' ? 'pending' : 'paid';
 
-    const order = new Order({
-      buyerId,
-      addressId,
-      totalPrice,
-      couponId,
-      paymentMethod,
-      notes,
-      status: orderStatus,
-    });
+    // Tạo đơn hàng riêng cho mỗi seller
+    const createdOrders = [];
+    const sellerIds = Object.keys(itemsBySeller);
 
-    const savedOrder = await order.save();
+    for (const sellerId of sellerIds) {
+      const sellerItems = itemsBySeller[sellerId];
+      let totalPrice = 0;
 
-    for (const item of orderItems) {
-      const orderItem = new OrderItem({
-        orderId: savedOrder._id,
-        ...item,
+      // Tính tổng giá cho đơn hàng của seller này
+      for (const item of sellerItems) {
+        totalPrice += item.unitPrice * item.quantity;
+      }
+
+      // Tạo đơn hàng cho seller này
+      const order = new Order({
+        buyerId,
+        addressId,
+        totalPrice,
+        couponId,
+        paymentMethod,
+        notes,
+        status: orderStatus,
       });
-      await orderItem.save();
 
-      // Giảm số lượng sản phẩm trong kho
-      await Product.findByIdAndUpdate(
-        item.productId,
-        { $inc: { stock: -item.quantity } }
-      );
+      const savedOrder = await order.save();
+
+      // Tạo OrderItem cho từng sản phẩm
+      for (const item of sellerItems) {
+        const orderItem = new OrderItem({
+          orderId: savedOrder._id,
+          productId: item.productId,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        });
+        await orderItem.save();
+
+        // Giảm số lượng sản phẩm trong kho
+        await Product.findByIdAndUpdate(
+          item.productId,
+          { $inc: { stock: -item.quantity } }
+        );
+      }
+
+      // Populate và thêm vào danh sách đơn hàng đã tạo
+      const populatedOrder = await Order.findById(savedOrder._id)
+        .populate('buyerId', 'fullName email')
+        .populate('addressId', 'fullName phone street city state country');
+
+      createdOrders.push(populatedOrder);
     }
 
-    const populatedOrder = await Order.findById(savedOrder._id)
-      .populate('buyerId', 'fullName email')
-      .populate('addressId', 'fullName phone street city state country');
-
-    res.status(201).json(populatedOrder);
+    // Trả về mảng các đơn hàng đã tạo
+    // Nếu chỉ có 1 đơn hàng, trả về object để tương thích với code cũ
+    if (createdOrders.length === 1) {
+      res.status(201).json(createdOrders[0]);
+    } else {
+      res.status(201).json({ orders: createdOrders, count: createdOrders.length });
+    }
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server khi tạo đơn hàng', error: error.message });
   }

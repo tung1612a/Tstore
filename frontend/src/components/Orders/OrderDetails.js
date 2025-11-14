@@ -589,10 +589,56 @@ const OrderDetails = () => {
                   )}
                 </Button>
               )}
-              {role === 'buyer' && ['pending', 'confirmed'].includes(order.status) && (
+              {(role === 'buyer' || role === 'customer' || role === 'seller') && ['pending', 'confirmed'].includes(order.status) && 
+                order.buyerId && (order.buyerId._id || order.buyerId) && 
+                String(order.buyerId._id || order.buyerId) === String(user?._id || user?.id) && (
                 <Button variant="danger" onClick={cancelOrder}>
                   <FiXCircle className="me-1" />
                   Hủy đơn hàng
+                </Button>
+              )}
+              {(role === 'buyer' || role === 'customer' || role === 'seller') && order.status === 'delivered' && 
+                order.buyerId && (order.buyerId._id || order.buyerId) && 
+                String(order.buyerId._id || order.buyerId) === String(user?._id || user?.id) && (
+                <Button
+                  variant="success"
+                  onClick={async () => {
+                    try {
+                      setConfirming(true);
+                      const token = localStorage.getItem('token');
+                      const response = await fetch(`http://localhost:5000/api/orders/${id}/confirm-received`, {
+                        method: 'PUT',
+                        headers: {
+                          'Authorization': `Bearer ${token}`
+                        }
+                      });
+                      if (response.ok) {
+                        await fetchOrderDetails();
+                        alert('Xác nhận nhận hàng thành công!');
+                      } else {
+                        const errorData = await response.json().catch(() => ({ message: 'Có lỗi xảy ra' }));
+                        alert(errorData.message || 'Không thể xác nhận nhận hàng');
+                      }
+                    } catch (error) {
+                      console.error('Error confirming received:', error);
+                      alert('Có lỗi xảy ra khi xác nhận nhận hàng');
+                    } finally {
+                      setConfirming(false);
+                    }
+                  }}
+                  disabled={confirming}
+                >
+                  {confirming ? (
+                    <>
+                      <Spinner animation="border" size="sm" className="me-1" />
+                      Đang xử lý...
+                    </>
+                  ) : (
+                    <>
+                      <FiCheckCircle className="me-1" />
+                      Xác nhận đã nhận hàng
+                    </>
+                  )}
                 </Button>
               )}
             </div>
@@ -600,8 +646,10 @@ const OrderDetails = () => {
         </Card.Footer>
       </Card>
 
-      {/* Review Section for Buyer */}
-      {role === 'buyer' && items && items.length > 0 && (
+      {/* Review Section for Buyer (including seller when they are buyer) */}
+      {(role === 'buyer' || role === 'customer' || role === 'seller') && items && items.length > 0 && 
+        order.buyerId && (order.buyerId._id || order.buyerId) && 
+        String(order.buyerId._id || order.buyerId) === String(user?._id || user?.id) && (
         <Card className="border-0 shadow-sm">
           <Card.Body>
             <h5 className="mb-4">Đánh giá sản phẩm</h5>

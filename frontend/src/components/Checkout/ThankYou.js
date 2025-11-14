@@ -8,6 +8,7 @@ const ThankYou = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const orderId = location.state?.orderId;
+  const orderIds = location.state?.orderIds; // Mảng các orderIds nếu có nhiều đơn hàng
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -146,18 +147,45 @@ const ThankYou = () => {
               </div>
               <h1 className="mb-3">Cảm ơn bạn đã đặt hàng!</h1>
               <p className="lead text-muted mb-4">
-                Đơn hàng của bạn đã được tiếp nhận và đang được xử lý
+                {orderIds && orderIds.length > 1 
+                  ? `Bạn đã đặt ${orderIds.length} đơn hàng từ các shop khác nhau. Các đơn hàng đã được tiếp nhận và đang được xử lý.`
+                  : 'Đơn hàng của bạn đã được tiếp nhận và đang được xử lý'
+                }
               </p>
-              <div 
-                className="order-id-badge" 
-                onClick={() => {
-                  const orderId = order._id?.toString() || order._id;
-                  navigate(`/orders/${orderId}`, { state: { from: '/thank-you' } });
-                }}
-                style={{ cursor: 'pointer' }}
-              >
-                <strong>Mã đơn hàng:</strong> <code>{(order._id?.toString() || order._id || '').slice(-8).toUpperCase()}</code>
-              </div>
+              {orderIds && orderIds.length > 1 ? (
+                <div className="mb-3">
+                  <Alert variant="info" className="mb-3">
+                    <strong>Lưu ý:</strong> Bạn đã đặt {orderIds.length} đơn hàng từ các shop khác nhau. 
+                    Mỗi đơn hàng sẽ được xử lý và giao hàng riêng biệt.
+                  </Alert>
+                  <div className="order-ids-list">
+                    <strong className="d-block mb-2">Mã các đơn hàng:</strong>
+                    {orderIds.map((id, index) => (
+                      <div 
+                        key={id}
+                        className="order-id-badge mb-2" 
+                        onClick={() => {
+                          navigate(`/orders/${id}`, { state: { from: '/thank-you' } });
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <strong>Đơn hàng {index + 1}:</strong> <code>{(id?.toString() || id || '').slice(-8).toUpperCase()}</code>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  className="order-id-badge" 
+                  onClick={() => {
+                    const orderId = order._id?.toString() || order._id;
+                    navigate(`/orders/${orderId}`, { state: { from: '/thank-you' } });
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <strong>Mã đơn hàng:</strong> <code>{(order._id?.toString() || order._id || '').slice(-8).toUpperCase()}</code>
+                </div>
+              )}
             </Card.Body>
           </Card>
 
