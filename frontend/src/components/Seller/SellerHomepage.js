@@ -59,6 +59,9 @@ const SellerHomepage = () => {
               <Button variant="light" onClick={() => navigate('/')}>
                 {t('common.back')}
               </Button>
+              <Button style={{marginLeft: '10px'}} variant="light" onClick={() => navigate('/login')}>
+                Đăng xuất
+              </Button>
             </Col>
           </Row>
         </Container>
