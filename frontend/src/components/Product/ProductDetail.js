@@ -288,14 +288,21 @@ function ProductDetail() {
             return
         }
 
-        if (user.role !== 'customer') {
-            showWarning('Chỉ khách hàng mới có thể chat với người bán!')
+        // Cho phép cả customer và seller chat với seller
+        if (user.role !== 'customer' && user.role !== 'seller') {
+            showWarning('Chỉ khách hàng và người bán mới có thể chat!')
             return
         }
 
         const sellerId = product.sellerId?._id || product.sellerId || product.seller?._id || product.seller
         if (!sellerId) {
             showError('Không tìm thấy thông tin người bán!')
+            return
+        }
+
+        // Không cho phép seller chat với chính mình
+        if (user.role === 'seller' && (user._id === sellerId || String(user._id) === String(sellerId))) {
+            showWarning('Bạn không thể chat với chính mình!')
             return
         }
 
@@ -664,7 +671,7 @@ function ProductDetail() {
                                             }
                                         </Button>
                                     )}
-                                    {(product.sellerId?._id || product.sellerId) && !isOwnProduct && isAuthenticated && user.role === 'customer' && (
+                                    {(product.sellerId?._id || product.sellerId) && !isOwnProduct && isAuthenticated && (user.role === 'customer' || user.role === 'seller') && (
                                         <Button
                                             variant="outline-primary"
                                             size="lg"

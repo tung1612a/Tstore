@@ -111,7 +111,7 @@ function SiteNavbar() {
                         Tin nhắn
                       </Dropdown.Item>
                     )}
-                    {(user?.role === 'buyer' || user?.role === 'customer') && (
+                    {(user?.role === 'seller' || user?.role === 'customer') && (
                       <Dropdown.Item href="/buyer/complaints">
                         <FiAlertTriangle className="me-2" />
                         Khiếu nại của tôi

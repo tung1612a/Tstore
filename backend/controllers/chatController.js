@@ -3,67 +3,108 @@ import Message from "../models/Message.js";
 import User from "../models/User.js";
 import Product from "../models/Product.js";
 
-// Tạo hoặc lấy conversation giữa customer và seller
+// Tạo hoặc lấy conversation giữa customer và seller, hoặc giữa 2 sellers
 export const getOrCreateConversation = async (req, res) => {
   try {
     const { sellerId, productId } = req.body;
-    const customerId = req.user._id;
+    const currentUserId = req.user._id;
+    const currentUserRole = req.user.role;
 
     if (!sellerId) {
       return res.status(400).json({ message: "sellerId is required" });
     }
 
     // Kiểm tra seller có tồn tại và là seller không
-    const seller = await User.findById(sellerId);
-    if (!seller || seller.role !== "seller") {
+    const targetSeller = await User.findById(sellerId);
+    if (!targetSeller || targetSeller.role !== "seller") {
       return res.status(404).json({ message: "Seller not found" });
     }
 
-    // Kiểm tra user có phải customer không
-    if (req.user.role !== "customer") {
-      return res.status(403).json({ message: "Only customers can create conversations" });
+    // Không cho phép chat với chính mình
+    if (targetSeller._id.toString() === currentUserId.toString()) {
+      return res.status(400).json({ message: "Cannot chat with yourself" });
     }
 
-    // Kiểm tra product nếu có productId
-    if (productId) {
-      const product = await Product.findById(productId);
-      if (!product) {
-        return res.status(404).json({ message: "Product not found" });
+    // Xử lý 2 trường hợp: customer-seller hoặc seller-seller
+    if (currentUserRole === "customer") {
+      // Customer chat với seller
+      // Kiểm tra product nếu có productId
+      if (productId) {
+        const product = await Product.findById(productId);
+        if (!product) {
+          return res.status(404).json({ message: "Product not found" });
+        }
+        // Đảm bảo product thuộc về seller này
+        if (product.sellerId.toString() !== sellerId.toString()) {
+          return res.status(400).json({ message: "Product does not belong to this seller" });
+        }
       }
-      // Đảm bảo product thuộc về seller này
-      if (product.sellerId.toString() !== sellerId.toString()) {
-        return res.status(400).json({ message: "Product does not belong to this seller" });
-      }
-    }
 
-    // Tìm hoặc tạo conversation
-    let conversation = await Conversation.findOne({
-      customerId,
-      sellerId,
-    })
-      .populate("customerId", "fullName avatarUrl")
-      .populate("sellerId", "fullName avatarUrl")
-      .populate("productId", "title price image imageURL");
-
-    if (!conversation) {
-      conversation = await Conversation.create({
-        customerId,
+      // Tìm hoặc tạo conversation
+      let conversation = await Conversation.findOne({
+        customerId: currentUserId,
         sellerId,
-        productId: productId || null,
-      });
-    } else if (productId && !conversation.productId) {
-      // Nếu conversation đã tồn tại nhưng chưa có productId, cập nhật nó
-      conversation.productId = productId;
-      await conversation.save();
+        conversationType: 'customer-seller',
+      })
+        .populate("customerId", "fullName avatarUrl")
+        .populate("sellerId", "fullName avatarUrl")
+        .populate("productId", "title price image imageURL");
+
+      if (!conversation) {
+        conversation = await Conversation.create({
+          customerId: currentUserId,
+          sellerId,
+          productId: productId || null,
+          conversationType: 'customer-seller',
+        });
+      } else if (productId && !conversation.productId) {
+        // Nếu conversation đã tồn tại nhưng chưa có productId, cập nhật nó
+        conversation.productId = productId;
+        await conversation.save();
+      }
+
+      // Populate lại để có thông tin đầy đủ
+      conversation = await Conversation.findById(conversation._id)
+        .populate("customerId", "fullName avatarUrl")
+        .populate("sellerId", "fullName avatarUrl")
+        .populate("productId", "title price image imageURL description stock");
+
+      res.json(conversation);
+    } else if (currentUserRole === "seller") {
+      // Seller chat với seller khác
+      // Đảm bảo sellerId nhỏ hơn sellerId2 để tránh duplicate (sắp xếp theo ObjectId string)
+      const currentUserIdStr = currentUserId.toString();
+      const sellerIdStr = sellerId.toString();
+      const seller1Id = currentUserIdStr < sellerIdStr ? currentUserId : sellerId;
+      const seller2Id = currentUserIdStr < sellerIdStr ? sellerId : currentUserId;
+
+      // Tìm conversation (có thể ở cả 2 chiều)
+      let conversation = await Conversation.findOne({
+        $or: [
+          { sellerId: seller1Id, sellerId2: seller2Id, conversationType: 'seller-seller' },
+          { sellerId: seller2Id, sellerId2: seller1Id, conversationType: 'seller-seller' }
+        ]
+      })
+        .populate("sellerId", "fullName avatarUrl")
+        .populate("sellerId2", "fullName avatarUrl");
+
+      if (!conversation) {
+        conversation = await Conversation.create({
+          sellerId: seller1Id,
+          sellerId2: seller2Id,
+          conversationType: 'seller-seller',
+        });
+      }
+
+      // Populate lại để có thông tin đầy đủ
+      conversation = await Conversation.findById(conversation._id)
+        .populate("sellerId", "fullName avatarUrl")
+        .populate("sellerId2", "fullName avatarUrl");
+
+      res.json(conversation);
+    } else {
+      return res.status(403).json({ message: "Only customers and sellers can create conversations" });
     }
-
-    // Populate lại để có thông tin đầy đủ
-    conversation = await Conversation.findById(conversation._id)
-      .populate("customerId", "fullName avatarUrl")
-      .populate("sellerId", "fullName avatarUrl")
-      .populate("productId", "title price image imageURL description stock");
-
-    res.json(conversation);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: err.message });
@@ -78,15 +119,26 @@ export const getMyConversations = async (req, res) => {
 
     let conversations;
     if (userRole === "customer") {
-      conversations = await Conversation.find({ customerId: userId })
+      conversations = await Conversation.find({ 
+        customerId: userId,
+        conversationType: 'customer-seller'
+      })
         .populate("customerId", "fullName avatarUrl")
         .populate("sellerId", "fullName avatarUrl")
         .populate("productId", "title price image imageURL")
         .sort({ lastMessageAt: -1 });
     } else if (userRole === "seller") {
-      conversations = await Conversation.find({ sellerId: userId })
+      // Lấy cả conversations customer-seller (seller là sellerId) và seller-seller (seller là sellerId hoặc sellerId2)
+      conversations = await Conversation.find({
+        $or: [
+          { sellerId: userId, conversationType: 'customer-seller' },
+          { sellerId: userId, conversationType: 'seller-seller' },
+          { sellerId2: userId, conversationType: 'seller-seller' }
+        ]
+      })
         .populate("customerId", "fullName avatarUrl")
         .populate("sellerId", "fullName avatarUrl")
+        .populate("sellerId2", "fullName avatarUrl")
         .populate("productId", "title price image imageURL")
         .sort({ lastMessageAt: -1 });
     } else {
@@ -112,10 +164,17 @@ export const getMessages = async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    if (
-      conversation.customerId.toString() !== userId.toString() &&
-      conversation.sellerId.toString() !== userId.toString()
-    ) {
+    // Kiểm tra quyền truy cập (hỗ trợ cả customer-seller và seller-seller)
+    let hasAccess = false;
+    if (conversation.conversationType === 'customer-seller') {
+      hasAccess = conversation.customerId?.toString() === userId.toString() ||
+                  conversation.sellerId?.toString() === userId.toString();
+    } else if (conversation.conversationType === 'seller-seller') {
+      hasAccess = conversation.sellerId?.toString() === userId.toString() ||
+                  conversation.sellerId2?.toString() === userId.toString();
+    }
+
+    if (!hasAccess) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -125,12 +184,46 @@ export const getMessages = async (req, res) => {
       .sort({ createdAt: 1 });
 
     // Đánh dấu messages chưa đọc là đã đọc (chỉ đánh dấu messages từ người kia)
-    if (req.user.role === "customer") {
-      // Customer đang xem, đánh dấu messages từ seller là đã đọc
+    if (conversation.conversationType === 'customer-seller') {
+      if (req.user.role === "customer") {
+        // Customer đang xem, đánh dấu messages từ seller là đã đọc
+        await Message.updateMany(
+          {
+            conversationId,
+            senderId: conversation.sellerId,
+            read: false,
+          },
+          {
+            read: true,
+            readAt: new Date(),
+          }
+        );
+        conversation.customerUnreadCount = 0;
+      } else if (req.user.role === "seller") {
+        // Seller đang xem, đánh dấu messages từ customer là đã đọc
+        await Message.updateMany(
+          {
+            conversationId,
+            senderId: conversation.customerId,
+            read: false,
+          },
+          {
+            read: true,
+            readAt: new Date(),
+          }
+        );
+        conversation.sellerUnreadCount = 0;
+      }
+    } else if (conversation.conversationType === 'seller-seller') {
+      // Xác định seller nào là người kia
+      const otherSellerId = conversation.sellerId?.toString() === userId.toString() 
+        ? conversation.sellerId2 
+        : conversation.sellerId;
+      
       await Message.updateMany(
         {
           conversationId,
-          senderId: conversation.sellerId,
+          senderId: otherSellerId,
           read: false,
         },
         {
@@ -138,23 +231,13 @@ export const getMessages = async (req, res) => {
           readAt: new Date(),
         }
       );
-      // Reset unread count
-      conversation.customerUnreadCount = 0;
-    } else if (req.user.role === "seller") {
-      // Seller đang xem, đánh dấu messages từ customer là đã đọc
-      await Message.updateMany(
-        {
-          conversationId,
-          senderId: conversation.customerId,
-          read: false,
-        },
-        {
-          read: true,
-          readAt: new Date(),
-        }
-      );
-      // Reset unread count
-      conversation.sellerUnreadCount = 0;
+      
+      // Reset unread count cho seller hiện tại
+      if (conversation.sellerId?.toString() === userId.toString()) {
+        conversation.sellerUnreadCount = 0;
+      } else if (conversation.sellerId2?.toString() === userId.toString()) {
+        conversation.seller2UnreadCount = 0;
+      }
     }
     await conversation.save();
 
@@ -181,10 +264,17 @@ export const sendMessage = async (req, res) => {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    if (
-      conversation.customerId.toString() !== userId.toString() &&
-      conversation.sellerId.toString() !== userId.toString()
-    ) {
+    // Kiểm tra quyền truy cập (hỗ trợ cả customer-seller và seller-seller)
+    let hasAccess = false;
+    if (conversation.conversationType === 'customer-seller') {
+      hasAccess = conversation.customerId?.toString() === userId.toString() ||
+                  conversation.sellerId?.toString() === userId.toString();
+    } else if (conversation.conversationType === 'seller-seller') {
+      hasAccess = conversation.sellerId?.toString() === userId.toString() ||
+                  conversation.sellerId2?.toString() === userId.toString();
+    }
+
+    if (!hasAccess) {
       return res.status(403).json({ message: "Access denied" });
     }
 
@@ -217,12 +307,22 @@ export const sendMessage = async (req, res) => {
     conversation.lastMessageAt = new Date();
 
     // Tăng unread count cho người nhận và reset unread count của người gửi
-    if (conversation.customerId.toString() === userId.toString()) {
-      conversation.sellerUnreadCount += 1;
-      conversation.customerUnreadCount = 0; // Reset khi customer gửi message
-    } else if (conversation.sellerId.toString() === userId.toString()) {
-      conversation.customerUnreadCount += 1;
-      conversation.sellerUnreadCount = 0; // Reset khi seller gửi message
+    if (conversation.conversationType === 'customer-seller') {
+      if (conversation.customerId?.toString() === userId.toString()) {
+        conversation.sellerUnreadCount += 1;
+        conversation.customerUnreadCount = 0; // Reset khi customer gửi message
+      } else if (conversation.sellerId?.toString() === userId.toString()) {
+        conversation.customerUnreadCount += 1;
+        conversation.sellerUnreadCount = 0; // Reset khi seller gửi message
+      }
+    } else if (conversation.conversationType === 'seller-seller') {
+      if (conversation.sellerId?.toString() === userId.toString()) {
+        conversation.seller2UnreadCount += 1;
+        conversation.sellerUnreadCount = 0; // Reset khi seller1 gửi message
+      } else if (conversation.sellerId2?.toString() === userId.toString()) {
+        conversation.sellerUnreadCount += 1;
+        conversation.seller2UnreadCount = 0; // Reset khi seller2 gửi message
+      }
     }
 
     await conversation.save();
@@ -247,16 +347,24 @@ export const getConversation = async (req, res) => {
     const conversation = await Conversation.findById(conversationId)
       .populate("customerId", "fullName avatarUrl")
       .populate("sellerId", "fullName avatarUrl")
+      .populate("sellerId2", "fullName avatarUrl")
       .populate("productId", "title price image imageURL description stock");
 
     if (!conversation) {
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    if (
-      conversation.customerId._id.toString() !== userId.toString() &&
-      conversation.sellerId._id.toString() !== userId.toString()
-    ) {
+    // Kiểm tra quyền truy cập (hỗ trợ cả customer-seller và seller-seller)
+    let hasAccess = false;
+    if (conversation.conversationType === 'customer-seller') {
+      hasAccess = conversation.customerId?._id?.toString() === userId.toString() ||
+                  conversation.sellerId?._id?.toString() === userId.toString();
+    } else if (conversation.conversationType === 'seller-seller') {
+      hasAccess = conversation.sellerId?._id?.toString() === userId.toString() ||
+                  conversation.sellerId2?._id?.toString() === userId.toString();
+    }
+
+    if (!hasAccess) {
       return res.status(403).json({ message: "Access denied" });
     }
 

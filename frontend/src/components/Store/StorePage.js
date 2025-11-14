@@ -48,8 +48,15 @@ function StorePage() {
       return
     }
 
-    if (user.role !== 'customer') {
-      alert('Chỉ khách hàng mới có thể chat với người bán!')
+    // Cho phép cả customer và seller chat với seller
+    if (user.role !== 'customer' && user.role !== 'seller') {
+      alert('Chỉ khách hàng và người bán mới có thể chat!')
+      return
+    }
+
+    // Không cho phép seller chat với chính mình
+    if (user.role === 'seller' && user._id === sellerId) {
+      alert('Bạn không thể chat với chính mình!')
       return
     }
 
@@ -196,7 +203,7 @@ function StorePage() {
                 <p className="text-muted mb-0">
                   {header.businessDescription || 'Cửa hàng chuyên cung cấp các sản phẩm chất lượng cao với giá cả hợp lý'}
                 </p>
-                {isAuthenticated && user.role === 'customer' && (
+                {isAuthenticated && (user.role === 'customer' || user.role === 'seller') && user._id !== sellerId && (
                   <div className="mt-3">
                     <Button
                       variant="primary"
@@ -204,7 +211,7 @@ function StorePage() {
                       className="d-flex align-items-center"
                     >
                       <FiMessageSquare className="me-2" />
-                      Chat với cửa hàng
+                      {user.role === 'seller' ? 'Chat với người bán' : 'Chat với cửa hàng'}
                     </Button>
                   </div>
                 )}
