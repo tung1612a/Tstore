@@ -78,6 +78,15 @@ export const getOrCreateConversation = async (req, res) => {
       const seller1Id = currentUserIdStr < sellerIdStr ? currentUserId : sellerId;
       const seller2Id = currentUserIdStr < sellerIdStr ? sellerId : currentUserId;
 
+      // Xóa các conversation cũ có customerId: null với sellerId này (nếu có) để tránh conflict
+      // Chỉ xóa conversation customer-seller có customerId: null
+      await Conversation.deleteMany({
+        $or: [
+          { sellerId: seller1Id, customerId: null, conversationType: 'customer-seller' },
+          { sellerId: seller2Id, customerId: null, conversationType: 'customer-seller' }
+        ]
+      });
+
       // Tìm conversation (có thể ở cả 2 chiều)
       let conversation = await Conversation.findOne({
         $or: [
@@ -93,6 +102,7 @@ export const getOrCreateConversation = async (req, res) => {
           sellerId: seller1Id,
           sellerId2: seller2Id,
           conversationType: 'seller-seller',
+          // Không set customerId để đảm bảo không có conflict với unique index
         });
       }
 

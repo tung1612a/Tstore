@@ -17,6 +17,7 @@ const AddressForm = ({ onAddressAdded, editingAddress, onEditComplete }) => {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState("")
     const [success, setSuccess] = useState("")
+    const [errors, setErrors] = useState({})
     const [provinceWardsMap, setProvinceWardsMap] = useState({})
     const [allProvinces, setAllProvinces] = useState([])
     const [currentWards, setCurrentWards] = useState([])
@@ -234,13 +235,70 @@ const AddressForm = ({ onAddressAdded, editingAddress, onEditComplete }) => {
         setShowWardDropdown(true)
     }
 
+    const validateForm = () => {
+        const newErrors = {}
+
+        // Validate họ tên
+        if (!formData.fullName.trim()) {
+            newErrors.fullName = 'Vui lòng nhập họ và tên'
+        } else if (formData.fullName.trim().length < 2) {
+            newErrors.fullName = 'Họ và tên phải có ít nhất 2 ký tự'
+        } else if (formData.fullName.trim().length > 30) {
+            newErrors.fullName = 'Họ và tên không được vượt quá 30 ký tự'
+        } else if (!/^[a-zA-ZÀ-ỹ\s]+$/.test(formData.fullName.trim())) {
+            newErrors.fullName = 'Họ và tên chỉ được chứa chữ cái và khoảng trắng'
+        }
+
+        // Validate số điện thoại
+        if (!formData.phone.trim()) {
+            newErrors.phone = 'Vui lòng nhập số điện thoại'
+        } else {
+            // Loại bỏ khoảng trắng và ký tự đặc biệt
+            const cleanedPhone = formData.phone.trim().replace(/\s/g, '').replace(/[^\d]/g, '')
+            
+            if (cleanedPhone.length < 9 || cleanedPhone.length > 10) {
+                newErrors.phone = 'Số điện thoại phải có từ 9 đến 10 chữ số'
+            } else if (!cleanedPhone.startsWith('0')) {
+                newErrors.phone = 'Số điện thoại phải bắt đầu bằng 0'
+            }
+        }
+
+        // Validate địa chỉ cụ thể
+        if (!formData.street.trim()) {
+            newErrors.street = 'Vui lòng nhập địa chỉ cụ thể'
+        } else if (formData.street.trim().length < 5) {
+            newErrors.street = 'Địa chỉ phải có ít nhất 5 ký tự'
+        } else if (formData.street.trim().length > 200) {
+            newErrors.street = 'Địa chỉ không được vượt quá 200 ký tự'
+        }
+
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
+    }
+
     const handleSubmit = async (e) => {
         e.preventDefault()
         setLoading(true)
         setError("")
         setSuccess("")
+        setErrors({})
+
+        // Validate form trước khi submit
+        if (!validateForm()) {
+            setLoading(false)
+            return
+        }
 
         try {
+            // Chuẩn hóa số điện thoại (loại bỏ khoảng trắng và ký tự đặc biệt)
+            const cleanedPhone = formData.phone.trim().replace(/\s/g, '').replace(/[^\d]/g, '')
+            
+            const submitData = {
+                ...formData,
+                fullName: formData.fullName.trim(),
+                phone: cleanedPhone,
+                street: formData.street.trim(),
+            }
             const token = localStorage.getItem("token")
             const url = editingAddress
                 ? `http://localhost:5000/api/address/${editingAddress._id}`
@@ -253,11 +311,12 @@ const AddressForm = ({ onAddressAdded, editingAddress, onEditComplete }) => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${token}`,
                 },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(submitData),
             })
 
             if (!response.ok) {
-                throw new Error("Lỗi khi lưu địa chỉ")
+                const errorData = await response.json().catch(() => ({ message: "Lỗi khi lưu địa chỉ" }))
+                throw new Error(errorData.message || "Lỗi khi lưu địa chỉ")
             }
 
             setSuccess(editingAddress ? "Cập nhật địa chỉ thành công!" : "Thêm địa chỉ thành công!")
@@ -294,39 +353,51 @@ const AddressForm = ({ onAddressAdded, editingAddress, onEditComplete }) => {
 
             <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3">
-                    <Form.Label>Họ và tên</Form.Label>
+                    <Form.Label>Họ và tên *</Form.Label>
                     <Form.Control
                         type="text"
                         name="fullName"
                         value={formData.fullName}
                         onChange={handleChange}
                         placeholder="Nhập họ và tên"
+                        className={errors.fullName ? 'is-invalid' : ''}
                         required
                     />
+                    {errors.fullName && (
+                        <div className="invalid-feedback d-block">{errors.fullName}</div>
+                    )}
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                    <Form.Label>Số điện thoại</Form.Label>
+                    <Form.Label>Số điện thoại *</Form.Label>
                     <Form.Control
                         type="tel"
                         name="phone"
                         value={formData.phone}
                         onChange={handleChange}
-                        placeholder="Nhập số điện thoại"
+                        placeholder="Nhập số điện thoại (ví dụ: 0912345678)"
+                        className={errors.phone ? 'is-invalid' : ''}
                         required
                     />
+                    {errors.phone && (
+                        <div className="invalid-feedback d-block">{errors.phone}</div>
+                    )}
                 </Form.Group>
 
                 <Form.Group className="mb-3">
-                    <Form.Label>Địa chỉ</Form.Label>
+                    <Form.Label>Địa chỉ cụ thể *</Form.Label>
                     <Form.Control
                         type="text"
                         name="street"
                         value={formData.street}
                         onChange={handleChange}
-                        placeholder="Nhập địa chỉ"
+                        placeholder="Nhập địa chỉ cụ thể (số nhà, tên đường, tên khu vực)"
+                        className={errors.street ? 'is-invalid' : ''}
                         required
                     />
+                    {errors.street && (
+                        <div className="invalid-feedback d-block">{errors.street}</div>
+                    )}
                 </Form.Group>
 
                 <Form.Group className="mb-3">
