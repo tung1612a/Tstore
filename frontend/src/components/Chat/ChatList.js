@@ -63,18 +63,40 @@ function ChatList() {
   };
 
   const getOtherUser = (conversation) => {
-    if (user.role === 'customer') {
-      return conversation.sellerId;
+    if (conversation.conversationType === 'seller-seller') {
+      // Seller-seller: trả về seller khác
+      if (conversation.sellerId?._id?.toString() === user._id?.toString() || 
+          conversation.sellerId?.toString() === user._id?.toString()) {
+        return conversation.sellerId2;
+      } else {
+        return conversation.sellerId;
+      }
     } else {
-      return conversation.customerId;
+      // Customer-seller
+      if (user.role === 'customer') {
+        return conversation.sellerId;
+      } else {
+        return conversation.customerId;
+      }
     }
   };
 
   const getUnreadCount = (conversation) => {
-    if (user.role === 'customer') {
-      return conversation.customerUnreadCount || 0;
+    if (conversation.conversationType === 'seller-seller') {
+      // Seller-seller: xác định seller nào là user hiện tại
+      if (conversation.sellerId?._id?.toString() === user._id?.toString() || 
+          conversation.sellerId?.toString() === user._id?.toString()) {
+        return conversation.sellerUnreadCount || 0;
+      } else {
+        return conversation.seller2UnreadCount || 0;
+      }
     } else {
-      return conversation.sellerUnreadCount || 0;
+      // Customer-seller
+      if (user.role === 'customer') {
+        return conversation.customerUnreadCount || 0;
+      } else {
+        return conversation.sellerUnreadCount || 0;
+      }
     }
   };
 

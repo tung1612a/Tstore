@@ -177,10 +177,21 @@ function Chat() {
 
     const getOtherUser = () => {
         if (!conversation) return null;
-        if (user.role === 'customer') {
-            return conversation.sellerId;
+        if (conversation.conversationType === 'seller-seller') {
+            // Seller-seller: trả về seller khác
+            if (conversation.sellerId?._id?.toString() === user._id?.toString() || 
+                conversation.sellerId?.toString() === user._id?.toString()) {
+                return conversation.sellerId2;
+            } else {
+                return conversation.sellerId;
+            }
         } else {
-            return conversation.customerId;
+            // Customer-seller
+            if (user.role === 'customer') {
+                return conversation.sellerId;
+            } else {
+                return conversation.customerId;
+            }
         }
     };
 
@@ -229,9 +240,11 @@ function Chat() {
                                         }}
                                     />
                                     <div>
-                                        <h6 className="mb-0">{otherUser.fullName}</h6>
+                                        <h6 className="mb-0">{otherUser?.fullName}</h6>
                                         <small className="text-muted">
-                                            {user.role === 'customer' ? 'Người bán' : 'Khách hàng'}
+                                            {conversation?.conversationType === 'seller-seller' 
+                                                ? 'Người bán' 
+                                                : (user.role === 'customer' ? 'Người bán' : 'Khách hàng')}
                                         </small>
                                     </div>
                                 </>
