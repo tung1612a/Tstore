@@ -656,7 +656,8 @@ const OrderDetails = () => {
             {items.map((item, index) => {
               const product = item.productId || {};
               const productId = product._id || product;
-              const shouldShowReview = ['delivered', 'completed'].includes(order.status) || order.paymentStatus === 'paid';
+              // Chỉ hiển thị form review khi order status là 'completed' (đã xác nhận nhận hàng)
+              const shouldShowReview = order.status === 'completed';
 
               return shouldShowReview && productId ? (
                 <div key={item._id || index} className="mb-4 pb-4 border-bottom">
@@ -674,6 +675,7 @@ const OrderDetails = () => {
                   <ReviewSection
                     productId={typeof productId === 'object' ? String(productId) : String(productId)}
                     orderId={orderIdStr}
+                    orderStatus={order.status}
                   />
                 </div>
               ) : null;

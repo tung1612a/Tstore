@@ -4,7 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { FiStar } from "react-icons/fi";
 import { createReview, getProductReviews, getUserReview, updateReview, deleteReview } from "../../services/reviewService";
 
-const ReviewSection = ({ productId, orderId }) => {
+const ReviewSection = ({ productId, orderId, orderStatus }) => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [reviews, setReviews] = useState([]);
@@ -15,9 +15,33 @@ const ReviewSection = ({ productId, orderId }) => {
     const [editingReviewId, setEditingReviewId] = useState(null); // Lưu reviewId khi đang chỉnh sửa
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [orderStatusState, setOrderStatusState] = useState(orderStatus);
 
     const token = localStorage.getItem("token");
     const currentUserId = user?._id || user?.id;
+
+    // Fetch order status nếu không được truyền vào
+    useEffect(() => {
+        if (!orderStatusState && orderId && token) {
+            const fetchOrderStatus = async () => {
+                try {
+                    const response = await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    });
+                    if (response.ok) {
+                        const data = await response.json();
+                        const status = data.order?.status || data.status;
+                        setOrderStatusState(status);
+                    }
+                } catch (err) {
+                    console.error("Error fetching order status:", err);
+                }
+            };
+            fetchOrderStatus();
+        }
+    }, [orderId, orderStatusState, token]);
 
     // 🔹 Lấy danh sách review của sản phẩm + review của user hiện tại
     useEffect(() => {
@@ -132,8 +156,22 @@ const ReviewSection = ({ productId, orderId }) => {
                 Đánh giá sản phẩm
             </h4>
 
-            {/* Form đánh giá - chỉ hiển thị nếu user chưa review cho order này */}
-            {!userReview && !isEditing && (
+            {/* Thông báo nếu order chưa completed */}
+            {!userReview && !isEditing && orderStatusState && orderStatusState !== 'completed' && (
+                <div style={{
+                    padding: "16px",
+                    background: "#fff3cd",
+                    border: "1px solid #ffc107",
+                    borderRadius: "8px",
+                    color: "#856404",
+                    marginBottom: "20px"
+                }}>
+                    <strong>Lưu ý:</strong> Bạn chỉ có thể đánh giá sản phẩm sau khi xác nhận đã nhận hàng.
+                </div>
+            )}
+
+            {/* Form đánh giá - chỉ hiển thị nếu user chưa review cho order này và order status là 'completed' */}
+            {!userReview && !isEditing && orderStatusState === 'completed' && (
                 // Form thêm review
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>

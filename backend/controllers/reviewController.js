@@ -24,6 +24,13 @@ export const createReview = async (req, res) => {
             return res.status(401).json({ message: "Bạn không có quyền review sản phẩm này" });
         }
 
+        // Kiểm tra order status phải là 'completed' (đã xác nhận nhận hàng)
+        if (order.status !== 'completed') {
+            return res.status(400).json({ 
+                message: "Bạn chỉ có thể đánh giá sản phẩm sau khi xác nhận đã nhận hàng" 
+            });
+        }
+
         // Kiểm tra sản phẩm có trong order này không
         const orderItem = await OrderItem.findOne({ 
             orderId, 
