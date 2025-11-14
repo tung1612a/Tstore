@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Spinner, Alert, Button } from 'react-bootstrap';
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   Tooltip,
@@ -119,13 +119,24 @@ const ShipperMoney = () => {
         <Card.Body style={{ height: '350px' }}>
           {report.monthlyRevenue?.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={report.monthlyRevenue}>
+              <BarChart data={report.monthlyRevenue}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis />
+                <YAxis 
+                  tickFormatter={(value) => {
+                    if (value >= 1000000) {
+                      return `${(value / 1000000).toFixed(1)}M`;
+                    } else if (value >= 1000) {
+                      return `${(value / 1000).toFixed(1)}K`;
+                    }
+                    return value.toLocaleString();
+                  }}
+                  width={90}
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip formatter={(value) => `${Number(value).toLocaleString()} ₫`} />
-                <Line type="monotone" dataKey="revenue" stroke="#007bff" strokeWidth={3} dot={{ r: 4 }} />
-              </LineChart>
+                <Bar dataKey="revenue" fill="#007bff" radius={[8, 8, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <p className="text-center text-muted">Chưa có dữ liệu doanh thu theo tháng.</p>
@@ -133,20 +144,24 @@ const ShipperMoney = () => {
         </Card.Body>
       </Card>
 
-      <Card className="shadow-sm border-0 rounded-4">
+      <Card className="shadow-sm border-0 rounded-4 mb-4">
         <Card.Header className="bg-light fw-bold fs-5 border-0">
           Số đơn hàng theo tháng
         </Card.Header>
         <Card.Body style={{ height: '350px' }}>
           {report.monthlyOrders?.length > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={report.monthlyOrders}>
+              <BarChart data={report.monthlyOrders}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
-                <YAxis />
+                <YAxis 
+                  tickFormatter={(value) => Math.round(value).toString()}
+                  width={60}
+                  tick={{ fontSize: 12 }}
+                />
                 <Tooltip />
-                <Line type="monotone" dataKey="orders" stroke="#28a745" strokeWidth={3} dot={{ r: 4 }} />
-              </LineChart>
+                <Bar dataKey="orders" fill="#28a745" radius={[8, 8, 0, 0]} />
+              </BarChart>
             </ResponsiveContainer>
           ) : (
             <p className="text-center text-muted">Chưa có dữ liệu đơn hàng theo tháng.</p>
@@ -161,13 +176,29 @@ const ShipperMoney = () => {
       <Card.Body style={{ height: '350px' }}>
         {report.dailyRevenue?.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={report.dailyRevenue}>
+            <BarChart data={report.dailyRevenue}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
+              <XAxis 
+                dataKey="date" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis 
+                tickFormatter={(value) => {
+                  if (value >= 1000000) {
+                    return `${(value / 1000000).toFixed(1)}M`;
+                  } else if (value >= 1000) {
+                    return `${(value / 1000).toFixed(1)}K`;
+                  }
+                  return value.toLocaleString();
+                }}
+                width={90}
+                tick={{ fontSize: 12 }}
+              />
               <Tooltip formatter={(value) => `${Number(value).toLocaleString()} ₫`} />
-              <Line type="monotone" dataKey="revenue" stroke="#17a2b8" strokeWidth={3} dot={{ r: 3 }} />
-            </LineChart>
+              <Bar dataKey="revenue" fill="#17a2b8" radius={[8, 8, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         ) : (
           <p className="text-center text-muted">Chưa có dữ liệu doanh thu theo ngày.</p>
@@ -182,13 +213,22 @@ const ShipperMoney = () => {
       <Card.Body style={{ height: '350px' }}>
         {report.dailyOrders?.length > 0 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={report.dailyOrders}>
+            <BarChart data={report.dailyOrders}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="date" />
-              <YAxis />
+              <XAxis 
+                dataKey="date" 
+                angle={-45}
+                textAnchor="end"
+                height={80}
+              />
+              <YAxis 
+                tickFormatter={(value) => Math.round(value).toString()}
+                width={60}
+                tick={{ fontSize: 12 }}
+              />
               <Tooltip />
-              <Line type="monotone" dataKey="orders" stroke="#6f42c1" strokeWidth={3} dot={{ r: 3 }} />
-            </LineChart>
+              <Bar dataKey="orders" fill="#6f42c1" radius={[8, 8, 0, 0]} />
+            </BarChart>
           </ResponsiveContainer>
         ) : (
           <p className="text-center text-muted">Chưa có dữ liệu đơn hàng theo ngày.</p>
