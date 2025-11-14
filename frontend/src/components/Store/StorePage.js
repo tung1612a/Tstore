@@ -194,7 +194,7 @@ function StorePage() {
                   <span>{products.length} sản phẩm</span>
                 </div>
                 <p className="text-muted mb-0">
-                  Cửa hàng chuyên cung cấp các sản phẩm công nghệ chất lượng cao với giá cả hợp lý
+                  {header.businessDescription || 'Cửa hàng chuyên cung cấp các sản phẩm chất lượng cao với giá cả hợp lý'}
                 </p>
                 {isAuthenticated && user.role === 'customer' && (
                   <div className="mt-3">

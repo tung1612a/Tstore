@@ -50,8 +50,8 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
 
   // Kiểm tra điều kiện hiển thị nút đánh giá
 
-  // Chỉ hiển thị cho buyer hoặc customer (customer = buyer trong hệ thống)
-  if (role !== 'buyer' && role !== 'customer') {
+  // Hiển thị cho buyer, customer hoặc seller (khi họ là người mua)
+  if (role !== 'buyer' && role !== 'customer' && role !== 'seller') {
     return null;
   }
 
@@ -134,8 +134,8 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
 
 // Component để hiển thị nút khiếu nại
 const ComplaintButton = ({ productId, orderId, orderStatus, role, onComplaintClick }) => {
-  // Chỉ hiển thị cho buyer hoặc customer
-  if (role !== 'buyer' && role !== 'customer') {
+  // Hiển thị cho buyer, customer hoặc seller (khi họ là người mua)
+  if (role !== 'buyer' && role !== 'customer' && role !== 'seller') {
     return null;
   }
 

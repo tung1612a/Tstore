@@ -24,13 +24,14 @@ export const getProducts = async (req, res) => {
     products.map(async (product) => {
       const [store, seller] = await Promise.all([
         Store.findOne({ sellerId: product.sellerId?._id }),
-        User.findById(product.sellerId?._id).select('avatarUrl')
+        User.findById(product.sellerId?._id).select('avatarUrl businessDescription')
       ]);
       const storeInfo = store ? { 
         storeName: store.storeName, 
         status: store.status, 
         bannerImageURL: store.bannerImageURL,
-        avatarUrl: seller?.avatarUrl || null
+        avatarUrl: seller?.avatarUrl || null,
+        businessDescription: seller?.businessDescription || null
       } : null;
 
       return {
@@ -51,13 +52,14 @@ export const getProductById = async (req, res) => {
   // Get store info for this product
   const [store, seller] = await Promise.all([
     Store.findOne({ sellerId: product.sellerId?._id }),
-    User.findById(product.sellerId?._id).select('avatarUrl')
+    User.findById(product.sellerId?._id).select('avatarUrl businessDescription')
   ]);
   const storeInfo = store ? { 
     storeName: store.storeName, 
     status: store.status, 
     bannerImageURL: store.bannerImageURL,
-    avatarUrl: seller?.avatarUrl || null
+    avatarUrl: seller?.avatarUrl || null,
+    businessDescription: seller?.businessDescription || null
   } : null;
 
   // Đếm số lượng đơn hàng đã hoàn thành (completed hoặc delivered) có chứa sản phẩm này
