@@ -421,10 +421,6 @@ const SellerComplaints = () => {
                 <FiSend className="me-2" />
                 Phản hồi
               </Button>
-              <Button variant="success" onClick={handleResolve} disabled={isResponding}>
-                <FiCheckCircle className="me-2" />
-                Đánh dấu giải quyết
-              </Button>
               <Button variant="danger" onClick={handleReject} disabled={isResponding || !responseText.trim()}>
                 <FiXCircle className="me-2" />
                 Từ chối

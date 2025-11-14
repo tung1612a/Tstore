@@ -18,6 +18,7 @@ import {
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { selectUserRole, getRole } from '../../store/userSlice';
+import { useAuth } from '../../contexts/AuthContext';
 import './OrderHistory.css';
 import { Button, Toast, ToastContainer } from 'react-bootstrap';
 import ReviewSection from './ReviewSection';
@@ -45,7 +46,7 @@ function formatDate(dateString) {
 }
 
 // Component con để hiển thị nút đánh giá và form review
-const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
+const ReviewButton = ({ productId, orderId, orderStatus, role, order, user }) => {
   const [showReview, setShowReview] = useState(false);
 
   // Kiểm tra điều kiện hiển thị nút đánh giá
@@ -55,19 +56,27 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
     return null;
   }
 
+  // Kiểm tra user có phải là buyer của order này không
+  if (order && user && order.buyerId) {
+    const buyerId = order.buyerId._id || order.buyerId;
+    const userId = user._id || user.id;
+    if (String(buyerId) !== String(userId)) {
+      return null;
+    }
+  }
+
   // Phải có productId
   if (!productId) {
     return null;
   }
 
-  // Kiểm tra status - chỉ hiển thị khi order đã hoàn thành hoặc đã giao hàng
+  // Kiểm tra status - chỉ hiển thị khi order đã completed (đã xác nhận nhận hàng)
   const statusNormalized = String(orderStatus || '')
     .toLowerCase()
     .trim();
   const isCompleted = statusNormalized === 'completed' || orderStatus === 'completed';
-  const isDelivered = statusNormalized === 'delivered' || orderStatus === 'delivered';
 
-  if (!isCompleted && !isDelivered) {
+  if (!isCompleted) {
     return null;
   }
 
@@ -99,7 +108,7 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
             ✕ Đóng
           </button>
         </div>
-        <ReviewSection productId={String(productId)} orderId={orderId} />
+        <ReviewSection productId={String(productId)} orderId={orderId} orderStatus={orderStatus} />
       </div>
     );
   }
@@ -133,10 +142,19 @@ const ReviewButton = ({ productId, orderId, orderStatus, role }) => {
 };
 
 // Component để hiển thị nút khiếu nại
-const ComplaintButton = ({ productId, orderId, orderStatus, role, onComplaintClick }) => {
+const ComplaintButton = ({ productId, orderId, orderStatus, role, onComplaintClick, order, user }) => {
   // Hiển thị cho buyer, customer hoặc seller (khi họ là người mua)
   if (role !== 'buyer' && role !== 'customer' && role !== 'seller') {
     return null;
+  }
+
+  // Kiểm tra user có phải là buyer của order này không
+  if (order && user && order.buyerId) {
+    const buyerId = order.buyerId._id || order.buyerId;
+    const userId = user._id || user.id;
+    if (String(buyerId) !== String(userId)) {
+      return null;
+    }
   }
 
   // Phải có productId
@@ -199,6 +217,7 @@ const OrderCard = React.memo(
     handleOpenComplaintModal,
     role,
     navigate,
+    user,
   }) => {
     const handleViewDetails = (e) => {
       e.stopPropagation();
@@ -287,6 +306,8 @@ const OrderCard = React.memo(
                           orderId={order._id}
                           orderStatus={order.status}
                           role={role}
+                          order={order}
+                          user={user}
                         />
                         <ComplaintButton
                           productId={
@@ -298,6 +319,8 @@ const OrderCard = React.memo(
                           orderStatus={order.status}
                           role={role}
                           onComplaintClick={handleOpenComplaintModal}
+                          order={order}
+                          user={user}
                         />
                       </div>
                     </div>
@@ -332,8 +355,12 @@ const OrderCard = React.memo(
                 </button>
               </div>
 
-              {/* Order Actions - Only show for buyer/customer roles */}
-              {(role === 'buyer' || role === 'customer' || !role) && (
+              {/* Order Actions - Show for buyer/customer/seller when they are the buyer of the order */}
+              {((role === 'buyer' || role === 'customer' || role === 'seller' || !role) && 
+                order.buyerId && 
+                (order.buyerId._id || order.buyerId) && 
+                user && 
+                String(order.buyerId._id || order.buyerId) === String(user._id || user.id)) && (
                 <div
                   className="order-actions"
                   style={{
@@ -407,6 +434,7 @@ const OrderHistory = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const role = useSelector(selectUserRole);
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -634,20 +662,29 @@ const OrderHistory = () => {
       });
 
       if (response.ok) {
+        // Đóng modal trước
         setShowComplaintModal(false);
         setSelectedOrder(null);
         setSelectedProductId(null);
         setComplaintType('');
         setComplaintDescription('');
         setComplaintImages([]);
-        showToastNotification('Gửi khiếu nại thành công! Người bán sẽ xem xét và phản hồi.', 'success');
+        
+        // Hiển thị thông báo thành công sau một chút delay để đảm bảo modal đã đóng
+        setTimeout(() => {
+          showToastNotification('Gửi khiếu nại thành công! Người bán sẽ xem xét và phản hồi.', 'success');
+          // Thêm alert để đảm bảo người dùng thấy thông báo
+          alert('Gửi khiếu nại thành công! Người bán sẽ xem xét và phản hồi.');
+        }, 300);
       } else {
         const error = await response.json();
         showToastNotification(error.message || 'Có lỗi xảy ra khi gửi khiếu nại', 'danger');
+        alert(error.message || 'Có lỗi xảy ra khi gửi khiếu nại');
       }
     } catch (error) {
       console.error('Error submitting complaint:', error);
       showToastNotification('Có lỗi xảy ra khi gửi khiếu nại', 'danger');
+      alert('Có lỗi xảy ra khi gửi khiếu nại. Vui lòng thử lại.');
     } finally {
       setIsSubmittingComplaint(false);
     }
@@ -761,6 +798,7 @@ const OrderHistory = () => {
                 handleOpenComplaintModal={handleOpenComplaintModal}
                 role={role}
                 navigate={navigate}
+                user={user}
                 toggleDetails={async (orderId) => {
                   // First, determine if we're opening or closing
                   const isCurrentlyOpen = expanded[orderId];
