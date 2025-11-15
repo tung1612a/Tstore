@@ -341,9 +341,9 @@ const ShipperOrders = () => {
                               </td>
                               <td className="py-3 px-4">
                                 <div className="small">
-                                  {order.addressId?.address}
+                                  {order.addressId?.street || 'N/A'}
                                   {order.addressId?.city && (
-                                    <div className="text-muted">{order.addressId.city}</div>
+                                    <div className="text-muted">{order.addressId.city}{order.addressId?.state ? `, ${order.addressId.state}` : ''}</div>
                                   )}
                                 </div>
                               </td>
@@ -507,10 +507,18 @@ const ShipperOrders = () => {
               
               <h6>Địa chỉ giao hàng:</h6>
               <div className="border rounded p-3 mb-3">
-                <p className="mb-1"><strong>{selectedOrder.order.addressId?.fullName || 'N/A'}</strong></p>
-                <p className="mb-1"><small className="text-muted">SĐT: {selectedOrder.order.addressId?.phone || 'N/A'}</small></p>
-                <p className="mb-1">{selectedOrder.order.addressId?.address || 'N/A'}</p>
-                <p className="mb-0">{selectedOrder.order.addressId?.district || ''} {selectedOrder.order.addressId?.city || ''}</p>
+                <div className="mb-2">
+                  <strong>Tên người nhận:</strong> {selectedOrder.order.addressId?.fullName || 'N/A'}
+                </div>
+                <div className="mb-2">
+                  <strong>SĐT:</strong> {selectedOrder.order.addressId?.phone || 'N/A'}
+                </div>
+                <div className="mb-2">
+                  <strong>Địa chỉ:</strong> {selectedOrder.order.addressId?.street || 'N/A'}
+                </div>
+                <div className="mb-0">
+                  <strong>Thành phố:</strong> {selectedOrder.order.addressId?.city || 'N/A'}{selectedOrder.order.addressId?.state ? `, ${selectedOrder.order.addressId.state}` : ''}
+                </div>
               </div>
 
               <h6>Sản phẩm trong đơn hàng:</h6>
