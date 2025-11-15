@@ -215,7 +215,7 @@ const SellerHomepage = () => {
                           <th>{t('product.description')}</th>
                           <th>{t('product.quantity')}</th>
                           <th>{t('product.price')}</th>
-                          <th>{t('common.edit')}</th>
+                          {/* <th>{t('common.edit')}</th> */}
                         </tr>
                       </thead>
                       <tbody>
@@ -228,12 +228,12 @@ const SellerHomepage = () => {
                               </span>
                             </td>
                             <td>${product.price}</td>
-                            <td>
+                            {/* <td>
                               <Button variant="outline-primary" size="sm">
                                 <FiEdit className="me-1" />
                                 Cập nhật
                               </Button>
-                            </td>
+                            </td> */}
                           </tr>
                         ))}
                       </tbody>
